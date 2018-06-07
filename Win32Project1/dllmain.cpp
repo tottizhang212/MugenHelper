@@ -2,11 +2,13 @@
 #include "stdafx.h"
 
 #include "proc.h"
-
+#include <detours.h>
+#include <detver.h>
+#include <syelog.h>
 
 
 HANDLE hThread;
-
+pFunc Hook = (pFunc)(0x0042A730);
 BOOL APIENTRY DllMain( HMODULE hModule,
                        DWORD  ul_reason_for_call,
                        LPVOID lpReserved
@@ -17,8 +19,20 @@ BOOL APIENTRY DllMain( HMODULE hModule,
 	case DLL_PROCESS_ATTACH:
 		DWORD threadID;
 		//HANDLE hThread;
-		loadCodes();
-		hThread = CreateThread(NULL, 0, ThreadProc, NULL, 0, &threadID); // 创建线程
+		loadCodes(hModule);
+		//DisableThreadLibraryCalls(hModule);
+		/*
+		
+		DetourTransactionBegin();
+		DetourUpdateThread(GetCurrentThread());
+		DetourAttach(&(PVOID&)Hook, hookTest);
+		DetourTransactionCommit();
+		
+		
+		*/
+	
+		//hThread = CreateThread(NULL, 0, ThreadProc, NULL, 0, &threadID); // 创建线程
+		break;
 	case DLL_THREAD_ATTACH:
 	case DLL_THREAD_DETACH:
 	case DLL_PROCESS_DETACH:
@@ -27,3 +41,10 @@ BOOL APIENTRY DllMain( HMODULE hModule,
 	return TRUE;
 }
 
+DWORD hookTest(DWORD para) {
+	printf("hookTest!");
+
+	return Hook(para);
+
+
+}

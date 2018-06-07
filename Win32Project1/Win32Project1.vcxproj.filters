@@ -47,4 +47,9 @@
       <Filter>资源文件</Filter>
     </ResourceCompile>
   </ItemGroup>
+  <ItemGroup>
+    <None Include="MugenHelper.def">
+      <Filter>源文件</Filter>
+    </None>
+  </ItemGroup>
 </Project>

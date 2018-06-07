@@ -1,0 +1,3 @@
+LIBRARY  MugenHelper
+EXPORTS
+	playerHandle @1
