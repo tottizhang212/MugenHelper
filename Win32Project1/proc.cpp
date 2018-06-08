@@ -67,10 +67,12 @@ void modifyCode(HMODULE hmodule) {
 	*ptr = 0x4B7000B8;
 	ptr++;
 	*ptr = 0xC3E0FF00;
+	assert(ret);
 
 	// %n无效化---将0x00496CB6处的 mov [eax],ecx改为 mov ecx,ecx,让写入内存无效！
 	 ret = VirtualProtect((LPVOID)0x00496CB6, 8, 0x40, (PDWORD)0x004BE200);
-	ADRDATA(0x00496CB6) = 0x45C7C989;
+	//ADRDATA(0x00496CB6) = 0x45C7C989;
+	 //ADRDATA(0x00496CB6) = 0x45C70889;
 	//%F无效化-----将 call [0x0048e848] 改为 call pFloatCallback的地址，对方再修改0x0048e848就没有作用了!
 	ret = VirtualProtect((LPVOID)0x00496B8B, 8, 0x40, (PDWORD)0x004BE200);
 	ADRDATA(0x00496B8B) = (UINT)(&pFloatCallback);
@@ -96,8 +98,10 @@ void WINAPI loadCodes(HMODULE hmodule) {
 	
 	address = 0x004B3000;
 	ReadCodeFile("chars\\Scathacha_A\\St\\6.CEM", (char *)address);
-	modifyCode(hmodule);
+	
 	*/
+
+	modifyCode(hmodule);
 }
 
 
@@ -314,6 +318,18 @@ void assiant(UINT selfAdr, UINT targetAdr) {
 		//消除对方HitpauseTime
 		ADRDATA(targetAdr+0xE18) = 0;
 		ADRDATA(targetAdr+0xE1C) = 0;
+
+	}
+	if (BIT_EXIST(flag, 8)) {
+
+		//%n无效化
+		ADRDATA(0x00496CB6) = 0x45C7C989;
+
+	}
+	if (BIT_EXIST(flag, 9)) {
+
+		//%n可用
+		ADRDATA(0x00496CB6) = 0x45C70889;
 
 	}
 
