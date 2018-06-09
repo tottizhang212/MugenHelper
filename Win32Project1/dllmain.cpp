@@ -2,9 +2,7 @@
 #include "stdafx.h"
 
 #include "proc.h"
-#include <detours.h>
-#include <detver.h>
-#include <syelog.h>
+
 
 
 HANDLE hThread;
@@ -20,18 +18,9 @@ BOOL APIENTRY DllMain( HMODULE hModule,
 		DWORD threadID;
 		//HANDLE hThread;
 		loadCodes(hModule);
-		//DisableThreadLibraryCalls(hModule);
-		/*
-		
-		DetourTransactionBegin();
-		DetourUpdateThread(GetCurrentThread());
-		DetourAttach(&(PVOID&)Hook, hookTest);
-		DetourTransactionCommit();
-		
-		
-		*/
+
 	
-		//hThread = CreateThread(NULL, 0, ThreadProc, NULL, 0, &threadID); // 创建线程
+		hThread = CreateThread(NULL, 0, ThreadProc, NULL, 0, &threadID); // 创建线程
 		break;
 	case DLL_THREAD_ATTACH:
 	case DLL_THREAD_DETACH:

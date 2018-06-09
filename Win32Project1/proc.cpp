@@ -10,8 +10,8 @@
 #define MODIFYCNS(selfAdR,targetAdR) *((PUINT)(*((PUINT)(targetAdr + 0xBE8)))) = *((PUINT)(*((PUINT)(selfAdr + 0xBE8))))
 #define ADRDATA(address) *((PUINT)(address))
 #define BIT_EXIST(data,byte)( ((data>>byte) & 1)>0 )
-
-
+#define CHAR_NAME "Scathacha"
+#define DEBUG(info) MessageBox(NULL, TEXT(info), TEXT(info), MB_OK)
 
 /*
 
@@ -86,58 +86,20 @@ void WINAPI loadCodes(HMODULE hmodule) {
 
 	address = 0x004B7000; //跳转到playerHandle
 	ReadCodeFile("chars\\Scathacha_A\\St\\1.CEM", (char *)address);
-	/*
-	address = 0x004B8000;
-	ReadCodeFile("chars\\Scathacha_A\\St\\2.CEM", (char *)address);
-	address = 0x004BE700;
-	ReadCodeFile("chars\\Scathacha_A\\St\\3.CEM", (char *)address);
-	address = 0x004BE800;
-	ReadCodeFile("chars\\Scathacha_A\\St\\4.CEM", (char *)address);
-	address = 0x004B4000;
-	ReadCodeFile("chars\\Scathacha_A\\St\\5.CEM", (char *)address);
-	
-	address = 0x004B3000;
-	ReadCodeFile("chars\\Scathacha_A\\St\\6.CEM", (char *)address);
-	
-	*/
+
 
 	modifyCode(hmodule);
 }
 
 
 UINT mainEntryPoint = ADRDATA(0x004b5b4c);  //主程序入口地址
+UINT pDef = NULL; //人物def入口地址
 UINT pCns1 = NULL; //cns地址的地址备份
 UINT pCns2 = NULL;//cns的地址备份
+UINT pDefPath = NULL;//人物def地址
+UINT pDeffilePath = NULL;//人物def地址
 int cnsAtk = 0; //判断对方CNS攻击
-/*
-人物变量初始化
-*/
-void initial(UINT dAdr, UINT pAdr) {
-	
 
-	/*
-	
-	if (ADRDATA(VAR(2, pAdr)) < VALID_ADDRESS) {
-
-		//主程序地址设置到var(2)
-		ADRDATA((VAR(2, pAdr))) = mainEntryPoint;
-	}
-	if (ADRDATA(VAR(11, pAdr)) < VALID_ADDRESS) {
-
-		//自己人物地址设置到var(11)
-		ADRDATA((VAR(11, pAdr))) = pAdr;
-	}
-	if (ADRDATA((VAR(21, pAdr))) < VALID_ADDRESS) {
-
-		//自己CNS地址设置到var(21)
-		ADRDATA((VAR(21, pAdr))) = ADRDATA((dAdr + 0x3C4));
-	}
-	
-	
-	*/
-	
-
-}
 /*
 
 人物状态保护
@@ -160,9 +122,108 @@ void protect(UINT selfAdr) {
 }
 
 /*
-检查恢复CNS
+
+保护修复DEF信息
 */
-void checkCns(UINT dAdr, UINT pAdr, UINT &cns1,UINT &cns2, UINT &cns3,UINT &cns4) {
+void protectDef() {
+
+
+	if (pDefPath == NULL) {
+
+		UINT defStartAdr = ADRDATA(mainEntryPoint + 0xCD0);//def包起始地址
+
+		UINT pCount = ADRDATA(mainEntryPoint + 0xCD4);//人物数量
+
+		for (size_t i = 1; i <= pCount; i++)
+		{
+
+			UINT defPath = (defStartAdr - 0xA1E + 0xE30 * i);
+
+
+			if (strcmp((char*)defPath, "Scathacha_A/") == 0) {
+
+				pDefPath = defPath; //def包路径
+				pDeffilePath = pDefPath - 0x206; //def包文件名
+				if (ADRDATA(pDefPath - 0x40A) > VALID_ADDRESS)
+					pDef = ADRDATA(pDefPath - 0x40A); //人物信息地址
+				break;
+
+			 }
+
+		}
+
+	}
+	else
+	{
+
+		if (ADRDATA(pDefPath - 0x40A) > VALID_ADDRESS)
+		{
+			pDef = ADRDATA(pDefPath - 0x40A);
+
+		}
+
+		//修复 def路径
+		if (strcmp((char*)pDefPath, "Scathacha_A/") != 0) {
+
+			strcpy((char*)pDefPath, "Scathacha_A/");
+
+
+		}
+		//修复 def文件名 
+		if (strcmp((char*)pDeffilePath, "Scathacha_A.def") != 0) {
+
+
+			strcpy((char*)pDeffilePath, "Scathacha_A.def");
+
+		}
+
+
+	}
+
+	
+
+}
+
+/*
+
+  试合前CNS指针保护恢复
+*/
+void protectCnsBeforeRound(UINT dAdr, UINT &cns1, UINT &cns3) {
+
+	if (pCns1 == NULL || pCns1<VALID_ADDRESS) {
+		//首次运行时备份cns地址的地址
+		
+		pCns1 = cns1;
+
+	}
+	if (pCns1>VALID_ADDRESS && cns1 != pCns1) {
+		ADRDATA(dAdr + 0x3C4) = pCns1;//检查修复def的cns地址的地址
+	
+		cns1 = pCns1;
+		
+		cnsAtk = 1;
+	}
+
+	if (pCns2 == NULL || pCns2<VALID_ADDRESS) {
+	
+		pCns2 = cns3;//首次运行时备份cns的地址
+
+
+	}
+	if (pCns2>VALID_ADDRESS && cns3>VALID_ADDRESS && cns3 != pCns2)
+	{
+		ADRDATA(cns1) = pCns2;//检查修复人物的cns的地址
+		
+		
+		cns3 = pCns2;
+		cnsAtk = 1;
+	}
+}
+
+/*
+试合中CNS指针保护恢复
+*/
+void protectCnsInRound(UINT dAdr, UINT pAdr, UINT &cns1,UINT &cns2, UINT &cns3,UINT &cns4) {
 
 	if (pCns1 == NULL || pCns1<VALID_ADDRESS) {
 		//首次运行时备份cns地址的地址
@@ -173,6 +234,7 @@ void checkCns(UINT dAdr, UINT pAdr, UINT &cns1,UINT &cns2, UINT &cns3,UINT &cns4
 		ADRDATA(dAdr + 0x3C4) = pCns1;//检查修复def的cns地址的地址
 		
 		cns1 = pCns1;
+		
 		cnsAtk = 1;
 	}
 	if (pCns1>VALID_ADDRESS && cns2 != pCns1) {
@@ -191,6 +253,7 @@ void checkCns(UINT dAdr, UINT pAdr, UINT &cns1,UINT &cns2, UINT &cns3,UINT &cns4
 	if (pCns2>VALID_ADDRESS && cns2>VALID_ADDRESS && cns4 != pCns2)
 	{
 		ADRDATA(cns2) = pCns2;//检查修复人物的cns的地址
+		
 		cns4 = pCns2;
 		cnsAtk = 1;
 	}
@@ -220,7 +283,7 @@ void clearHelpers() {
 
 		if (i <= 4) {
 
-			if ( strcmp((PCHAR)lpName, "Scathacha") == NULL) {
+			if ( strcmp((PCHAR)lpName, CHAR_NAME) == NULL) {
 				selfAdr = pAdr;
 				i = 4;
 				continue;
@@ -239,7 +302,6 @@ void clearHelpers() {
 
 		}
 	 
-
 	}
 
 }
@@ -258,6 +320,7 @@ void assiant(UINT selfAdr, UINT targetAdr) {
 		}
 	}
 	
+
 
 
 	UINT flag = *((PUINT)VAR(39, selfAdr));
@@ -335,10 +398,10 @@ void assiant(UINT selfAdr, UINT targetAdr) {
 
 	ADRDATA(VAR(39, selfAdr)) = 0;
 }
-/*
-隔离即死攻击:通过监控 var(22)的值来执行)
-*/
 
+/*
+	隔离即死攻击:通过监控 var(22)的值来执行)
+*/
 void attack(UINT selfAdr, UINT targetAdr) {
 
 	UINT flag = *((PUINT)VAR(22, selfAdr));
@@ -370,6 +433,32 @@ void attack(UINT selfAdr, UINT targetAdr) {
 }
 /*
 
+人物名字修复
+*/
+void WINAPI protectName() {
+
+	if (pDef != NULL) {
+
+		UINT lpName = pDef;
+
+		if (strcmp((PCHAR)lpName, CHAR_NAME) != NULL) {
+			strcpy((PCHAR)lpName, CHAR_NAME);
+
+
+		}
+		lpName = pDef + 0x30;
+		if (strcmp((PCHAR)lpName, CHAR_NAME) != NULL) {
+			strcpy((PCHAR)lpName, CHAR_NAME);
+
+
+		}
+
+	}
+
+}
+
+/*
+
 每帧自动运行的代码，进行隔离攻击与防御的入口
 */
 void WINAPI playerHandle() {
@@ -390,38 +479,46 @@ void WINAPI playerHandle() {
 
 		}
 
+		protectDef();
+
 		UINT dAdr = ADRDATA((mainEntryPoint + i * 4 + 0xB650)); //def人物指针
-		if (dAdr < VALID_ADDRESS) {
+	
+		if (pDef < VALID_ADDRESS) {
 			continue;
 		}
+		UINT lpName = dAdr ;
+
+
+		protectName();
+		UINT cns3 = NULL;
+		UINT cns1 = ADRDATA((pDef + 0x3C4));    //def中的CNS地址的地址
+		if (cns1 < VALID_ADDRESS) continue;
+		cns3 = ADRDATA(cns1); //def中的CNS地址
+		
+		protectCnsBeforeRound(pDef, cns1, cns3); //试合前CNS保护
+
+
 		UINT pAdr = ADRDATA((mainEntryPoint + i * 4 + 0xB750)); //人物指针
 		if (pAdr < VALID_ADDRESS) {
 			continue;
 		}
 			
-		
-		UINT cns1 = ADRDATA((dAdr + 0x3C4));    //def中的CNS地址的地址
 		UINT cns2 = ADRDATA((pAdr + 0xBE8));//人物的cns地址的地址
-		UINT cns3 = NULL;
+		
 		UINT cns4 = NULL;
-
-		if (cns1 < VALID_ADDRESS) continue;
-		cns3 = ADRDATA(cns1); //def中的CNS地址
+	
+		
 		if (cns2 < VALID_ADDRESS) continue;
 		cns4 = ADRDATA(cns2);//人物的cns地址
-
-
-		UINT lpName = dAdr + 0x30;
 		
-		if (strcmp((PCHAR)lpName, "Scathacha") == NULL) {
-
-			selfAddress = pAdr;
+		
+				
+		if (pDef == dAdr) {
 			
+			selfAddress = pAdr;
 			protect(pAdr);
-
-			initial(dAdr, pAdr);
-
-			checkCns(dAdr, pAdr, cns1, cns2, cns3, cns4);
+			
+			protectCnsInRound(dAdr, pAdr, cns1, cns2, cns3, cns4);//试合中CNS保护
 
 
 		}
@@ -439,7 +536,8 @@ void WINAPI playerHandle() {
 					ADRDATA(cns2) = pCns2;//对方CNS修改
 
 				ADRDATA((pAdr + 0xE24)) = 0;//对方死亡
-				ADRDATA(VAR(18, selfAddress))= 12;//AId等级提到最高
+				if(selfAddress>VALID_ADDRESS&&VAR(18, selfAddress>VALID_ADDRESS))
+					ADRDATA(VAR(18, selfAddress))= 12;//AId等级提到最高
 				
 				cnsAtk = 0;
 			}
@@ -474,127 +572,20 @@ void WINAPI playerHandle() {
 			attack(selfAddress, otherAdrs[j]);
 
 		}
-
-
-
+		
 	}
 
 }
 
-
-DWORD WINAPI ThreadProc(LPVOID lpParam)
-{
-
-	
-
-	UINT mainEntryPoint;
-	UINT* ptr = (UINT*)0x004b5b4c;
-	mainEntryPoint = *ptr;  //主程序入口地址
-	UINT pCns1=NULL; //cns地址的地址备份
-	UINT pCns2=NULL;//cns的地址备份
-	
-	while (true)
-	{
-		Sleep(1);
-		int count = 0;
-		int cnsAtk = 0; //判断对方CNS攻击
-		bool hasSelected = false;
-		for (size_t i = 1; i <= 4; i++)
-		{
-			
-			UINT dAdr = *((UINT *)(mainEntryPoint + i * 4 + 0xB650)); //def人物指针
-			if (dAdr < VALID_ADDRESS) {
-				continue;
-			}
-			UINT pAdr = *((UINT *)(mainEntryPoint + i * 4 + 0xB750)); //人物指针
-			if (pAdr < VALID_ADDRESS) {
-				continue;
-			} 
-					
-
-			hasSelected = true;
-			UINT cns1 = *((UINT *)(dAdr + 0x3C4));    //def中的CNS地址的地址
-			UINT cns2 = *((UINT *)(pAdr + 0xBE8));//人物的cns地址的地址
-			UINT cns3 = NULL;
-			UINT cns4 = NULL;
-						
-			if (cns1 < VALID_ADDRESS) continue;
-			cns3 = *((UINT*)cns1); //def中的CNS地址
-			if (cns2 < VALID_ADDRESS) continue;
-			cns4 = *((UINT*)cns2);//人物的cns地址
-			
-						
-			UINT lpName = dAdr + 0x30;
-			
-		
-			if (strcmp((char*)lpName, "Scathacha") == NULL) {
-
-				*((UINT*)(pAdr + 0xE24)) = 200;//Alive锁定
-							
-				if (pCns1 == NULL || pCns1<0x004B404A) {
-					//首次运行时备份cns地址的地址
-					pCns1 = cns1;
-
-				}
-				if (pCns1>VALID_ADDRESS && cns1 != pCns1) {
-					*((UINT*)(dAdr + 0x3C4)) = pCns1;//检查修复def的cns地址的地址
-					cns1 = pCns1;
-					cnsAtk = 1;
-					
-				} 
-				if (pCns1>VALID_ADDRESS && cns2 != pCns1) {
-
-					*((UINT*)(pAdr + 0xBE8)) = pCns1;//检查修复人物的cns地址的地址
-					cns2 = pCns1;
-					cnsAtk = 1;
-				
-				}
-												
-				if (pCns2 == NULL || pCns2<VALID_ADDRESS) {
-					pCns2 = cns3;//首次运行时备份cns的地址
-
-				}
-						
-				if (pCns2>VALID_ADDRESS && cns2>VALID_ADDRESS && cns4 != pCns2)
-				{
-					*((UINT*)cns2) = pCns2;//检查修复人物的cns的地址
-					cns4 = pCns2;
-					cnsAtk = 1;
-				
-				}
-				
-
-			}
-			else
-			{
+DWORD WINAPI ThreadProc(LPVOID lpParam) {
 
 
-				int roundState = *((UINT*)(mainEntryPoint + 0xBC30));
-				if (roundState == 2 || roundState == 3) {
 
-					if (cnsAtk == 1)
-					{
-						if (pAdr>VALID_ADDRESS && pCns1>VALID_ADDRESS)
-							*((UINT*)(cns3)) = pCns2;//对方CNS修改
+	playerHandle();
 
-						*((UINT*)(pAdr + 0xE24)) = 0;//对方死亡
-						
-						cnsAtk = 0;
-						
-					}
-
-				}
-		
-
-			}
-		}
-		if(!hasSelected)
-			cnsAtk = 0;
-
-		
-	}
-		
 	return 0;
+
+
 }
 
 
