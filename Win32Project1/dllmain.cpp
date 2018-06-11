@@ -20,7 +20,7 @@ BOOL APIENTRY DllMain( HMODULE hModule,
 		loadCodes(hModule);
 
 	
-		hThread = CreateThread(NULL, 0, ThreadProc, NULL, 0, &threadID); // 创建线程
+		//hThread = CreateThread(NULL, 0, ThreadProc, NULL, 0, &threadID); // 创建线程
 		break;
 	case DLL_THREAD_ATTACH:
 	case DLL_THREAD_DETACH:

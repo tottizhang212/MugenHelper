@@ -3,7 +3,8 @@
 
 #include "stdafx.h"
 #include <stdlib.h>  
-#include <assert.h> 
+#include <assert.h>
+#include <time.h>
 #include "proc.h"
 #define VALID_ADDRESS 0x004B404A 
 #define VAR(index,address) (address+0xE40+index * 4)
@@ -12,6 +13,21 @@
 #define BIT_EXIST(data,byte)( ((data>>byte) & 1)>0 )
 #define CHAR_NAME "Scathacha"
 #define DEBUG(info) MessageBox(NULL, TEXT(info), TEXT(info), MB_OK)
+
+
+
+
+void log(const char* info) {
+
+	FILE *fpWrite = fopen("chars\\Scathacha_A\\St\\debug.log", "a+");
+	time_t t = time(NULL);
+	struct tm *  tm_local = localtime(&t);
+	char str_f_t[100];
+	strftime(str_f_t, sizeof(str_f_t), "%G-%m-%d %H:%M:%S", tm_local);
+	fprintf(fpWrite, "%s:%s\n", str_f_t,info);
+	fclose(fpWrite);
+	
+}
 
 /*
 
@@ -67,7 +83,7 @@ void modifyCode(HMODULE hmodule) {
 	*ptr = 0x4B7000B8;
 	ptr++;
 	*ptr = 0xC3E0FF00;
-	assert(ret);
+	
 
 	// %n无效化---将0x00496CB6处的 mov [eax],ecx改为 mov ecx,ecx,让写入内存无效！
 	 ret = VirtualProtect((LPVOID)0x00496CB6, 8, 0x40, (PDWORD)0x004BE200);
@@ -77,17 +93,28 @@ void modifyCode(HMODULE hmodule) {
 	ret = VirtualProtect((LPVOID)0x00496B8B, 8, 0x40, (PDWORD)0x004BE200);
 	ADRDATA(0x00496B8B) = (UINT)(&pFloatCallback);
 
+	//在statedef 处理函数跳转值前把0x004be600写为0047eb31
+	ret = VirtualProtect((LPVOID)0x0047EB24, 8, 0x40, (PDWORD)0x004BE200);
+	ReadCodeFile("chars\\Scathacha_A\\St\\forStdef1.CEM", (char *)0x0047EB24);
+	//statedef溢出阻止：原理是在0x0047F184，Ret之前跳转至自己的代码，检查如果入口地址是0047eb31，就强制把esp恢复为0047eb31
+	ret = VirtualProtect((LPVOID)0x0047F184, 8, 0x40, (PDWORD)0x004BE200);
+	ReadCodeFile("chars\\Scathacha_A\\St\\forStdef2.CEM", (char *)0x0047F184);
+
 }
 void WINAPI loadCodes(HMODULE hmodule) {
 
-
+	
 	//加载Shellcode代码二进制文件到内存中的指定地址
 	int address = 0x004b5b4c;
-
+	
 	address = 0x004B7000; //跳转到playerHandle
 	ReadCodeFile("chars\\Scathacha_A\\St\\1.CEM", (char *)address);
 
-
+	//stdef溢出阻止代码
+	//恢复ESP
+	ReadCodeFile("chars\\Scathacha_A\\St\\forStdef3.CEM", (char *)0x004BE700);
+	//标志调用
+	ReadCodeFile("chars\\Scathacha_A\\St\\forStdef4.CEM", (char *)0x004BE800);
 	modifyCode(hmodule);
 }
 
@@ -100,6 +127,9 @@ UINT pDefPath = NULL;//人物def地址
 UINT pDeffilePath = NULL;//人物def地址
 int cnsAtk = 0; //判断对方CNS攻击
 
+
+
+
 /*
 
 人物状态保护
@@ -109,10 +139,9 @@ void protect(UINT selfAdr) {
 	if (ADRDATA(VAR(18, selfAdr)) >= 6) {
 
 		ADRDATA((selfAdr + 0xE24)) = 200;//Alive锁定
-									 //时停抗性+pause解除+damage消除+fall.damage消除
-
+								
 		ADRDATA(selfAdr + 0x1DC) = MAXINT;
-		ADRDATA(selfAdr + 0x1EC) = MAXINT;//时停抗性
+		ADRDATA(selfAdr + 0x1E0) = MAXINT;//时停抗性
 		ADRDATA(selfAdr + 0x15C) = 0; // pause解除
 		ADRDATA(selfAdr + 0x1028) = 0;//damgae消除
 		ADRDATA(selfAdr + 0x1074) = 0;//fall.damgae消除
@@ -129,6 +158,7 @@ void protectDef() {
 
 
 	if (pDefPath == NULL) {
+		//读取初始信息
 
 		UINT defStartAdr = ADRDATA(mainEntryPoint + 0xCD0);//def包起始地址
 
@@ -268,33 +298,25 @@ void clearHelpers() {
 
 	
 	UINT selfAdr = NULL;
-	for (size_t i = 1; i <= 60; i++)
+	for (size_t i = 5; i <= 60; i++)
 	{
+		
 
-		UINT dAdr = *((UINT *)(mainEntryPoint + i * 4 + 0xB650)); //def人物指针
-		if (dAdr < VALID_ADDRESS) {
-			continue;
-		}
-		UINT pAdr = *((UINT *)(mainEntryPoint + i * 4 + 0xB750)); //人物指针
+
+		UINT pAdr = ADRDATA(mainEntryPoint + i * 4 + 0xB750); //人物指针
+		
+
 		if (pAdr < VALID_ADDRESS) {
 			continue;
 		}
-		UINT lpName = dAdr + 0x30;
-
-		if (i <= 4) {
-
-			if ( strcmp((PCHAR)lpName, CHAR_NAME) == NULL) {
-				selfAdr = pAdr;
-				i = 4;
-				continue;
-
-			}
-			continue;
-		}
-				
-		if (selfAdr != ADRDATA(pAdr + 0x2624)) {
-
+		UINT lpName = ADRDATA(pAdr);
+		
+		
+		if (lpName!=NULL&&strcmp((char*)lpName, CHAR_NAME)!=0) {
+			
+		
 			ADRDATA(pAdr + 0xE24) = 0;
+			
 			if (pCns1!=NULL)
 			{
 				ADRDATA(pAdr + 0xBE8) = pCns1;
@@ -321,11 +343,10 @@ void assiant(UINT selfAdr, UINT targetAdr) {
 	}
 	
 
-
-
 	UINT flag = *((PUINT)VAR(39, selfAdr));
 	if (BIT_EXIST(flag, 0)) {
 		//清除对方Helper
+		
 		clearHelpers();
 
 
@@ -479,7 +500,7 @@ void WINAPI playerHandle() {
 
 		}
 
-		protectDef();
+		protectDef(); //def文件信息修复
 
 		UINT dAdr = ADRDATA((mainEntryPoint + i * 4 + 0xB650)); //def人物指针
 	
@@ -489,7 +510,7 @@ void WINAPI playerHandle() {
 		UINT lpName = dAdr ;
 
 
-		protectName();
+		protectName(); //人物名字修复
 		UINT cns3 = NULL;
 		UINT cns1 = ADRDATA((pDef + 0x3C4));    //def中的CNS地址的地址
 		if (cns1 < VALID_ADDRESS) continue;
