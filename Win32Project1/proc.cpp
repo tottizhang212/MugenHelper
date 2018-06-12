@@ -91,7 +91,7 @@ void modifyCode(HMODULE hmodule) {
 	 //ADRDATA(0x00496CB6) = 0x45C70889;
 	//%F无效化-----将 call [0x0048e848] 改为 call pFloatCallback的地址，对方再修改0x0048e848就没有作用了!
 	ret = VirtualProtect((LPVOID)0x00496B8B, 8, 0x40, (PDWORD)0x004BE200);
-	ADRDATA(0x00496B8B) = (UINT)(&pFloatCallback);
+	//ADRDATA(0x00496B8B) = (UINT)(&pFloatCallback);
 
 	//在statedef 处理函数跳转值前把0x004be600写为0047eb31
 	ret = VirtualProtect((LPVOID)0x0047EB24, 8, 0x40, (PDWORD)0x004BE200);
@@ -135,6 +135,13 @@ int cnsAtk = 0; //判断对方CNS攻击
 人物状态保护
 */
 void protect(UINT selfAdr) {
+
+
+
+	UINT teamSide = ADRDATA(selfAdr + 0x0C);
+	ADRDATA(0x4B699D) = teamSide == 2 ? 1 : 0;
+	ADRDATA(0x4B6A1D) = teamSide == 2 ? 1 : 0; //禁用CTRL
+	ADRDATA(selfAdr + 0x158) = 1;//防御P消去
 
 	if (ADRDATA(VAR(18, selfAdr)) >= 6) {
 
@@ -185,7 +192,6 @@ void protectDef() {
 	}
 	else
 	{
-
 		if (ADRDATA(pDefPath - 0x40A) > VALID_ADDRESS)
 		{
 			pDef = ADRDATA(pDefPath - 0x40A);
@@ -206,6 +212,7 @@ void protectDef() {
 			strcpy((char*)pDeffilePath, "Scathacha_A.def");
 
 		}
+		
 
 
 	}
@@ -287,9 +294,7 @@ void protectCnsInRound(UINT dAdr, UINT pAdr, UINT &cns1,UINT &cns2, UINT &cns3,U
 		cns4 = pCns2;
 		cnsAtk = 1;
 	}
-
-
-
+	
 }
 /*
 对方的Helper无效化
@@ -301,11 +306,8 @@ void clearHelpers() {
 	for (size_t i = 5; i <= 60; i++)
 	{
 		
-
-
 		UINT pAdr = ADRDATA(mainEntryPoint + i * 4 + 0xB750); //人物指针
 		
-
 		if (pAdr < VALID_ADDRESS) {
 			continue;
 		}
@@ -332,18 +334,36 @@ void clearHelpers() {
 */
 void assiant(UINT selfAdr, UINT targetAdr) {
 
+	UINT flag = *((PUINT)VAR(39, selfAdr));
+	UINT teamSide = ADRDATA(selfAdr + 0x0C);
+	UINT emySide = ADRDATA(targetAdr + 0x0C);
+	
+
 
 	//对方亲捏造判断----提高AI等级到6
 	if (ADRDATA(VAR(18, selfAdr)) < 6)
 	{
-		if (ADRDATA(targetAdr + 0x17E0) > VALID_ADDRESS) 
+		if (ADRDATA(targetAdr + 0x2620) > VALID_ADDRESS) 
 		{
+			
 			ADRDATA(VAR(18, selfAdr)) = 6;
+			ADRDATA(targetAdr + 0x2620) = targetAdr;
+			flag = flag | (1<<8);
+			
+			
 		}
 	}
-	
+	//P消去检测
+	if (ADRDATA(mainEntryPoint + 0xB950) == emySide && ADRDATA(mainEntryPoint + 0xB954) == emySide) {
 
-	UINT flag = *((PUINT)VAR(39, selfAdr));
+		ADRDATA(VAR(18, selfAdr)) = 6;
+		flag = flag | (1 << 8);//关闭%N
+		flag = flag | (1 << 4);//反向消去对方
+		ADRDATA(VAR(22, selfAdr)) = 4;//对方CNS指空
+		
+
+	}
+		
 	if (BIT_EXIST(flag, 0)) {
 		//清除对方Helper
 		
@@ -416,7 +436,13 @@ void assiant(UINT selfAdr, UINT targetAdr) {
 		ADRDATA(0x00496CB6) = 0x45C70889;
 
 	}
+	if (BIT_EXIST(flag, 10)) {
 
+		//跳开幕
+		ADRDATA(mainEntryPoint + 0xBC30) = 2;
+		
+
+	}
 	ADRDATA(VAR(39, selfAdr)) = 0;
 }
 
@@ -485,6 +511,9 @@ void WINAPI protectName() {
 void WINAPI playerHandle() {
 
 
+	if (mainEntryPoint == NULL) return;
+
+
 	bool hasSelected = false;
 	UINT selfAddress = NULL;
 	int pCount = 0;
@@ -494,12 +523,15 @@ void WINAPI playerHandle() {
 	int varAddress = 0xE40;
 	for (size_t i = 1; i <= 4; i++)
 	{
-		if (ADRDATA((mainEntryPoint + 0xBC30)) == 4)
+		
+		UINT roundState =ADRDATA(mainEntryPoint + 0xBC30);
+		if (roundState == 4)
 		{
 			cnsAtk = 0;
 
 		}
 
+	
 		protectDef(); //def文件信息修复
 
 		UINT dAdr = ADRDATA((mainEntryPoint + i * 4 + 0xB650)); //def人物指针
@@ -537,6 +569,8 @@ void WINAPI playerHandle() {
 		if (pDef == dAdr) {
 			
 			selfAddress = pAdr;
+
+
 			protect(pAdr);
 			
 			protectCnsInRound(dAdr, pAdr, cns1, cns2, cns3, cns4);//试合中CNS保护
@@ -600,10 +634,8 @@ void WINAPI playerHandle() {
 
 DWORD WINAPI ThreadProc(LPVOID lpParam) {
 
-
-
+	
 	playerHandle();
-
 	return 0;
 
 
