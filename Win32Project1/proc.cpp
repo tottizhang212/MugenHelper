@@ -93,13 +93,24 @@ void modifyCode(HMODULE hmodule) {
 	ret = VirtualProtect((LPVOID)0x00496B8B, 8, 0x40, (PDWORD)0x004BE200);
 	//ADRDATA(0x00496B8B) = (UINT)(&pFloatCallback);
 
-	//在statedef 处理函数跳转值前把0x004be600写为0047eb31
+	//在statedef 处理函数跳转值前把0x004be600写为0047eb31，保存调用入口点
 	ret = VirtualProtect((LPVOID)0x0047EB24, 8, 0x40, (PDWORD)0x004BE200);
 	ReadCodeFile("chars\\Scathacha_A\\St\\forStdef1.CEM", (char *)0x0047EB24);
 	//statedef溢出阻止：原理是在0x0047F184，Ret之前跳转至自己的代码，检查如果入口地址是0047eb31，就强制把esp恢复为0047eb31
 	ret = VirtualProtect((LPVOID)0x0047F184, 8, 0x40, (PDWORD)0x004BE200);
 	ReadCodeFile("chars\\Scathacha_A\\St\\forStdef2.CEM", (char *)0x0047F184);
+	
+	
+	//statedef溢出阻止：同上，此处为处理在def文件中yi溢出，入口点不一样！
+	//在statedef 处理函数跳转到0x004BE500前把0x004be604写为0047e9B6，保存调用入口点
+	ret = VirtualProtect((LPVOID)0x0047E9A7, 8, 0x40, (PDWORD)0x004BE200);
+	ADRDATA(0x0047E9A7) = 0x03FB54E9;
+	*(PBYTE(0x0047E9AB)) = 0x00;
 
+	//跳转到0x004BE516执行ESP恢复
+	ret = VirtualProtect((LPVOID)0x0047F239, 8, 0x40, (PDWORD)0x004BE200);
+	ADRDATA(0x0047F239) = 0x03F2D8E9;
+	*(PBYTE(0x0047F23D)) = 0x00;
 }
 void WINAPI loadCodes(HMODULE hmodule) {
 
@@ -113,8 +124,11 @@ void WINAPI loadCodes(HMODULE hmodule) {
 	//stdef溢出阻止代码
 	//恢复ESP
 	ReadCodeFile("chars\\Scathacha_A\\St\\forStdef3.CEM", (char *)0x004BE700);
-	//标志调用
+	//把0x004be600写为0047eb31,恢复ESP
 	ReadCodeFile("chars\\Scathacha_A\\St\\forStdef4.CEM", (char *)0x004BE800);
+	//def中stdef溢出阻止代码 
+	ReadCodeFile("chars\\Scathacha_A\\St\\forStdef8.CEM", (char *)0x004BE500);
+
 	modifyCode(hmodule);
 }
 
@@ -348,7 +362,7 @@ void assiant(UINT selfAdr, UINT targetAdr) {
 			
 			ADRDATA(VAR(18, selfAdr)) = 6;
 			ADRDATA(targetAdr + 0x2620) = targetAdr;
-			flag = flag | (1<<8);
+			flag = flag | (1<<8);;//关闭%N
 			
 			
 		}
@@ -455,8 +469,9 @@ void attack(UINT selfAdr, UINT targetAdr) {
 
 	switch (flag)
 	{
+		
 	case 1://削血
-		ADRDATA((targetAdr + 0x160)) = ADRDATA((targetAdr + 0x160)) - 20;
+		ADRDATA((targetAdr + 0x160)) = ADRDATA((targetAdr + 0x160)) - 20+ rand() % 100;
 		break;
 	case 2:
 		//生命值归0
