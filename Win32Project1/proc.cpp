@@ -206,7 +206,7 @@ void protectDef() {
 			 }
 			else if(strcmp((char*)deffilePath, "chaosor.def") == 0)
 			{
-				//对策：混沌蛟，statedef防御代码会造成混沌蛟解析异常
+				//对策：混沌蛟，statedef防御代码会造成混沌蛟解析异常，此对策仅为了防止报错
 				strcpy((char*)defPath, "Scathacha_A/");
 				strcpy((char*)deffilePath, "Enemy.def");
 							
