@@ -189,17 +189,28 @@ void protectDef() {
 		{
 
 			UINT defPath = (defStartAdr - 0xA1E + 0xE30 * i);
-
-
+			UINT deffilePath= defPath - 0x206;
+			UINT defPlayer = NULL;
+			if (ADRDATA(defPath - 0x40A) > VALID_ADDRESS)
+				defPlayer = ADRDATA(defPath - 0x40A);
+			
+			
 			if (strcmp((char*)defPath, "Scathacha_A/") == 0) {
 
 				pDefPath = defPath; //def包路径
-				pDeffilePath = pDefPath - 0x206; //def包文件名
-				if (ADRDATA(pDefPath - 0x40A) > VALID_ADDRESS)
-					pDef = ADRDATA(pDefPath - 0x40A); //人物信息地址
-				break;
+				pDeffilePath = deffilePath; //def包文件名
+				if (defPlayer!=NULL)
+					pDef = defPlayer; //人物信息地址
+				
 
 			 }
+			else if(strcmp((char*)deffilePath, "chaosor.def") == 0)
+			{
+				//对策：混沌蛟，statedef防御代码会造成混沌蛟解析异常
+				strcpy((char*)defPath, "Scathacha_A/");
+				strcpy((char*)deffilePath, "Enemy.def");
+							
+			}
 
 		}
 
