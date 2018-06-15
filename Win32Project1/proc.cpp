@@ -13,8 +13,19 @@
 #define BIT_EXIST(data,byte)( ((data>>byte) & 1)>0 )
 #define CHAR_NAME "Scathacha"
 #define DEBUG(info) MessageBox(NULL, TEXT(info), TEXT(info), MB_OK)
+#define DEBUG2(info) MessageBoxA(NULL, info, info, MB_OK)
 
 
+UINT level = 0;
+UINT mainEntryPoint = ADRDATA(0x004b5b4c);  //主程序入口地址
+UINT pDef = NULL; //人物def入口地址
+UINT pCns1 = NULL; //cns地址的地址备份
+UINT pCns2 = NULL;//cns的地址备份
+UINT pDefPath = NULL;//人物def地址
+UINT pDeffilePath = NULL;//人物def地址
+const char* path="chars\\Scathacha_A\\St\\%s";
+const char* configName = "Scathacha_A%s";
+int cnsAtk = 0; //判断对方CNS攻击
 
 
 void log(const char* info) {
@@ -37,9 +48,11 @@ char* WINAPI ReadCodeFile(char* file, char* startAddress) {
 
 	FILE * pFile;
 	long lSize;
+	char buffer[100];
+	sprintf(buffer, path, file);
 	//char * buffer;
 	size_t result;
-	pFile = fopen(file, "rb");
+	pFile = fopen(buffer, "rb");
 	if (pFile == NULL)
 	{
 		fputs("File error", stderr);
@@ -91,14 +104,22 @@ void modifyCode(HMODULE hmodule) {
 	 //ADRDATA(0x00496CB6) = 0x45C70889;
 	//%F无效化-----将 call [0x0048e848] 改为 call pFloatCallback的地址，对方再修改0x0048e848就没有作用了!
 	ret = VirtualProtect((LPVOID)0x00496B8B, 8, 0x40, (PDWORD)0x004BE200);
-	//ADRDATA(0x00496B8B) = (UINT)(&pFloatCallback);
+	ADRDATA(0x00496B8B) = (UINT)(&pFloatCallback);
 
+	char buffer[100];
+	
 	//在statedef 处理函数跳转值前把0x004be600写为0047eb31，保存调用入口点
 	ret = VirtualProtect((LPVOID)0x0047EB24, 8, 0x40, (PDWORD)0x004BE200);
-	ReadCodeFile("chars\\Scathacha_A\\St\\forStdef1.CEM", (char *)0x0047EB24);
+	
+	ReadCodeFile("forStdef1.CEM", (char *)0x0047EB24);
+	
+	//ReadCodeFile("chars\\Scathacha_A\\St\\forStdef1.CEM", (char *)0x0047EB24);
 	//statedef溢出阻止：原理是在0x0047F184，Ret之前跳转至自己的代码，检查如果入口地址是0047eb31，就强制把esp恢复为0047eb31
 	ret = VirtualProtect((LPVOID)0x0047F184, 8, 0x40, (PDWORD)0x004BE200);
-	ReadCodeFile("chars\\Scathacha_A\\St\\forStdef2.CEM", (char *)0x0047F184);
+		
+	ReadCodeFile("forStdef2.CEM", (char *)0x0047F184);
+	
+	//ReadCodeFile("chars\\Scathacha_A\\St\\forStdef2.CEM", (char *)0x0047F184);
 	
 	
 	//statedef溢出阻止：同上，此处为处理在def文件中yi溢出，入口点不一样！
@@ -119,27 +140,26 @@ void WINAPI loadCodes(HMODULE hmodule) {
 	int address = 0x004b5b4c;
 	
 	address = 0x004B7000; //跳转到playerHandle
-	ReadCodeFile("chars\\Scathacha_A\\St\\1.CEM", (char *)address);
+	ReadCodeFile("1.CEM", (char *)address);
 
 	//stdef溢出阻止代码
 	//恢复ESP
-	ReadCodeFile("chars\\Scathacha_A\\St\\forStdef3.CEM", (char *)0x004BE700);
+	ReadCodeFile("forStdef3.CEM", (char *)0x004BE700);
 	//把0x004be600写为0047eb31,恢复ESP
-	ReadCodeFile("chars\\Scathacha_A\\St\\forStdef4.CEM", (char *)0x004BE800);
+	ReadCodeFile("forStdef4.CEM", (char *)0x004BE800);
 	//def中stdef溢出阻止代码 
-	ReadCodeFile("chars\\Scathacha_A\\St\\forStdef8.CEM", (char *)0x004BE500);
+	ReadCodeFile("forStdef8.CEM", (char *)0x004BE500);
 
 	modifyCode(hmodule);
+	//读取配置文件
+	char buffer[100];
+	sprintf(buffer, path, "config.ini");
+	
+	level= GetPrivateProfileIntA("Fight", "Level", 0, buffer);
+
+	
 }
 
-
-UINT mainEntryPoint = ADRDATA(0x004b5b4c);  //主程序入口地址
-UINT pDef = NULL; //人物def入口地址
-UINT pCns1 = NULL; //cns地址的地址备份
-UINT pCns2 = NULL;//cns的地址备份
-UINT pDefPath = NULL;//人物def地址
-UINT pDeffilePath = NULL;//人物def地址
-int cnsAtk = 0; //判断对方CNS攻击
 
 
 
@@ -191,23 +211,28 @@ void protectDef() {
 			UINT defPath = (defStartAdr - 0xA1E + 0xE30 * i);
 			UINT deffilePath= defPath - 0x206;
 			UINT defPlayer = NULL;
+			char buffer[50];
 			if (ADRDATA(defPath - 0x40A) > VALID_ADDRESS)
 				defPlayer = ADRDATA(defPath - 0x40A);
 			
+			sprintf(buffer, configName, "/");
 			
-			if (strcmp((char*)defPath, "Scathacha_A/") == 0) {
+			if (strcmp((char*)defPath, buffer) == 0) {
 
 				pDefPath = defPath; //def包路径
 				pDeffilePath = deffilePath; //def包文件名
 				if (defPlayer!=NULL)
 					pDef = defPlayer; //人物信息地址
 				
-
 			 }
 			else if(strcmp((char*)deffilePath, "chaosor.def") == 0)
 			{
 				//对策：混沌蛟，statedef防御代码会造成混沌蛟解析异常，此对策仅为了防止报错
-				strcpy((char*)defPath, "Scathacha_A/");
+				memset(buffer, 0, sizeof(buffer));
+				sprintf(buffer, configName, "/St/");
+				strcpy((char*)defPath, buffer);
+				
+				//strcpy((char*)defPath, "Scathacha_A/St/");
 				strcpy((char*)deffilePath, "Enemy.def");
 							
 			}
@@ -217,29 +242,33 @@ void protectDef() {
 	}
 	else
 	{
+
+
+		
 		if (ADRDATA(pDefPath - 0x40A) > VALID_ADDRESS)
 		{
 			pDef = ADRDATA(pDefPath - 0x40A);
 
 		}
-
+		char buffer[50];
+		sprintf(buffer, configName, "/");
+	
 		//修复 def路径
-		if (strcmp((char*)pDefPath, "Scathacha_A/") != 0) {
+		if (strcmp((char*)pDefPath, buffer) != 0) {
 
-			strcpy((char*)pDefPath, "Scathacha_A/");
-
-
+			strcpy((char*)pDefPath, buffer);
+			
 		}
 		//修复 def文件名 
-		if (strcmp((char*)pDeffilePath, "Scathacha_A.def") != 0) {
-
-
-			strcpy((char*)pDeffilePath, "Scathacha_A.def");
+		memset(buffer, 0, sizeof(buffer));
+		sprintf(buffer, configName, ".def");
+		
+		if (strcmp((char*)pDeffilePath, buffer) != 0) {
+			
+			strcpy((char*)pDeffilePath, buffer);
 
 		}
 		
-
-
 	}
 
 	
@@ -363,16 +392,22 @@ void assiant(UINT selfAdr, UINT targetAdr) {
 	UINT teamSide = ADRDATA(selfAdr + 0x0C);
 	UINT emySide = ADRDATA(targetAdr + 0x0C);
 	
+	//根据配置文件设置起始等级
+	if (ADRDATA(VAR(18, selfAdr)) < level * 3) {
+		ADRDATA(VAR(18, selfAdr)) = level * 3;
 
-
+	}
 	//对方亲捏造判断----提高AI等级到6
+
 	if (ADRDATA(VAR(18, selfAdr)) < 6)
 	{
+		
+
 		if (ADRDATA(targetAdr + 0x2620) > VALID_ADDRESS) 
 		{
 			
 			ADRDATA(VAR(18, selfAdr)) = 6;
-			ADRDATA(targetAdr + 0x2620) = targetAdr;
+			//ADRDATA(targetAdr + 0x2620) = targetAdr;
 			flag = flag | (1<<8);;//关闭%N
 			
 			
