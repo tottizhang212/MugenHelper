@@ -1,8 +1,9 @@
 #pragma once
 
 #include "stdafx.h"
-typedef DWORD(WINAPI *pFunc)(DWORD);
+typedef void(WINAPI *pFunc)(DWORD, DWORD);
  DWORD WINAPI ThreadProc(LPVOID lpParam);
- void WINAPI loadCodes(HMODULE hmodule);
- DWORD hookTest(DWORD para);
+ UINT WINAPI loadCodes(HMODULE hmodule);
+ void hookTest(DWORD para1, DWORD para2);
  void WINAPI playerHandle();
+ void log( char* info);

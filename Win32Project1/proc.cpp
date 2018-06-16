@@ -5,17 +5,19 @@
 #include <stdlib.h>  
 #include <assert.h>
 #include <time.h>
+
 #include "proc.h"
+
 #define VALID_ADDRESS 0x004B404A 
 #define VAR(index,address) (address+0xE40+index * 4)
 #define MODIFYCNS(selfAdR,targetAdR) *((PUINT)(*((PUINT)(targetAdr + 0xBE8)))) = *((PUINT)(*((PUINT)(selfAdr + 0xBE8))))
 #define ADRDATA(address) *((PUINT)(address))
 #define BIT_EXIST(data,byte)( ((data>>byte) & 1)>0 )
-#define CHAR_NAME "Scathacha"
 #define DEBUG(info) MessageBox(NULL, TEXT(info), TEXT(info), MB_OK)
 #define DEBUG2(info) MessageBoxA(NULL, info, info, MB_OK)
-
-
+#define CHAR_NAME "Scathacha"
+const char* path = "chars\\Scathacha_A\\St\\%s";
+const char* configName = "Scathacha_A%s";
 UINT level = 0;
 UINT mainEntryPoint = ADRDATA(0x004b5b4c);  //主程序入口地址
 UINT pDef = NULL; //人物def入口地址
@@ -23,12 +25,11 @@ UINT pCns1 = NULL; //cns地址的地址备份
 UINT pCns2 = NULL;//cns的地址备份
 UINT pDefPath = NULL;//人物def地址
 UINT pDeffilePath = NULL;//人物def地址
-const char* path="chars\\Scathacha_A\\St\\%s";
-const char* configName = "Scathacha_A%s";
+UINT pChaosorDefPath = NULL;
 int cnsAtk = 0; //判断对方CNS攻击
 
 
-void log(const char* info) {
+void log( char* info) {
 
 	FILE *fpWrite = fopen("chars\\Scathacha_A\\St\\debug.log", "a+");
 	time_t t = time(NULL);
@@ -38,6 +39,7 @@ void log(const char* info) {
 	fprintf(fpWrite, "%s:%s\n", str_f_t,info);
 	fclose(fpWrite);
 	
+		
 }
 
 /*
@@ -82,7 +84,37 @@ char* WINAPI ReadCodeFile(char* file, char* startAddress) {
 	return startAddress;
 }
 UINT pFloatCallback = 0x00496651;//替代用%F入口跳转地址变量
-void modifyCode(HMODULE hmodule) {
+
+void forbidStateDefOverFlow() {
+
+
+	//在statedef 处理函数跳转值前把0x004be600写为0047eb31，保存调用入口点
+	BOOL ret = VirtualProtect((LPVOID)0x0047EB24, 8, 0x40, (PDWORD)0x004BE200);
+
+	ReadCodeFile("forStdef1.CEM", (char *)0x0047EB24);
+
+	//ReadCodeFile("chars\\Scathacha_A\\St\\forStdef1.CEM", (char *)0x0047EB24);
+	//statedef溢出阻止：原理是在0x0047F184，Ret之前跳转至自己的代码，检查如果入口地址是0047eb31，就强制把esp恢复为0047eb31
+	ret = VirtualProtect((LPVOID)0x0047F184, 8, 0x40, (PDWORD)0x004BE200);
+
+	ReadCodeFile("forStdef2.CEM", (char *)0x0047F184);
+
+	//ReadCodeFile("chars\\Scathacha_A\\St\\forStdef2.CEM", (char *)0x0047F184);
+
+
+	//statedef溢出阻止：同上，此处为处理在def文件中yi溢出，入口点不一样！
+	//在statedef 处理函数跳转到0x004BE500前把0x004be604写为0047e9B6，保存调用入口点
+	ret = VirtualProtect((LPVOID)0x0047E9A7, 8, 0x40, (PDWORD)0x004BE200);
+	ADRDATA(0x0047E9A7) = 0x03FB54E9;
+	*(PBYTE(0x0047E9AB)) = 0x00;
+
+	//跳转到0x004BE516执行ESP恢复
+	ret = VirtualProtect((LPVOID)0x0047F239, 8, 0x40, (PDWORD)0x004BE200);
+	ADRDATA(0x0047F239) = 0x03F2D8E9;
+	*(PBYTE(0x0047F23D)) = 0x00;
+}
+
+void modifyCode(HMODULE hmodule,UINT level) {
 
 	
 	
@@ -101,40 +133,29 @@ void modifyCode(HMODULE hmodule) {
 	// %n无效化---将0x00496CB6处的 mov [eax],ecx改为 mov ecx,ecx,让写入内存无效！
 	 ret = VirtualProtect((LPVOID)0x00496CB6, 8, 0x40, (PDWORD)0x004BE200);
 	//ADRDATA(0x00496CB6) = 0x45C7C989;
-	 //ADRDATA(0x00496CB6) = 0x45C70889;
+	
 	//%F无效化-----将 call [0x0048e848] 改为 call pFloatCallback的地址，对方再修改0x0048e848就没有作用了!
 	ret = VirtualProtect((LPVOID)0x00496B8B, 8, 0x40, (PDWORD)0x004BE200);
-	ADRDATA(0x00496B8B) = (UINT)(&pFloatCallback);
+	if (level >= 3) {
+		ADRDATA(0x00496B8B) = (UINT)(&pFloatCallback);
 
+	}
+	
 	char buffer[100];
-	
-	//在statedef 处理函数跳转值前把0x004be600写为0047eb31，保存调用入口点
-	ret = VirtualProtect((LPVOID)0x0047EB24, 8, 0x40, (PDWORD)0x004BE200);
-	
-	ReadCodeFile("forStdef1.CEM", (char *)0x0047EB24);
-	
-	//ReadCodeFile("chars\\Scathacha_A\\St\\forStdef1.CEM", (char *)0x0047EB24);
-	//statedef溢出阻止：原理是在0x0047F184，Ret之前跳转至自己的代码，检查如果入口地址是0047eb31，就强制把esp恢复为0047eb31
-	ret = VirtualProtect((LPVOID)0x0047F184, 8, 0x40, (PDWORD)0x004BE200);
-		
-	ReadCodeFile("forStdef2.CEM", (char *)0x0047F184);
-	
-	//ReadCodeFile("chars\\Scathacha_A\\St\\forStdef2.CEM", (char *)0x0047F184);
-	
-	
-	//statedef溢出阻止：同上，此处为处理在def文件中yi溢出，入口点不一样！
-	//在statedef 处理函数跳转到0x004BE500前把0x004be604写为0047e9B6，保存调用入口点
-	ret = VirtualProtect((LPVOID)0x0047E9A7, 8, 0x40, (PDWORD)0x004BE200);
-	ADRDATA(0x0047E9A7) = 0x03FB54E9;
-	*(PBYTE(0x0047E9AB)) = 0x00;
 
-	//跳转到0x004BE516执行ESP恢复
-	ret = VirtualProtect((LPVOID)0x0047F239, 8, 0x40, (PDWORD)0x004BE200);
-	ADRDATA(0x0047F239) = 0x03F2D8E9;
-	*(PBYTE(0x0047F23D)) = 0x00;
+	if (level >= 4) {
+
+		forbidStateDefOverFlow();
+	}
+	
+	
 }
-void WINAPI loadCodes(HMODULE hmodule) {
+UINT WINAPI loadCodes(HMODULE hmodule) {
+	//读取配置文件
+	char buffer[100];
+	sprintf(buffer, path, "config.ini");
 
+	level = GetPrivateProfileIntA("Fight", "Level", 0, buffer);
 	
 	//加载Shellcode代码二进制文件到内存中的指定地址
 	int address = 0x004b5b4c;
@@ -150,14 +171,10 @@ void WINAPI loadCodes(HMODULE hmodule) {
 	//def中stdef溢出阻止代码 
 	ReadCodeFile("forStdef8.CEM", (char *)0x004BE500);
 
-	modifyCode(hmodule);
-	//读取配置文件
-	char buffer[100];
-	sprintf(buffer, path, "config.ini");
+	modifyCode(hmodule,level);
 	
-	level= GetPrivateProfileIntA("Fight", "Level", 0, buffer);
 
-	
+	return level;
 }
 
 
@@ -198,9 +215,10 @@ void protect(UINT selfAdr) {
 void protectDef() {
 
 
-	if (pDefPath == NULL) {
+	if (pDefPath == NULL || pChaosorDefPath==NULL) {
 		//读取初始信息
-
+		
+		
 		UINT defStartAdr = ADRDATA(mainEntryPoint + 0xCD0);//def包起始地址
 
 		UINT pCount = ADRDATA(mainEntryPoint + 0xCD4);//人物数量
@@ -219,15 +237,20 @@ void protectDef() {
 			
 			if (strcmp((char*)defPath, buffer) == 0) {
 
-				pDefPath = defPath; //def包路径
-				pDeffilePath = deffilePath; //def包文件名
-				if (defPlayer!=NULL)
-					pDef = defPlayer; //人物信息地址
-				
+				if (pDefPath == NULL) {
+					pDefPath = defPath; //def包路径
+					pDeffilePath = deffilePath; //def包文件名
+					if (defPlayer != NULL)
+						pDef = defPlayer; //人物信息地址
+
+				}
+						
 			 }
 			else if(strcmp((char*)deffilePath, "chaosor.def") == 0)
 			{
 				//对策：混沌蛟，statedef防御代码会造成混沌蛟解析异常，此对策仅为了防止报错
+				if(pChaosorDefPath==NULL) pChaosorDefPath = defPath;
+					
 				memset(buffer, 0, sizeof(buffer));
 				sprintf(buffer, configName, "/St/");
 				strcpy((char*)defPath, buffer);
@@ -240,11 +263,9 @@ void protectDef() {
 		}
 
 	}
-	else
+	else if(pDefPath != NULL)
 	{
-
-
-		
+				
 		if (ADRDATA(pDefPath - 0x40A) > VALID_ADDRESS)
 		{
 			pDef = ADRDATA(pDefPath - 0x40A);
@@ -571,7 +592,7 @@ void WINAPI protectName() {
 */
 void WINAPI playerHandle() {
 
-
+	mainEntryPoint = ADRDATA(0x004b5b4c);
 	if (mainEntryPoint == NULL) return;
 
 
