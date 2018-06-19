@@ -68,7 +68,7 @@ static BOOL CALLBACK AddBywayCallback(_In_opt_ PVOID pContext,
 	PBOOL pbAddedDll = (PBOOL)pContext;
 	if (!pszFile && !*pbAddedDll) {                    
 		*pbAddedDll = TRUE;
-		*ppszOutFile = "chars\\Scathacha_A\\St\\MugenHelper.dll";
+		*ppszOutFile = "chars\\kfm\\MugenHelper.dll";
 	}
 	return TRUE;
 }
@@ -82,10 +82,8 @@ void attachDll() {
 	HANDLE hNew = INVALID_HANDLE_VALUE;
 	PDETOUR_BINARY pBinary = NULL;
 	BOOL bAddedDll = FALSE;
-
 	
-
-	assert(DoesDllExportOrdinal1("chars\\Scathacha_A\\St\\MugenHelper.dll"));
+	assert(DoesDllExportOrdinal1("chars\\kfm\\MugenHelper.dll"));
 	hOld = CreateFileA("zlib.dll",
 		GENERIC_READ,
 		FILE_SHARE_READ,

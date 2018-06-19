@@ -54,6 +54,5 @@
     <None Include="MugenHelper.def">
       <Filter>源文件</Filter>
     </None>
-    <None Include="packages.config" />
   </ItemGroup>
 </Project>

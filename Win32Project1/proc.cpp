@@ -4,7 +4,6 @@
 #include "stdafx.h"
 #include <stdlib.h>  
 #include <assert.h>
-#include <time.h>
 
 #include "proc.h"
 
@@ -15,9 +14,17 @@
 #define BIT_EXIST(data,byte)( ((data>>byte) & 1)>0 )
 #define DEBUG(info) MessageBox(NULL, TEXT(info), TEXT(info), MB_OK)
 #define DEBUG2(info) MessageBoxA(NULL, info, info, MB_OK)
+#define CHAR_NAME "Kung Fu Man"
+const char* path = "chars\\kfm\\%s";
+const char* configName = "kfm%s";
+/*
+
 #define CHAR_NAME "Scathacha"
 const char* path = "chars\\Scathacha_A\\St\\%s";
 const char* configName = "Scathacha_A%s";
+
+*/
+
 UINT level = 0;
 UINT mainEntryPoint = ADRDATA(0x004b5b4c);  //主程序入口地址
 UINT pDef = NULL; //人物def入口地址
@@ -29,18 +36,7 @@ UINT pChaosorDefPath = NULL;
 int cnsAtk = 0; //判断对方CNS攻击
 
 
-void log( char* info) {
 
-	FILE *fpWrite = fopen("chars\\Scathacha_A\\St\\debug.log", "a+");
-	time_t t = time(NULL);
-	struct tm *  tm_local = localtime(&t);
-	char str_f_t[100];
-	strftime(str_f_t, sizeof(str_f_t), "%G-%m-%d %H:%M:%S", tm_local);
-	fprintf(fpWrite, "%s:%s\n", str_f_t,info);
-	fclose(fpWrite);
-	
-		
-}
 
 /*
 
@@ -136,9 +132,10 @@ void modifyCode(HMODULE hmodule,UINT level) {
 	
 	//%F无效化-----将 call [0x0048e848] 改为 call pFloatCallback的地址，对方再修改0x0048e848就没有作用了!
 	ret = VirtualProtect((LPVOID)0x00496B8B, 8, 0x40, (PDWORD)0x004BE200);
+	
 	if (level >= 3) {
 		ADRDATA(0x00496B8B) = (UINT)(&pFloatCallback);
-
+		
 	}
 	
 	char buffer[100];
@@ -233,18 +230,25 @@ void protectDef() {
 			if (ADRDATA(defPath - 0x40A) > VALID_ADDRESS)
 				defPlayer = ADRDATA(defPath - 0x40A);
 			
-			sprintf(buffer, configName, "/");
 			
+			sprintf(buffer, configName, "/");
+		
 			if (strcmp((char*)defPath, buffer) == 0) {
-
+			
+			
 				if (pDefPath == NULL) {
 					pDefPath = defPath; //def包路径
 					pDeffilePath = deffilePath; //def包文件名
-					if (defPlayer != NULL)
-						pDef = defPlayer; //人物信息地址
+					
+					
 
 				}
-						
+				if (defPlayer != NULL)
+				{
+					
+					pDef = defPlayer; //人物信息地址
+
+				}
 			 }
 			else if(strcmp((char*)deffilePath, "chaosor.def") == 0)
 			{
@@ -591,11 +595,12 @@ void WINAPI protectName() {
 每帧自动运行的代码，进行隔离攻击与防御的入口
 */
 void WINAPI playerHandle() {
-
+	
 	mainEntryPoint = ADRDATA(0x004b5b4c);
-	if (mainEntryPoint == NULL) return;
+	
+	if (mainEntryPoint< VALID_ADDRESS) return;
 
-
+	
 	bool hasSelected = false;
 	UINT selfAddress = NULL;
 	int pCount = 0;
@@ -603,6 +608,7 @@ void WINAPI playerHandle() {
 	UINT otherAdrs[3] = {NULL,NULL,NULL};
 	UINT otherCns[3] = { NULL,NULL,NULL };
 	int varAddress = 0xE40;
+	
 	for (size_t i = 1; i <= 4; i++)
 	{
 		
@@ -617,12 +623,12 @@ void WINAPI playerHandle() {
 		protectDef(); //def文件信息修复
 
 		UINT dAdr = ADRDATA((mainEntryPoint + i * 4 + 0xB650)); //def人物指针
-	
+		
 		if (pDef < VALID_ADDRESS) {
 			continue;
 		}
 		UINT lpName = dAdr ;
-
+		
 
 		protectName(); //人物名字修复
 		UINT cns3 = NULL;
@@ -632,7 +638,7 @@ void WINAPI playerHandle() {
 		
 		protectCnsBeforeRound(pDef, cns1, cns3); //试合前CNS保护
 
-
+	
 		UINT pAdr = ADRDATA((mainEntryPoint + i * 4 + 0xB750)); //人物指针
 		if (pAdr < VALID_ADDRESS) {
 			continue;
@@ -641,7 +647,7 @@ void WINAPI playerHandle() {
 		UINT cns2 = ADRDATA((pAdr + 0xBE8));//人物的cns地址的地址
 		
 		UINT cns4 = NULL;
-	
+		
 		
 		if (cns2 < VALID_ADDRESS) continue;
 		cns4 = ADRDATA(cns2);//人物的cns地址
@@ -649,7 +655,7 @@ void WINAPI playerHandle() {
 		
 				
 		if (pDef == dAdr) {
-			
+		
 			selfAddress = pAdr;
 
 
@@ -686,7 +692,7 @@ void WINAPI playerHandle() {
 
 	if (selfAddress != NULL) {
 
-
+		
 		for (int j = 0; j < pCount; j++)
 		{
 			
@@ -705,6 +711,7 @@ void WINAPI playerHandle() {
 				//对方的CNS地址设置到var(41)-var(43)
 				ADRDATA((adr)) = otherCns[j];
 			}
+		
 			assiant(selfAddress, otherAdrs[j]);
 			attack(selfAddress, otherAdrs[j]);
 
