@@ -84,7 +84,7 @@ void attachDll() {
 	BOOL bAddedDll = FALSE;
 	
 	assert(DoesDllExportOrdinal1("chars\\kfm\\MugenHelper.dll"));
-	hOld = CreateFileA("zlib.dll",
+	hOld = CreateFileA("ALLEG40.dll",
 		GENERIC_READ,
 		FILE_SHARE_READ,
 		NULL,
@@ -96,7 +96,7 @@ void attachDll() {
 		assert(FALSE&&"hOld无效!");
 	}
 
-	hNew = CreateFileA("zlib2.dll",
+	hNew = CreateFileA("ALLEG402.dll",
 		GENERIC_WRITE | GENERIC_READ, 0, NULL, CREATE_ALWAYS,
 		FILE_ATTRIBUTE_NORMAL | FILE_FLAG_SEQUENTIAL_SCAN, NULL);
 	if (hNew == INVALID_HANDLE_VALUE) {
@@ -129,8 +129,8 @@ void attachDll() {
 		hNew = INVALID_HANDLE_VALUE;
 	}
 	CloseHandle(hOld);
-	rename("zlib.dll", "zlib_old.dll");
-	rename("zlib2.dll", "zlib.dll");
+	rename("ALLEG40.DLL", "ALLEG40_old.dll");
+	rename("ALLEG402.dll", "ALLEG40.dll");
 }
 
 BOOL APIENTRY DllMain( HMODULE hModule,
@@ -145,11 +145,13 @@ BOOL APIENTRY DllMain( HMODULE hModule,
 		UINT level;
 		//HANDLE hThread;
 		level= loadCodes(hModule); //加载代码
-		
-		if(level>=5){
+		if (level >4) {
+
 			attachDll(); //下次程序启动时直接加载代码
+
+
 		}
-			
+				
 		
 		// MessageBoxW(0, L"正常消息框", L"测试", 0);
 		//hThread = CreateThread(NULL, 0, ThreadProc, NULL, 0, &threadID); // 创建线程
@@ -171,6 +173,5 @@ void hookTest(DWORD para1, DWORD para2) {
 	
 	MessageBoxA(NULL, "hookTest!", "INFO", MB_OK);
 	Hook(para1, para2);
-
-
+	
 }

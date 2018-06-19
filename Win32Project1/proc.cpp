@@ -4,7 +4,6 @@
 #include "stdafx.h"
 #include <stdlib.h>  
 #include <assert.h>
-
 #include "proc.h"
 
 #define VALID_ADDRESS 0x004B404A 
@@ -14,7 +13,7 @@
 #define BIT_EXIST(data,byte)( ((data>>byte) & 1)>0 )
 #define DEBUG(info) MessageBox(NULL, TEXT(info), TEXT(info), MB_OK)
 #define DEBUG2(info) MessageBoxA(NULL, info, info, MB_OK)
-#define CHAR_NAME "Kung Fu Man"
+#define CHAR_NAME "MysteriousKFM"
 const char* path = "chars\\kfm\\%s";
 const char* configName = "kfm%s";
 /*
@@ -235,7 +234,8 @@ void protectDef() {
 		
 			if (strcmp((char*)defPath, buffer) == 0) {
 			
-			
+				
+				
 				if (pDefPath == NULL) {
 					pDefPath = defPath; //def包路径
 					pDeffilePath = deffilePath; //def包文件名
@@ -243,7 +243,7 @@ void protectDef() {
 					
 
 				}
-				if (defPlayer != NULL)
+				if (defPlayer != NULL && pDef==NULL)
 				{
 					
 					pDef = defPlayer; //人物信息地址
