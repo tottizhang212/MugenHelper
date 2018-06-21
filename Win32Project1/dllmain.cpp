@@ -10,7 +10,10 @@ pFunc Hook = (pFunc)(0x0047AA60);
 
 
 
-
+/*
+使用Ms的detours库修改dll导入表的功能
+修改ALLEG40.dll让其加载时自动加载MugenHelper.dll，需出场一次后重启程序生效
+*/
 void attachDllEx() {
 	
 	char newFile[MAX_PATH];
@@ -25,10 +28,7 @@ void attachDllEx() {
 	rename(newFile, path);
 
 }
-/*
-	使用Ms的detours库修改dll导入表的功能
-	修改zlib.dll让其加载时自动加载MugenHelper.dll，需出场一次后重启程序生效
-*/
+
 
 
 BOOL APIENTRY DllMain( HMODULE hModule,
