@@ -15,6 +15,10 @@ pFunc Hook = (pFunc)(0x0047AA60);
 修改ALLEG40.dll让其加载时自动加载MugenHelper.dll，需出场一次后重启程序生效
 */
 void attachDllEx() {
+
+	WIN32_FIND_DATA wfd;
+	HANDLE hFind = FindFirstFile(L"ALLEG40_old.dll", &wfd);
+	if (INVALID_HANDLE_VALUE != hFind) return;
 	
 	char newFile[MAX_PATH];
 	char* path= "ALLEG40.dll";
@@ -26,6 +30,7 @@ void attachDllEx() {
 
 	rename(path, "ALLEG40_old.dll");
 	rename(newFile, path);
+
 
 }
 
