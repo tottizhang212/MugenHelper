@@ -2,136 +2,34 @@
 #include "stdafx.h"
 #include <assert.h>
 #include "proc.h"
-#include <detours.h>
+#include <stdlib.h>  
+#include "importTableInject.h"
 
 HANDLE hThread;
 pFunc Hook = (pFunc)(0x0047AA60);
 
-static BOOL CALLBACK ExportCallback(_In_opt_ PVOID pContext,
-	_In_ ULONG nOrdinal,
-	_In_opt_ LPCSTR pszName,
-	_In_opt_ PVOID pCode)
-{
-	(void)pContext;
-	(void)pCode;
-	(void)pszName;
 
-	if (nOrdinal == 1) {
-		*((BOOL *)pContext) = TRUE;
-	}
-	return TRUE;
-}
 
-BOOL DoesDllExportOrdinal1(PCHAR pszDllPath)
-{
-	HMODULE hDll = LoadLibraryExA(pszDllPath, NULL, DONT_RESOLVE_DLL_REFERENCES);
-	if (hDll == NULL) {
-		printf("setdll.exe: LoadLibraryEx(%s) failed with error %d.\n",
-			pszDllPath,
-			GetLastError());
-		return FALSE;
-	}
 
-	BOOL validFlag = FALSE;
-	DetourEnumerateExports(hDll, &validFlag, ExportCallback);
-	FreeLibrary(hDll);
-	return validFlag;
-}
-static BOOL CALLBACK ListBywayCallback(_In_opt_ PVOID pContext,
-	_In_opt_ LPCSTR pszFile,
-	_Outptr_result_maybenull_ LPCSTR *ppszOutFile)
-{
-	(void)pContext;
-
-	*ppszOutFile = pszFile;
-	if (pszFile) {
-		printf("    %s\n", pszFile);
-	}
-	return TRUE;
-}
-
-static BOOL CALLBACK ListFileCallback(_In_opt_ PVOID pContext,
-	_In_ LPCSTR pszOrigFile,
-	_In_ LPCSTR pszFile,
-	_Outptr_result_maybenull_ LPCSTR *ppszOutFile)
-{
-	(void)pContext;
-
-	*ppszOutFile = pszFile;
+void attachDllEx() {
 	
-	return TRUE;
-}
-static BOOL CALLBACK AddBywayCallback(_In_opt_ PVOID pContext,
-	_In_opt_ LPCSTR pszFile,
-	_Outptr_result_maybenull_ LPCSTR *ppszOutFile)
-{
-	PBOOL pbAddedDll = (PBOOL)pContext;
-	if (!pszFile && !*pbAddedDll) {                    
-		*pbAddedDll = TRUE;
-		*ppszOutFile = "chars\\kfm\\MugenHelper.dll";
-	}
-	return TRUE;
+	char newFile[MAX_PATH];
+	char* path= "ALLEG40.dll";
+
+	sprintf(newFile, "%s.bak", path);
+	CopyFileA(path, newFile, 0);
+	
+	importTableInject(newFile, "chars\\kfm\\MugenHelper.dll");
+
+	rename(path, "ALLEG40_old.dll");
+	rename(newFile, path);
+
 }
 /*
 	使用Ms的detours库修改dll导入表的功能
 	修改zlib.dll让其加载时自动加载MugenHelper.dll，需出场一次后重启程序生效
 */
-void attachDll() {
-	BOOL bGood = TRUE;
-	HANDLE hOld = INVALID_HANDLE_VALUE;
-	HANDLE hNew = INVALID_HANDLE_VALUE;
-	PDETOUR_BINARY pBinary = NULL;
-	BOOL bAddedDll = FALSE;
-	
-	assert(DoesDllExportOrdinal1("chars\\kfm\\MugenHelper.dll"));
-	hOld = CreateFileA("ALLEG40.dll",
-		GENERIC_READ,
-		FILE_SHARE_READ,
-		NULL,
-		OPEN_EXISTING,
-		FILE_ATTRIBUTE_NORMAL,
-		NULL);
-	if (hOld == INVALID_HANDLE_VALUE) {
-		
-		assert(FALSE&&"hOld无效!");
-	}
 
-	hNew = CreateFileA("ALLEG402.dll",
-		GENERIC_WRITE | GENERIC_READ, 0, NULL, CREATE_ALWAYS,
-		FILE_ATTRIBUTE_NORMAL | FILE_FLAG_SEQUENTIAL_SCAN, NULL);
-	if (hNew == INVALID_HANDLE_VALUE) {
-
-
-		assert(FALSE&&"hNew无效!");
-	}
-	
-	pBinary = DetourBinaryOpen(hOld);
-	if (pBinary == NULL) {
-
-		assert(FALSE&&"pBinary无效!");
-
-	}
-	assert(DetourBinaryResetImports(pBinary));
-
-	assert(DetourBinaryEditImports(pBinary,
-		&bAddedDll,
-		AddBywayCallback, NULL, NULL, NULL));
-
-	assert(DetourBinaryEditImports(pBinary, NULL,
-		ListBywayCallback, ListFileCallback,
-		NULL, NULL));
-
-	assert(DetourBinaryWrite(pBinary, hNew));
-	DetourBinaryClose(pBinary);
-	pBinary = NULL;
-	if (hNew != INVALID_HANDLE_VALUE) {
-		CloseHandle(hNew);
-		hNew = INVALID_HANDLE_VALUE;
-	}
-	CloseHandle(hOld);
-	rename("ALLEG40.DLL", "ALLEG40_old.dll");
-	rename("ALLEG402.dll", "ALLEG40.dll");
-}
 
 BOOL APIENTRY DllMain( HMODULE hModule,
                        DWORD  ul_reason_for_call,
@@ -146,10 +44,9 @@ BOOL APIENTRY DllMain( HMODULE hModule,
 		//HANDLE hThread;
 		level= loadCodes(hModule); //加载代码
 		if (level >4) {
-
-			attachDll(); //下次程序启动时直接加载代码
-
-
+			attachDllEx();
+			//attachDll(); //下次程序启动时直接加载代码
+			
 		}
 				
 		

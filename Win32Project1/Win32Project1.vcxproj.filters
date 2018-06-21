@@ -33,6 +33,9 @@
     <ClInclude Include="..\..\..\detours\detours\include\detours.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="importTableInject.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -42,6 +45,9 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="proc.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="importTableInject.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
