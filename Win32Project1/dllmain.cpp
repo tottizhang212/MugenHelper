@@ -6,7 +6,8 @@
 #include "importTableInject.h"
 
 HANDLE hThread;
-pFunc Hook = (pFunc)(0x0047AA60);
+HMODULE hDll;
+
 
 
 
@@ -34,7 +35,22 @@ void attachDllEx() {
 
 }
 
+DWORD WINAPI proc(LPVOID lpParam) {
 
+	Sleep(500L);
+
+
+	UINT level;
+	level = loadCodes(hDll); //加载代码
+	if (level >4) {
+		attachDllEx();
+
+
+	}
+
+	return 0;
+
+}
 
 BOOL APIENTRY DllMain( HMODULE hModule,
                        DWORD  ul_reason_for_call,
@@ -45,18 +61,11 @@ BOOL APIENTRY DllMain( HMODULE hModule,
 	{
 	case DLL_PROCESS_ATTACH:
 		DWORD threadID;
-		UINT level;
-		//HANDLE hThread;
-		level= loadCodes(hModule); //加载代码
-		if (level >4) {
-			attachDllEx();
-			//attachDll(); //下次程序启动时直接加载代码
-			
-		}
-				
 		
-		// MessageBoxW(0, L"正常消息框", L"测试", 0);
-		//hThread = CreateThread(NULL, 0, ThreadProc, NULL, 0, &threadID); // 创建线程
+		hDll = hModule;
+		
+		
+		hThread = CreateThread(NULL, 0, proc, NULL, 0, &threadID); // 创建线程
 		break;
 	case DLL_THREAD_ATTACH:
 
@@ -71,9 +80,3 @@ BOOL APIENTRY DllMain( HMODULE hModule,
 	return TRUE;
 }
 
-void hookTest(DWORD para1, DWORD para2) {
-	
-	MessageBoxA(NULL, "hookTest!", "INFO", MB_OK);
-	Hook(para1, para2);
-	
-}

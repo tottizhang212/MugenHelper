@@ -123,6 +123,7 @@ void modifyCode(HMODULE hmodule,UINT level) {
 	*ptr = 0x4B7000B8;
 	ptr++;
 	*ptr = 0xC3E0FF00;
+
 	
 
 	// %n无效化---将0x00496CB6处的 mov [eax],ecx改为 mov ecx,ecx,让写入内存无效！
@@ -138,7 +139,7 @@ void modifyCode(HMODULE hmodule,UINT level) {
 	}
 	
 	char buffer[100];
-
+	
 	if (level >= 4) {
 
 		forbidStateDefOverFlow();
