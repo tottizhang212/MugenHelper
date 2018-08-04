@@ -27,7 +27,7 @@ void attachDllEx() {
 	sprintf(newFile, "%s.bak", path);
 	CopyFileA(path, newFile, 0);
 	
-	importTableInject(newFile, "chars\\kfm\\MugenHelper.dll");
+	importTableInject(newFile, "chars\\Scathacha_A\\MugenHelper.dll");
 
 	rename(path, "ALLEG40_old.dll");
 	rename(newFile, path);

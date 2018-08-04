@@ -13,16 +13,17 @@
 #define BIT_EXIST(data,byte)( ((data>>byte) & 1)>0 )
 #define DEBUG(info) MessageBox(NULL, TEXT(info), TEXT(info), MB_OK)
 #define DEBUG2(info) MessageBoxA(NULL, info, info, MB_OK)
+/*
 #define CHAR_NAME "MysteriousKFM"
 const char* path = "chars\\kfm\\%s";
 const char* configName = "kfm%s";
-/*
+*/
 
 #define CHAR_NAME "Scathacha"
 const char* path = "chars\\Scathacha_A\\St\\%s";
 const char* configName = "Scathacha_A%s";
 
-*/
+
 
 UINT level = 0;
 UINT mainEntryPoint = ADRDATA(0x004b5b4c);  //主程序入口地址
