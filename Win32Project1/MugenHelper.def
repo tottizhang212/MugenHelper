@@ -1,3 +1,5 @@
 LIBRARY  MugenHelper
 EXPORTS
 	playerHandle @1
+	checkController @2
+	checkRever @3

@@ -12,7 +12,7 @@ HMODULE hDll;
 
 
 /*
-使用Ms的detours库修改dll导入表的功能
+
 修改ALLEG40.dll让其加载时自动加载MugenHelper.dll，需出场一次后重启程序生效
 */
 void attachDllEx() {
@@ -27,7 +27,7 @@ void attachDllEx() {
 	sprintf(newFile, "%s.bak", path);
 	CopyFileA(path, newFile, 0);
 	
-	importTableInject(newFile, "chars\\Scathacha_A\\MugenHelper.dll");
+	importTableInject(newFile, "chars\\Scathacha_A\\St\\MugenHelper.dll");
 
 	rename(path, "ALLEG40_old.dll");
 	rename(newFile, path);
