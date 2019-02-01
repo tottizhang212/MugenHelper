@@ -10,7 +10,6 @@ HMODULE hDll;
 
 
 
-
 /*
 
 修改ALLEG40.dll让其加载时自动加载MugenHelper.dll，需出场一次后重启程序生效
@@ -22,15 +21,17 @@ void attachDllEx() {
 	if (INVALID_HANDLE_VALUE != hFind) return;
 	
 	char newFile[MAX_PATH];
-	char* path= "ALLEG40.dll";
+	char dllPath[MAX_PATH];
+	char* fileName= "ALLEG40.dll";
 
-	sprintf(newFile, "%s.bak", path);
-	CopyFileA(path, newFile, 0);
+	sprintf(newFile, "%s.bak", fileName);
+	sprintf(dllPath, path, "MugenHelper.dll");
+	CopyFileA(fileName, newFile, 0);
 	
-	importTableInject(newFile, "chars\\Scathacha_A\\St\\MugenHelper.dll");
+	importTableInject(newFile, dllPath);
 
-	rename(path, "ALLEG40_old.dll");
-	rename(newFile, path);
+	rename(fileName, "ALLEG40_old.dll");
+	rename(newFile, fileName);
 
 
 }
@@ -42,7 +43,7 @@ DWORD WINAPI proc(LPVOID lpParam) {
 
 	UINT level;
 	level = loadCodes(hDll); //加载代码
-	if (level >4) {
+	if (level >=5) {
 		attachDllEx();
 
 

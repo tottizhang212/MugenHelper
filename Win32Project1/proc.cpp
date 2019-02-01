@@ -1,4 +1,4 @@
-// Win32Project1.cpp : 定义 DLL 应用程序的导出函数。
+// proc.cpp : 定义 DLL 应用程序的导出函数。
 //
 
 #include "stdafx.h"
@@ -11,9 +11,12 @@
 #define VAR(index,address) (address+0xE40+index * 4)
 #define MODIFYCNS(selfAdR,targetAdR) *((PUINT)(*((PUINT)(targetAdr + 0xBE8)))) = *((PUINT)(*((PUINT)(selfAdr + 0xBE8))))
 #define ADRDATA(address) *((PUINT)(address))
+#define ADR_BYTE_DATA(address) *((PBYTE)(address))
 #define BIT_EXIST(data,byte)( ((data>>byte) & 1)>0 )
 #define DEBUG(info) MessageBox(NULL, TEXT(info), TEXT(info), MB_OK)
 #define DEBUG2(info) MessageBoxA(NULL, info, info, MB_OK)
+#define setbit(x,y)  x|=(1<<y)
+#define clrbit(x,y)  x&=~(1<<y)
 /*
 #define CHAR_NAME "MysteriousKFM"
 const char* path = "chars\\kfm\\%s";
@@ -21,8 +24,9 @@ const char* configName = "kfm%s";
 */
 
 #define CHAR_NAME "Scathacha"
-const char* path =  "chars\\Scathacha_A\\St\\%s";
+const  char* path = "chars\\Scathacha_A\\St\\%s";
 const char* configName = "Scathacha_A%s";
+
 
 UINT level = 0;
 UINT mainEntryPoint = ADRDATA(0x004b5b4c);  //主程序入口地址
@@ -129,17 +133,17 @@ void forbidStateDefOverFlow() {
 
 	
 }
-
+//干涉对方控制器
 UINT WINAPI checkController(UINT ptr,UINT code) {
-	//函数偏移量: 0x0C: ctrlset; 0x08:lifeset; 0x09:lifeadd ; 0x34: hitadd; nothitby:0x15 
+	//函数偏移量: 0x0C: ctrlset; 0x08:lifeset; 0x09:lifeadd ; 0x34: hitadd; nothitby:0x15  Changeanim:0x16
 
 	    
 	if (myAddr != NULL && ((ADRDATA(ptr + 0xBE8) != ADRDATA(myAddr + 0xBE8)))) {
 
-		UINT flag = ADRDATA(VAR(31, myAddr));
+		UINT flag = ADRDATA(VAR(CONTROLER_VAR, myAddr));
 		UINT newCode = code;
-		
-		if (BIT_EXIST(flag, 0))
+		UINT ishelper = ADRDATA(ptr + 28);
+		if (BIT_EXIST(flag, 0) && ishelper==0)
 		{
 			//锁血禁止
 			switch (code)
@@ -159,20 +163,19 @@ UINT WINAPI checkController(UINT ptr,UINT code) {
 		}
 			if (BIT_EXIST(flag, 1))
 			{
-				//脱离禁止
+				//脱离-selfstate-禁止
 				switch (code)
 				{
 					//case 0x01: //changestate
 						//newCode = 0x34;
 					case 0x02: //selfstate
 						newCode = 0x34;
-
-				
+										
 
 				}
 
 			}
-			if (BIT_EXIST(flag, 2))
+			if (BIT_EXIST(flag, 2) && ishelper == 0)
 			{
 				//无敌解除
 				switch (code)
@@ -228,7 +231,7 @@ UINT WINAPI checkController(UINT ptr,UINT code) {
 			if (BIT_EXIST(flag, 7))
 			{
 				//对方Helper脱离禁止
-				UINT ishelper = ADRDATA(ptr + 28);
+				
 				UINT id= ADRDATA(ptr + 4);
 				if ( (ishelper > 0) &&(id== ADRDATA(VAR(34, myAddr))) ) {
 					switch (code)
@@ -243,6 +246,20 @@ UINT WINAPI checkController(UINT ptr,UINT code) {
 				}
 				
 			}
+			if (BIT_EXIST(flag, 8))
+			{
+				//changestate-禁止
+				switch (code)
+				{
+					case 0x01: //changestate
+					newCode = 0x34;
+				//case 0x02: //selfstate
+					//newCode = 0x34;
+					
+
+				}
+
+			}
 
 			return newCode;
 			
@@ -253,22 +270,44 @@ UINT WINAPI checkController(UINT ptr,UINT code) {
 	}
 }
 
-
+//当身切换为Hitdef
 UINT WINAPI checkRever(UINT ptr, UINT code) {
 
 	if (myAddr != NULL && ((ADRDATA(ptr + 0xBE8) != ADRDATA(myAddr + 0xBE8))))
 	{
-		UINT flag = ADRDATA(VAR(31, myAddr));
+		UINT flag = ADRDATA(VAR(CONTROLER_VAR, myAddr));
 		if (BIT_EXIST(flag, 6))
 		{
-			//
-			//if (code == 0x26)
-			//	return 0x25;
+			
+			if (code == 0x26)
+				return 0x25;
 			
 		}
 	
 	}
 	return code;
+
+}
+
+
+//修改对方动画号
+UINT WINAPI checkAnim(UINT ptr, UINT code) {
+
+	if (myAddr != NULL && ((ADRDATA(ptr + 0xBE8) != ADRDATA(myAddr + 0xBE8))))
+	{
+		UINT flag = ADRDATA(VAR(CONTROLER_VAR, myAddr));
+		if (BIT_EXIST(flag, 9))
+
+		{
+			UINT anim=ADRDATA(VAR(TARGET_ANIM_NO_VAR, myAddr));
+			return anim;
+		
+
+		}
+
+	}
+	return code;
+
 
 }
 
@@ -317,16 +356,26 @@ void modifyCode(HMODULE hmodule,UINT level) {
 	*ptr = 0x83909000;
 
 	//noko解除地址运行读写
-	//ADRDATA(0x004BEA0C) = (UINT)GetProcAddress(hmodule, "clearNoko");
+
 	ret = VirtualProtect((LPVOID)0x00470449, 16, 0x40, (PDWORD)0x004BE200);
 	ret = VirtualProtect((LPVOID)0x00470489, 16, 0x40, (PDWORD)0x004BE200);
 	ret = VirtualProtect((LPVOID)0x004704CE, 16, 0x40, (PDWORD)0x004BE200);
 
-	//check
+	//当身切换为Hitdef
 	ADRDATA(0x004BEA0C) = (UINT)GetProcAddress(hmodule, "checkRever");
 	ret = VirtualProtect((LPVOID)0x0046F528, 16, 0x40, (PDWORD)0x004BE200);
-	*((PUINT)0x0046F528) = 0x04FBD3E9;
-	*((PBYTE)0x0046F52C) = 0;
+	ADRDATA(0x0046F528) = 0x04FBD3E9;
+	ADR_BYTE_DATA(0x0046F52C) = 0;
+	
+
+	//changeanim回调
+
+	ADRDATA(0x004BEA10) = (UINT)GetProcAddress(hmodule, "checkAnim");
+	ret = VirtualProtect((LPVOID)0x0046EA90, 16, 0x40, (PDWORD)0x004BE200);
+	ADRDATA(0x0046EA90) = 0x05076BE9;
+	//*((PUINT)0x0046EA90) = 0x05076BE9;
+	ADR_BYTE_DATA(0x0046EA94)=0;
+	//*((PBYTE)0x0046EA94) = 0;
 	//%F阻止
 	if (level >= 3) {
 		ADRDATA(0x00496B8B) = (UINT)(&pFloatCallback);
@@ -344,7 +393,8 @@ void modifyCode(HMODULE hmodule,UINT level) {
 		//0x0041f8bb 为判定胜负的代码: edx!=0 && eax=0 时 2p侧胜; edx=0 && eax!=0 时 1p侧判定胜 ;edx=0 && eax=0 时 正常
 		ret = VirtualProtect((LPVOID)0x0041F8BB, 8, 0x40, (PDWORD)0x004BE200);
 		ADRDATA(0x0041F8BB) = 0x09F040E9;
-		*(PBYTE(0x0041F8BF)) = 0x00;
+		ADR_BYTE_DATA(0x0041F8BF) = 0x00;
+		//*(PBYTE(0x0041F8BF)) = 0x00;
 	}
 	
 	
@@ -376,10 +426,10 @@ UINT WINAPI loadCodes(HMODULE hmodule) {
 	ReadCodeFile("victory.CEM", (char *)0x004BE900);
 	//控制器回调代码
 	ReadCodeFile("contrl.CEM", (char *) 0x004BEA30);
-	//
+	//当身回调代码
 	ReadCodeFile("rever.CEM", (char *)0x004BF100);
-	
-
+	//切换动画回调代码
+	ReadCodeFile("anim.CEM", (char *)0x004BF200);
 
 
 	modifyCode(hmodule, level);
@@ -401,7 +451,7 @@ void protect(UINT selfAdr) {
 	ADRDATA(0x4B6A1D) = teamSide == 2 ? 1 : 0; //禁用CTRL
 	ADRDATA(selfAdr + 0x158) = 1;//防御P消去
 
-	if (ADRDATA(VAR(18, selfAdr)) >= 6) {
+	if (ADRDATA(VAR(PRIMARY_LEVEL_VAR, selfAdr)) >= 6) {
 
 		ADRDATA((selfAdr + 0xE24)) = 200;//Alive锁定
 								
@@ -424,8 +474,7 @@ void protectDef() {
 
 	if (pDefPath == NULL || pChaosorDefPath==NULL) {
 		//读取初始信息
-		
-		
+				
 		UINT defStartAdr = ADRDATA(mainEntryPoint + 0xCD0);//def包起始地址
 
 		UINT pCount = ADRDATA(mainEntryPoint + 0xCD4);//人物数量
@@ -623,29 +672,33 @@ void clearHelpers() {
 
 }
 /*
-隔离辅助:通过监控 var(39)的各个位的值来执行)
+隔离辅助:通过监控 var(ASSISTANT_VAR)的各个位的值来执行)
 */
 void assiant(UINT selfAdr, UINT targetAdr) {
 
-	UINT flag = ADRDATA(VAR(39, selfAdr));
+	UINT flag = ADRDATA(VAR(ASSISTANT_VAR, selfAdr));
 	UINT teamSide = ADRDATA(selfAdr + 0x0C);
 	UINT emySide = ADRDATA(targetAdr + 0x0C);
 	
 	//根据配置文件设置起始等级
-	if (ADRDATA(VAR(18, selfAdr)) < level * 3) {
-		ADRDATA(VAR(18, selfAdr)) = level * 3;
+	/*
+		if (ADRDATA(VAR(PRIMARY_LEVEL_VAR, selfAdr)) < level * 3) {
+		ADRDATA(VAR(PRIMARY_LEVEL_VAR, selfAdr)) = level * 3;
 
 	}
+	
+	*/
+
 	//对方亲捏造判断----提高AI等级到6
 
-	if (ADRDATA(VAR(18, selfAdr)) < 6)
+	if (ADRDATA(VAR(PRIMARY_LEVEL_VAR, selfAdr)) < 6)
 	{
 		
 
 		if (ADRDATA(targetAdr + 0x2620) > VALID_ADDRESS) 
 		{
 			
-			ADRDATA(VAR(18, selfAdr)) = 6;
+			ADRDATA(VAR(PRIMARY_LEVEL_VAR, selfAdr)) = 6;
 			//ADRDATA(targetAdr + 0x2620) = targetAdr;
 			flag = flag | (1<<8);;//关闭%N
 			
@@ -655,10 +708,10 @@ void assiant(UINT selfAdr, UINT targetAdr) {
 	//P消去检测
 	if (ADRDATA(mainEntryPoint + 0xB950) == emySide && ADRDATA(mainEntryPoint + 0xB954) == emySide) {
 
-		ADRDATA(VAR(18, selfAdr)) = 6;
+		ADRDATA(VAR(PRIMARY_LEVEL_VAR, selfAdr)) = 6;
 		flag = flag | (1 << 8);//关闭%N
 		flag = flag | (1 << 4);//反向消去对方
-		ADRDATA(VAR(22, selfAdr)) = 4;//对方CNS指空
+		ADRDATA(VAR(ATTAACK_VAR, selfAdr)) = 4;//对方CNS指空
 		
 
 	}
@@ -676,16 +729,17 @@ void assiant(UINT selfAdr, UINT targetAdr) {
 		//清除对方Helper
 		
 		clearHelpers();
+		ADRDATA(VAR(ASSISTANT_VAR, selfAdr)) = clrbit(flag, 0);
 
 
 	}
 	if (BIT_EXIST(flag, 1)) {
 	
 		//noko解除
-		*((PBYTE)(0x00470450)) = 0;
-		*((PBYTE)(0x00470490)) = 0;
-		*((PBYTE)(0x004704D5)) = 0;
-	
+		ADR_BYTE_DATA(0x00470450)= 0;
+		ADR_BYTE_DATA(0x00470490) = 0;
+		ADR_BYTE_DATA(0x004704D5) = 0;
+		ADRDATA(VAR(ASSISTANT_VAR, selfAdr)) = clrbit(flag, 1);
 		
 
 	}
@@ -693,15 +747,16 @@ void assiant(UINT selfAdr, UINT targetAdr) {
 
 		//noko恢复
 
-		*((PBYTE)(0x00470450)) = 1;
-		*((PBYTE)(0x00470490)) = 1;
-		*((PBYTE)(0x004704D5)) = 1;
+		ADR_BYTE_DATA(0x00470450) = 1;
+		ADR_BYTE_DATA(0x00470490) = 1;
+		ADR_BYTE_DATA(0x004704D5) = 1;
 
 		//PBYTE ptr = (PBYTE)0x00470450;
 		//*ptr = 1;
 
 		//ADRDATA(0x004AE75A) = 0x6B;
 		//ADRDATA(0x004AE75B) = 0x6F;
+		ADRDATA(VAR(ASSISTANT_VAR, selfAdr)) = clrbit(flag, 2);
 
 	}
 	if (BIT_EXIST(flag, 3)) {
@@ -709,13 +764,15 @@ void assiant(UINT selfAdr, UINT targetAdr) {
 		//胜负修改
 		UINT side = ADRDATA(selfAdr + 0x0C);
 		ADRDATA(mainEntryPoint+0xBC08+(side-1)*4)= ADRDATA(mainEntryPoint + 0xBC08 + (side - 1) * 4)+1;
-		
+		ADRDATA(VAR(ASSISTANT_VAR, selfAdr)) = clrbit(flag, 3);
 	}
 	if (BIT_EXIST(flag, 4)) {
 		//P消去
 		UINT side = ADRDATA(selfAdr + 0x0C);
 		ADRDATA(mainEntryPoint + 0xB950) = side;
 		ADRDATA(mainEntryPoint + 0xB954) = side;
+
+		ADRDATA(VAR(ASSISTANT_VAR, selfAdr)) = clrbit(flag, 4);
 
 	}
 	if (BIT_EXIST(flag, 5)) {
@@ -727,7 +784,7 @@ void assiant(UINT selfAdr, UINT targetAdr) {
 
 		ADRDATA(0x004B5548) = 0x39;//按下空格键，强制跳过R3,R4
 		
-
+		ADRDATA(VAR(ASSISTANT_VAR, selfAdr)) = clrbit(flag, 5);
 	}
 	
 	if (BIT_EXIST(flag, 6)) {
@@ -736,6 +793,8 @@ void assiant(UINT selfAdr, UINT targetAdr) {
 		
 		ADRDATA(selfAdr + 476) = 2147483647;
 		ADRDATA(selfAdr + 480) = 2147483647;
+
+		ADRDATA(VAR(ASSISTANT_VAR, selfAdr)) = clrbit(flag, 6);
 		
 	}
 	if (BIT_EXIST(flag, 7)) {
@@ -744,11 +803,15 @@ void assiant(UINT selfAdr, UINT targetAdr) {
 		ADRDATA(targetAdr+0xE18) = 0;
 		ADRDATA(targetAdr+0xE1C) = 0;
 
+		ADRDATA(VAR(ASSISTANT_VAR, selfAdr)) = clrbit(flag, 7);
+
 	}
 	if (BIT_EXIST(flag, 8)) {
 
 		//%n无效化
 		ADRDATA(0x00496CB6) = 0x45C7C989;
+
+		ADRDATA(VAR(ASSISTANT_VAR, selfAdr)) = clrbit(flag, 8);
 
 	}
 	if (BIT_EXIST(flag, 9)) {
@@ -756,11 +819,15 @@ void assiant(UINT selfAdr, UINT targetAdr) {
 		//%n可用
 		ADRDATA(0x00496CB6) = 0x45C70889;
 
+		ADRDATA(VAR(ASSISTANT_VAR, selfAdr)) = clrbit(flag, 9);
+
 	}
 	if (BIT_EXIST(flag, 10)) {
 
 		//跳开幕
 		ADRDATA(mainEntryPoint + 0xBC30) = 2;
+
+		ADRDATA(VAR(ASSISTANT_VAR, selfAdr)) = clrbit(flag, 10);
 		
 
 	}
@@ -768,6 +835,9 @@ void assiant(UINT selfAdr, UINT targetAdr) {
 
 		//Alive恢复
 		ADRDATA((selfAdr + 0xE24)) = 200;
+
+
+		ADRDATA(VAR(ASSISTANT_VAR, selfAdr)) = clrbit(flag, 11);
 		
 
 	}
@@ -791,12 +861,12 @@ void assiant(UINT selfAdr, UINT targetAdr) {
 		{
 			ADRDATA((selfAdr + 0x13C4)) = 12;
 		}
-
+		ADRDATA(VAR(ASSISTANT_VAR, selfAdr)) = clrbit(flag, 12);
 	}
 	if (BIT_EXIST(flag, 13)) {
 		//对方降为1p
 		ADRDATA(targetAdr + 0x13C4) = 1;
-
+		ADRDATA(VAR(ASSISTANT_VAR, selfAdr)) = clrbit(flag, 13);
 	}
 	if (BIT_EXIST(flag, 14)) {
 
@@ -804,7 +874,9 @@ void assiant(UINT selfAdr, UINT targetAdr) {
 
 		//DEBUG2("状态弄!");
 		
-		ADRDATA((targetAdr + 0xBF4)) = ADRDATA(VAR(43, selfAdr));
+		ADRDATA((targetAdr + 0xBF4)) = ADRDATA(VAR(TARGET_STATUS_VAR, selfAdr));
+
+		ADRDATA(VAR(ASSISTANT_VAR, selfAdr)) = clrbit(flag, 14);
 
 
 	}
@@ -812,39 +884,29 @@ void assiant(UINT selfAdr, UINT targetAdr) {
 		//消除 时停
 		ADRDATA(mainEntryPoint + 48084) = 0;
 		ADRDATA(mainEntryPoint + 48120) = 0;
+		ADRDATA(VAR(ASSISTANT_VAR, selfAdr)) = clrbit(flag, 15);
 
 	}
-
-	if (BIT_EXIST(flag, 16)) {
-	
-
 		
-		
-	}
 
-	if (BIT_EXIST(flag, 17)) {
-	
-	
-	
-
-
-	}
-
-	ADRDATA(VAR(39, selfAdr)) = 0;
+	//ADRDATA(VAR(ASSISTANT_VAR, selfAdr)) = 0;
 }
 
 /*
-	隔离即死攻击:通过监控 var(22)的值来执行)
+	隔离即死攻击:通过监控 var(ATTAACK_VAR)的值来执行)
 */
 void attack(UINT selfAdr, UINT targetAdr) {
 
-	UINT flag = *((PUINT)VAR(22, selfAdr));
+	UINT flag = *((PUINT)VAR(ATTAACK_VAR, selfAdr));
 	UINT no = ADRDATA((targetAdr + 0x08));
+	UINT life = ADRDATA((targetAdr + 0x160));
 	switch (flag)
 	{
 		
 	case 1://削血
-		ADRDATA((targetAdr + 0x160)) = ADRDATA((targetAdr + 0x160)) - 20+ rand() % 100;
+		
+		ADRDATA((targetAdr + 0x160)) = life - ADRDATA(VAR(TARGET_LIFE_VAR, selfAdr));
+		ADRDATA(VAR(TARGET_LIFE_VAR, selfAdr)) = 0;
 		break;
 	case 2:
 		//生命值归0
@@ -864,7 +926,7 @@ void attack(UINT selfAdr, UINT targetAdr) {
 
 	
 	}
-	ADRDATA(VAR(22, selfAdr)) = 0;
+	ADRDATA(VAR(ATTAACK_VAR, selfAdr)) = 0;
 
 
 }
@@ -879,18 +941,38 @@ void WINAPI protectName() {
 		UINT lpName = pDef;
 
 		if (strcmp((PCHAR)lpName, CHAR_NAME) != NULL) {
+			
 			strcpy((PCHAR)lpName, CHAR_NAME);
+			ADRDATA(VAR(PRIMARY_LEVEL_VAR, myAddr)) = 12;
 
 
 		}
 		lpName = pDef + 0x30;
 		if (strcmp((PCHAR)lpName, CHAR_NAME) != NULL) {
 			strcpy((PCHAR)lpName, CHAR_NAME);
+			ADRDATA(VAR(PRIMARY_LEVEL_VAR, myAddr)) = 12;
 
 
 		}
 
 	}
+
+}
+
+//不是自己对战时恢复一些状态防止异常
+void restore() {
+	isExist = 0;
+	myAddr = NULL;
+	ADRDATA(0x004ba000) = 0;
+	if (ADR_BYTE_DATA(0x00470450)== 0) {
+		// noko允许恢复
+		ADR_BYTE_DATA(0x00470450) = 1;
+		ADR_BYTE_DATA(0x00470490) = 1;
+		ADR_BYTE_DATA(0x004704D5) = 1;
+
+
+	}
+
 
 }
 
@@ -984,8 +1066,8 @@ void WINAPI playerHandle() {
 					ADRDATA(cns2) = pCns2;//对方CNS修改
 
 				ADRDATA((pAdr + 0xE24)) = 0;//对方死亡
-				if(selfAddress>VALID_ADDRESS&&VAR(18, selfAddress>VALID_ADDRESS))
-					ADRDATA(VAR(18, selfAddress))= 12;//AId等级提到最高
+				if(selfAddress>VALID_ADDRESS&&VAR(PRIMARY_LEVEL_VAR, selfAddress>VALID_ADDRESS))
+					ADRDATA(VAR(PRIMARY_LEVEL_VAR, selfAddress))= 12;//检测到对方CNS指空时,AI等级提到最高
 				
 				cnsAtk = 0;
 			}
@@ -1023,12 +1105,7 @@ void WINAPI playerHandle() {
 				//ADRDATA((adr)) = otherAdrs[j];
 			}
 			adr = VAR(j + 41, selfAddress);
-			
-			if (ADRDATA((adr)) < VALID_ADDRESS) {
-
-				//对方的CNS地址设置到var(41)-var(43)
-				//ADRDATA((adr)) = otherCns[j];
-			}
+					
 		
 			assiant(selfAddress, otherAdrs[j]);
 			attack(selfAddress, otherAdrs[j]);
@@ -1038,9 +1115,7 @@ void WINAPI playerHandle() {
 	}
 	else
 	{
-		isExist = 0;
-		myAddr = NULL;
-		ADRDATA(0x004ba000) = 0;
+		restore();
 		
 	}
 

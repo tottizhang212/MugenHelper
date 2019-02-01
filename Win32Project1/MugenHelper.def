@@ -3,3 +3,4 @@ EXPORTS
 	playerHandle @1
 	checkController @2
 	checkRever @3
+	checkAnim @4
