@@ -260,7 +260,7 @@ UINT WINAPI checkController(UINT ptr,UINT code) {
 				}
 
 			}
-
+			
 			return newCode;
 			
 	}
@@ -740,7 +740,8 @@ void assiant(UINT selfAdr, UINT targetAdr) {
 		ADR_BYTE_DATA(0x00470490) = 0;
 		ADR_BYTE_DATA(0x004704D5) = 0;
 		ADRDATA(VAR(ASSISTANT_VAR, selfAdr)) = clrbit(flag, 1);
-		
+		ADRDATA(targetAdr + 0xE18) = 0;
+		ADRDATA(targetAdr + 0xE1C) = 0;
 
 	}
 	if (BIT_EXIST(flag, 2)) {
