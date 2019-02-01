@@ -765,6 +765,7 @@ void assiant(UINT selfAdr, UINT targetAdr) {
 		//Ê¤¸ºÐÞ¸Ä
 		UINT side = ADRDATA(selfAdr + 0x0C);
 		ADRDATA(mainEntryPoint+0xBC08+(side-1)*4)= ADRDATA(mainEntryPoint + 0xBC08 + (side - 1) * 4)+1;
+		ADRDATA(mainEntryPoint + 0xBC34) = side;
 		ADRDATA(VAR(ASSISTANT_VAR, selfAdr)) = clrbit(flag, 3);
 	}
 	if (BIT_EXIST(flag, 4)) {
