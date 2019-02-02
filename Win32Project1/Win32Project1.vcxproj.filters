@@ -30,9 +30,6 @@
     <ClInclude Include="proc.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\detours\detours\include\detours.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
     <ClInclude Include="importTableInject.h">
       <Filter>头文件</Filter>
     </ClInclude>

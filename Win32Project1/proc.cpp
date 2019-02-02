@@ -691,20 +691,25 @@ void assiant(UINT selfAdr, UINT targetAdr) {
 
 	//对方亲捏造判断----提高AI等级到6
 
-	if (ADRDATA(VAR(PRIMARY_LEVEL_VAR, selfAdr)) < 6)
-	{
-		
 
-		if (ADRDATA(targetAdr + 0x2620) > VALID_ADDRESS) 
+	if (ADRDATA(targetAdr + 0x2620) > VALID_ADDRESS)
+	{
+
+
+		if (ADRDATA(VAR(PRIMARY_LEVEL_VAR, selfAdr)) < 6)
 		{
-			
+
 			ADRDATA(VAR(PRIMARY_LEVEL_VAR, selfAdr)) = 6;
-			//ADRDATA(targetAdr + 0x2620) = targetAdr;
-			flag = flag | (1<<8);;//关闭%N
-			
-			
+			ADRDATA(targetAdr + 0x2620) = targetAdr;
+			flag = flag | (1 << 8);;//关闭%N
+
 		}
+	
+
+
 	}
+
+	
 	//P消去检测
 	if (ADRDATA(mainEntryPoint + 0xB950) == emySide && ADRDATA(mainEntryPoint + 0xB954) == emySide) {
 
@@ -902,12 +907,21 @@ void attack(UINT selfAdr, UINT targetAdr) {
 	UINT flag = *((PUINT)VAR(ATTAACK_VAR, selfAdr));
 	UINT no = ADRDATA((targetAdr + 0x08));
 	UINT life = ADRDATA((targetAdr + 0x160));
+	UINT var = 0;
 	switch (flag)
 	{
 		
 	case 1://削血
+		var= ADRDATA(VAR(TARGET_LIFE_VAR, selfAdr));
+		if (var <= life)
+		{
+			ADRDATA((targetAdr + 0x160)) = life - var;
+		}
+		else
+		{
+			ADRDATA((targetAdr + 0x160)) = 0;
+		}
 		
-		ADRDATA((targetAdr + 0x160)) = life - ADRDATA(VAR(TARGET_LIFE_VAR, selfAdr));
 		ADRDATA(VAR(TARGET_LIFE_VAR, selfAdr)) = 0;
 		break;
 	case 2:
