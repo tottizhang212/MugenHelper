@@ -907,12 +907,15 @@ void attack(UINT selfAdr, UINT targetAdr) {
 	UINT flag = *((PUINT)VAR(ATTAACK_VAR, selfAdr));
 	UINT no = ADRDATA((targetAdr + 0x08));
 	UINT life = ADRDATA((targetAdr + 0x160));
+	UINT lifeMax= ADRDATA((targetAdr + 0x164));
 	UINT var = 0;
 	switch (flag)
 	{
 		
 	case 1://Ï÷Ñª
-		var= ADRDATA(VAR(TARGET_LIFE_VAR, selfAdr));
+		var= lifeMax*0.001;
+		if (var <= 0)
+			var = 1;
 		if (var <= life)
 		{
 			ADRDATA((targetAdr + 0x160)) = life - var;
