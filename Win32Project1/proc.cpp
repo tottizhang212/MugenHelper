@@ -3,6 +3,7 @@
 
 #include "stdafx.h"
 #include <stdlib.h>  
+#include<time.h>
 #include <assert.h>
 #include "proc.h"
 #include "resource.h"
@@ -100,6 +101,19 @@ char* WINAPI ReadCodeFile(char* file, char* startAddress) {
 
 	return startAddress;
 }
+void log(const char* content) {
+
+	FILE * pFile;
+	char buffer[100];
+	sprintf(buffer, path, "debug.log");
+	pFile = fopen(buffer, "a+");
+	time_t t = time(0);
+	char tmpBuf[100];
+	strftime(tmpBuf, 100, "%Y-%m-%d %H:%M:%S", localtime(&t)); //format date and time. 
+	fprintf(pFile, "%s---%s\r\n", tmpBuf,content);
+	fclose(pFile);
+}
+
 UINT pFloatCallback = 0x00496651;//替代用%F入口跳转地址变量
 
 void forbidStateDefOverFlow() {
@@ -137,7 +151,7 @@ void forbidStateDefOverFlow() {
 UINT WINAPI checkController(UINT ptr,UINT code) {
 	//函数偏移量: 0x0C: ctrlset; 0x08:lifeset; 0x09:lifeadd ; 0x34: hitadd; nothitby:0x15  Changeanim:0x16
 
-	    
+
 	if (myAddr != NULL && ((ADRDATA(ptr + 0xBE8) != ADRDATA(myAddr + 0xBE8)))) {
 
 		UINT flag = ADRDATA(VAR(CONTROLER_VAR, myAddr));
@@ -313,7 +327,7 @@ UINT WINAPI checkAnim(UINT ptr, UINT code) {
 
 void modifyCode(HMODULE hmodule,UINT level) {
 
-	
+	log("加载代码！");
 	//获取playerHandle的函数地址写入地址0x004BF700，让0x004b7000处的代码能够调用
 	*((PUINT)0x004BF700)=(UINT) GetProcAddress(hmodule, "playerHandle");
 
@@ -659,7 +673,7 @@ void clearHelpers() {
 		if (lpName!=NULL&&strcmp((char*)lpName, CHAR_NAME)!=0) {
 			
 		
-			//ADRDATA(pAdr + 0xE24) = 0;
+			ADRDATA(pAdr + 0xE24) = 0;
 			
 			if (pCns1!=NULL)
 			{
@@ -671,6 +685,28 @@ void clearHelpers() {
 	}
 
 }
+
+UINT findHelper(UINT parentAdr, UINT helperId) {
+
+
+	UINT parentId = ADRDATA(parentAdr +4);
+	for (size_t i = 5; i <= 60; i++)
+	{
+		UINT pAdr = ADRDATA(mainEntryPoint + i * 4 + 0xB750); //人物指针
+		
+
+		if ((parentId == ADRDATA(pAdr + 9756)) && (helperId == ADRDATA(pAdr + 9752))) {
+
+			return pAdr;
+		}
+		
+
+	}
+	return NULL;
+
+
+
+}
 /*
 隔离辅助:通过监控 var(ASSISTANT_VAR)的各个位的值来执行)
 */
@@ -679,7 +715,7 @@ void assiant(UINT selfAdr, UINT targetAdr) {
 	UINT flag = ADRDATA(VAR(ASSISTANT_VAR, selfAdr));
 	UINT teamSide = ADRDATA(selfAdr + 0x0C);
 	UINT emySide = ADRDATA(targetAdr + 0x0C);
-	
+	UINT emyNo= ADRDATA(targetAdr + 8);
 	//根据配置文件设置起始等级
 	/*
 		if (ADRDATA(VAR(PRIMARY_LEVEL_VAR, selfAdr)) < level * 3) {
@@ -894,7 +930,27 @@ void assiant(UINT selfAdr, UINT targetAdr) {
 		ADRDATA(VAR(ASSISTANT_VAR, selfAdr)) = clrbit(flag, 15);
 
 	}
+	if (BIT_EXIST(flag, 16)) {
+
+		UINT helperId = ADRDATA(VAR(TARGET_HELPER_VAR, selfAdr));
+		//UINT helperId = 500000;
+		//DEBUG2("找到Helpr");
 		
+		UINT adr = findHelper(selfAdr, helperId);
+		if (adr != NULL)
+		{
+		
+			UINT L = ADRDATA(adr + 544);
+			ADRDATA(L + 8) = 1;
+			UINT target = ADRDATA(L + 24);
+			ADRDATA(target) = emyNo - 1;
+			UINT base = ADRDATA(L + 20);
+			ADRDATA(base) = targetAdr;
+		}
+
+	
+
+	}
 
 	//ADRDATA(VAR(ASSISTANT_VAR, selfAdr)) = 0;
 }
