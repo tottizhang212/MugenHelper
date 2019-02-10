@@ -4,3 +4,4 @@ EXPORTS
 	checkController @2
 	checkRever @3
 	checkAnim @4
+	preCode @5

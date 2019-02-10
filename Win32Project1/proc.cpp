@@ -55,7 +55,8 @@ pOnctrl _onCtrl;
   0x004bEA04 :汇编代码用：缓存中间结果 
   0x004bEA08 : 控制器回调处理函数地址  
   0x004bEA0C : noko解除回调
-  
+  0x004BEA10: 动画回调
+  0x004BEA14: 512
 */
 
 
@@ -157,7 +158,7 @@ UINT WINAPI checkController(UINT ptr,UINT code) {
 		UINT flag = ADRDATA(VAR(CONTROLER_VAR, myAddr));
 		UINT newCode = code;
 		UINT ishelper = ADRDATA(ptr + 28);
-		if (BIT_EXIST(flag, 0) && ishelper==0)
+		if (BIT_EXIST(flag, 0) )
 		{
 			//锁血禁止
 			switch (code)
@@ -324,10 +325,55 @@ UINT WINAPI checkAnim(UINT ptr, UINT code) {
 
 
 }
+UINT WINAPI preCode(UINT num) {
+	if (num > 3580) {
 
+
+		ADR_BYTE_DATA(0x0047F767) = 0x90;
+		ADR_BYTE_DATA(0x0047F768) = 0x90;
+
+		ADR_BYTE_DATA(0x0047F76B) = 0x90;
+		ADR_BYTE_DATA(0x0047F76C) = 0x90;
+		ADR_BYTE_DATA(0x0047F76D) = 0x90;
+
+
+
+		ADR_BYTE_DATA(0x0047F79D) = 0x90;
+		ADR_BYTE_DATA(0x0047F79E) = 0x90;
+
+		ADR_BYTE_DATA(0x0047F7A1) = 0x90;
+		ADR_BYTE_DATA(0x0047F7A2) = 0x90;
+		ADR_BYTE_DATA(0x0047F7A3) = 0x90;
+		
+	}
+	else {
+
+		ADR_BYTE_DATA(0x0047F767) = 0x88;
+		ADR_BYTE_DATA(0x0047F768) = 0x0B;
+
+		ADR_BYTE_DATA(0x0047F76B) = 0xC6;
+		ADR_BYTE_DATA(0x0047F76C) = 0x03;
+		ADR_BYTE_DATA(0x0047F76D) = 0x01;
+			
+			
+		ADR_BYTE_DATA(0x0047F79D) = 0x88;
+		ADR_BYTE_DATA(0x0047F79E) = 0x03;
+
+		ADR_BYTE_DATA(0x0047F7A1) = 0xc6;
+		ADR_BYTE_DATA(0x0047F7A2) = 0x03;
+		ADR_BYTE_DATA(0x0047F7A3) = 0x00;
+			
+
+	}
+	return 0;
+
+
+
+
+}
 void modifyCode(HMODULE hmodule,UINT level) {
 
-	log("加载代码！");
+	//log("加载代码！");
 	//获取playerHandle的函数地址写入地址0x004BF700，让0x004b7000处的代码能够调用
 	*((PUINT)0x004BF700)=(UINT) GetProcAddress(hmodule, "playerHandle");
 
@@ -390,6 +436,14 @@ void modifyCode(HMODULE hmodule,UINT level) {
 	//*((PUINT)0x0046EA90) = 0x05076BE9;
 	ADR_BYTE_DATA(0x0046EA94)=0;
 	//*((PBYTE)0x0046EA94) = 0;
+
+	//512超越阻止
+	//ADRDATA(0x004BEA14) = (UINT)GetProcAddress(hmodule, "preCode");
+	//ret = VirtualProtect((LPVOID)0x0047F728, 16, 0x40, (PDWORD)0x004BE200);
+	//VirtualProtect((LPVOID)0x0047F767, 16, 0x40, (PDWORD)0x004BE200);
+	//VirtualProtect((LPVOID)0x0047F79D, 16, 0x40, (PDWORD)0x004BE200);
+	//ADRDATA(0x0047F728) = 0x03FAF3E9;
+	//ADR_BYTE_DATA(0x0047F72C) = 0;
 	//%F阻止
 	if (level >= 3) {
 		ADRDATA(0x00496B8B) = (UINT)(&pFloatCallback);
@@ -444,7 +498,8 @@ UINT WINAPI loadCodes(HMODULE hmodule) {
 	ReadCodeFile("rever.CEM", (char *)0x004BF100);
 	//切换动画回调代码
 	ReadCodeFile("anim.CEM", (char *)0x004BF200);
-
+	//
+	ReadCodeFile("512.CEM", (char *)0x004BF220);
 
 	modifyCode(hmodule, level);
 	return level;
@@ -569,9 +624,6 @@ void protectDef() {
 		}
 		
 	}
-
-	
-
 }
 
 
@@ -694,7 +746,9 @@ UINT findHelper(UINT parentAdr, UINT helperId) {
 	{
 		UINT pAdr = ADRDATA(mainEntryPoint + i * 4 + 0xB750); //人物指针
 		
-
+		if (pAdr < VALID_ADDRESS) {
+			continue;
+		}
 		if ((parentId == ADRDATA(pAdr + 9756)) && (helperId == ADRDATA(pAdr + 9752))) {
 
 			return pAdr;
@@ -703,10 +757,9 @@ UINT findHelper(UINT parentAdr, UINT helperId) {
 
 	}
 	return NULL;
-
-
-
+	
 }
+
 /*
 隔离辅助:通过监控 var(ASSISTANT_VAR)的各个位的值来执行)
 */
@@ -745,7 +798,7 @@ void assiant(UINT selfAdr, UINT targetAdr) {
 
 	}
 
-	
+	//checkHelper(targetAdr);
 	//P消去检测
 	if (ADRDATA(mainEntryPoint + 0xB950) == emySide && ADRDATA(mainEntryPoint + 0xB954) == emySide) {
 
