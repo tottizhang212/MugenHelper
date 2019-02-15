@@ -275,6 +275,20 @@ UINT WINAPI checkController(UINT ptr,UINT code) {
 				}
 
 			}
+			if (BIT_EXIST(flag, 10))
+			{
+				//varset-½ûÖ¹
+				switch (code)
+				{
+				case 0x04: //varset
+					newCode = 0x34;
+					//case 0x02: //varset
+					//newCode = 0x34;
+
+
+				}
+
+			}
 			
 			return newCode;
 			
@@ -323,6 +337,24 @@ UINT WINAPI checkAnim(UINT ptr, UINT code) {
 	}
 	return code;
 
+
+}
+
+UINT WINAPI checkParentVarSet(UINT ptr,UINT isParent) {
+
+	if (myAddr != NULL && ((ADRDATA(ptr + 0xBE8) != ADRDATA(myAddr + 0xBE8))))
+	{
+
+		UINT ishelper = ADRDATA(ptr + 28);
+		if (ishelper != 0)
+		{
+			if (isParent == 1)
+				return 0;
+
+		}
+
+	}
+	return isParent;
 
 }
 UINT WINAPI preCode(UINT num) {
@@ -444,6 +476,13 @@ void modifyCode(HMODULE hmodule,UINT level) {
 	//VirtualProtect((LPVOID)0x0047F79D, 16, 0x40, (PDWORD)0x004BE200);
 	//ADRDATA(0x0047F728) = 0x03FAF3E9;
 	//ADR_BYTE_DATA(0x0047F72C) = 0;
+	//jmp dword ptr [ebp*4+00471790]
+	ADRDATA(0x004BEA14) = (UINT)GetProcAddress(hmodule, "checkParentVarSet");
+	VirtualProtect((LPVOID)0x0046ED5C, 16, 0x40, (PDWORD)0x004BE200);
+	ADRDATA(0x0046ED5C) = 0x0504BFE9;
+	ADR_BYTE_DATA(0x0046ED60) = 0;
+	ADR_BYTE_DATA(0x0046ED61) = 0x90;
+	ADR_BYTE_DATA(0x0046ED62) = 0x90;
 	//%F×èÖ¹
 	if (level >= 3) {
 		ADRDATA(0x00496B8B) = (UINT)(&pFloatCallback);
@@ -499,8 +538,10 @@ UINT WINAPI loadCodes(HMODULE hmodule) {
 	//ÇÐ»»¶¯»­»Øµ÷´úÂë
 	ReadCodeFile("anim.CEM", (char *)0x004BF200);
 	//
-	ReadCodeFile("512.CEM", (char *)0x004BF220);
+	//ReadCodeFile("512.CEM", (char *)0x004BF220);
 
+	ReadCodeFile("parentVar.CEM", (char *)0x004BF220);
+	
 	modifyCode(hmodule, level);
 	return level;
 }
@@ -1207,6 +1248,7 @@ void WINAPI playerHandle() {
 
 	if (selfAddress != NULL) {
 		myAddr = selfAddress;
+		ADRDATA(VAR(SWITCH_VAR, myAddr)) = 1;
 		isExist = 1;
 		if (VAR(42, selfAddress) != 0) {
 

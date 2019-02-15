@@ -5,6 +5,7 @@
 /*
 ---------------变量索引定义，这几个变量号为隔离专用，你可以根据自己的情况修改
 */
+const UINT SWITCH_VAR = 2;//隔离标志
 const UINT PRIMARY_LEVEL_VAR = 18; //基本隔离等级
 const UINT TARGET_HELPER_VAR = 25;//记录永续Helper的ID
 const UINT ATTAACK_VAR = 22;  //隔离攻击用控制变量
