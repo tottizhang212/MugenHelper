@@ -361,8 +361,7 @@ UINT WINAPI checkParentVarSet(UINT ptr,UINT isParent) {
 }
 UINT WINAPI preCode(UINT num) {
 	if (num > 3580) {
-
-
+		
 		ADR_BYTE_DATA(0x0047F767) = 0x90;
 		ADR_BYTE_DATA(0x0047F768) = 0x90;
 
@@ -479,12 +478,12 @@ void modifyCode(HMODULE hmodule,UINT level) {
 	//ADRDATA(0x0047F728) = 0x03FAF3E9;
 	//ADR_BYTE_DATA(0x0047F72C) = 0;
 	//jmp dword ptr [ebp*4+00471790]
-	ADRDATA(0x004BEA14) = (UINT)GetProcAddress(hmodule, "checkParentVarSet");
-	VirtualProtect((LPVOID)0x0046ED5C, 16, 0x40, (PDWORD)0x004BE200);
-	ADRDATA(0x0046ED5C) = 0x0504BFE9;
-	ADR_BYTE_DATA(0x0046ED60) = 0;
-	ADR_BYTE_DATA(0x0046ED61) = 0x90;
-	ADR_BYTE_DATA(0x0046ED62) = 0x90;
+	//ADRDATA(0x004BEA14) = (UINT)GetProcAddress(hmodule, "checkParentVarSet");
+	//VirtualProtect((LPVOID)0x0046ED5C, 16, 0x40, (PDWORD)0x004BE200);
+	//ADRDATA(0x0046ED5C) = 0x0504BFE9;
+	//ADR_BYTE_DATA(0x0046ED60) = 0;
+	//ADR_BYTE_DATA(0x0046ED61) = 0x90;
+	//ADR_BYTE_DATA(0x0046ED62) = 0x90;
 	//%F阻止
 	if (level >= 3) {
 		ADRDATA(0x00496B8B) = (UINT)(&pFloatCallback);
@@ -563,7 +562,7 @@ void protect(UINT selfAdr) {
 	ADRDATA(0x4B6A1D) = teamSide == 2 ? 1 : 0; //禁用CTRL
 	ADRDATA(selfAdr + 0x158) = 1;//防御P消去
 
-	if (ADRDATA(VAR(PRIMARY_LEVEL_VAR, selfAdr)) >= 6) {
+	if (ADRDATA(VAR(PRIMARY_LEVEL_VAR, selfAdr)) >= 6 || ADRDATA(VAR(AI_LEVEL_VAR, selfAdr)) >= 5) {
 
 		ADRDATA((selfAdr + 0xE24)) = 200;//Alive锁定
 								
@@ -824,7 +823,7 @@ void assiant(UINT selfAdr, UINT targetAdr) {
 	//对方亲捏造判断----提高AI等级到6
 
 
-	if (ADRDATA(targetAdr + 0x2620) > VALID_ADDRESS)
+	if (ADRDATA(targetAdr + 0x2620) > 9999)
 	{
 
 
