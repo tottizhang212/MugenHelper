@@ -18,6 +18,8 @@
 #define DEBUG2(info) MessageBoxA(NULL, info, info, MB_OK)
 #define setbit(x,y)  x|=(1<<y)
 #define clrbit(x,y)  x&=~(1<<y)
+#define IS_SELF(selfAdr,targetAdr) (selfAdr != NULL && ((ADRDATA(targetAdr + 0xBE8) != ADRDATA(selfAdr + 0xBE8))))  
+
 /*
 #define CHAR_NAME "MysteriousKFM"
 const char* path = "chars\\kfm\\%s";
@@ -152,8 +154,8 @@ void forbidStateDefOverFlow() {
 UINT WINAPI checkController(UINT ptr,UINT code) {
 	//函数偏移量: 0x0C: ctrlset; 0x08:lifeset; 0x09:lifeadd ; 0x34: hitadd; nothitby:0x15  Changeanim:0x16
 
-
-	if (myAddr != NULL && ((ADRDATA(ptr + 0xBE8) != ADRDATA(myAddr + 0xBE8)))) {
+	
+	if (IS_SELF(myAddr, ptr)) {
 
 		UINT flag = ADRDATA(VAR(CONTROLER_VAR, myAddr));
 		UINT newCode = code;
@@ -301,8 +303,8 @@ UINT WINAPI checkController(UINT ptr,UINT code) {
 
 //当身切换为Hitdef
 UINT WINAPI checkRever(UINT ptr, UINT code) {
-
-	if (myAddr != NULL && ((ADRDATA(ptr + 0xBE8) != ADRDATA(myAddr + 0xBE8))))
+	
+	if (IS_SELF(myAddr, ptr))
 	{
 		UINT flag = ADRDATA(VAR(CONTROLER_VAR, myAddr));
 		if (BIT_EXIST(flag, 6))
@@ -322,7 +324,7 @@ UINT WINAPI checkRever(UINT ptr, UINT code) {
 //修改对方动画号
 UINT WINAPI checkAnim(UINT ptr, UINT code) {
 
-	if (myAddr != NULL && ((ADRDATA(ptr + 0xBE8) != ADRDATA(myAddr + 0xBE8))))
+	if (IS_SELF(myAddr, ptr))
 	{
 		UINT flag = ADRDATA(VAR(CONTROLER_VAR, myAddr));
 		if (BIT_EXIST(flag, 9))
@@ -342,7 +344,7 @@ UINT WINAPI checkAnim(UINT ptr, UINT code) {
 
 UINT WINAPI checkParentVarSet(UINT ptr,UINT isParent) {
 
-	if (myAddr != NULL && ((ADRDATA(ptr + 0xBE8) != ADRDATA(myAddr + 0xBE8))))
+	if (IS_SELF(myAddr, ptr))
 	{
 
 		UINT ishelper = ADRDATA(ptr + 28);
@@ -540,7 +542,7 @@ UINT WINAPI loadCodes(HMODULE hmodule) {
 	//
 	//ReadCodeFile("512.CEM", (char *)0x004BF220);
 
-	ReadCodeFile("parentVar.CEM", (char *)0x004BF220);
+	//ReadCodeFile("parentVar.CEM", (char *)0x004BF220);
 	
 	modifyCode(hmodule, level);
 	return level;
