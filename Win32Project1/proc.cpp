@@ -315,7 +315,7 @@ UINT WINAPI checkController2(UINT ptr, UINT code) {
 			{
 			case 0x78: //Hitoverride
 				newCode = 0xDD;
-
+				
 				break;
 
 
@@ -323,15 +323,14 @@ UINT WINAPI checkController2(UINT ptr, UINT code) {
 
 
 		}
-		
-
-
-
+	
 		return newCode;
 
 	}
 	else
 	{
+
+		
 		return code;
 	}
 
@@ -511,7 +510,7 @@ void modifyCode(HMODULE hmodule,UINT level) {
 	UINT startAdr = 0x00470378;
 	ret = VirtualProtect((LPVOID)startAdr, 16, 0x40, (PDWORD)0x004BE200);
 	ADRDATA(startAdr) = 0x04EEA3E9;
-	startAdr += 1;
+	startAdr += 4;
 	ADR_BYTE_DATA(startAdr) = 0;
 	//VirtualProtect((LPVOID)0x0047F767, 16, 0x40, (PDWORD)0x004BE200);
 	//VirtualProtect((LPVOID)0x0047F79D, 16, 0x40, (PDWORD)0x004BE200);
