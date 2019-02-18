@@ -18,7 +18,7 @@
 #define DEBUG2(info) MessageBoxA(NULL, info, info, MB_OK)
 #define setbit(x,y)  x|=(1<<y)
 #define clrbit(x,y)  x&=~(1<<y)
-#define IS_SELF(selfAdr,targetAdr) (selfAdr != NULL && ((ADRDATA(targetAdr + 0xBE8) != ADRDATA(selfAdr + 0xBE8))))  
+#define IS_NOT_SELF(selfAdr,targetAdr) (selfAdr != NULL && ((ADRDATA(targetAdr + 0xBE8) != ADRDATA(selfAdr + 0xBE8))))  
 
 /*
 #define CHAR_NAME "MysteriousKFM"
@@ -58,7 +58,7 @@ pOnctrl _onCtrl;
   0x004bEA08 : 控制器回调处理函数地址  
   0x004bEA0C : noko解除回调
   0x004BEA10: 动画回调
-  0x004BEA14: 512
+  0x004BEA14: 控制器回调处理函数地址2
 */
 
 
@@ -150,12 +150,12 @@ void forbidStateDefOverFlow() {
 
 	
 }
-//干涉对方控制器
+//干涉对方控制器 小于6E
 UINT WINAPI checkController(UINT ptr,UINT code) {
 	//函数偏移量: 0x0C: ctrlset; 0x08:lifeset; 0x09:lifeadd ; 0x34: hitadd; nothitby:0x15  Changeanim:0x16
 
 	
-	if (IS_SELF(myAddr, ptr)) {
+	if (IS_NOT_SELF(myAddr, ptr)) {
 
 		UINT flag = ADRDATA(VAR(CONTROLER_VAR, myAddr));
 		UINT newCode = code;
@@ -300,11 +300,47 @@ UINT WINAPI checkController(UINT ptr,UINT code) {
 		return code;
 	}
 }
+// 干涉对方控制器 大于6E
+UINT WINAPI checkController2(UINT ptr, UINT code) {
 
+	if (IS_NOT_SELF(myAddr, ptr)) {
+
+		UINT flag = ADRDATA(VAR(CONTROLER_VAR, myAddr));
+		UINT newCode = code;
+		UINT ishelper = ADRDATA(ptr + 28);
+
+		if (BIT_EXIST(flag, 11))
+		{
+			switch (code)
+			{
+			case 0x78: //Hitoverride
+				newCode = 0xDD;
+
+				break;
+
+
+			}
+
+
+		}
+		
+
+
+
+		return newCode;
+
+	}
+	else
+	{
+		return code;
+	}
+
+
+}
 //当身切换为Hitdef
 UINT WINAPI checkRever(UINT ptr, UINT code) {
 	
-	if (IS_SELF(myAddr, ptr))
+	if (IS_NOT_SELF(myAddr, ptr))
 	{
 		UINT flag = ADRDATA(VAR(CONTROLER_VAR, myAddr));
 		if (BIT_EXIST(flag, 6))
@@ -324,7 +360,7 @@ UINT WINAPI checkRever(UINT ptr, UINT code) {
 //修改对方动画号
 UINT WINAPI checkAnim(UINT ptr, UINT code) {
 
-	if (IS_SELF(myAddr, ptr))
+	if (IS_NOT_SELF(myAddr, ptr))
 	{
 		UINT flag = ADRDATA(VAR(CONTROLER_VAR, myAddr));
 		if (BIT_EXIST(flag, 9))
@@ -344,7 +380,7 @@ UINT WINAPI checkAnim(UINT ptr, UINT code) {
 
 UINT WINAPI checkParentVarSet(UINT ptr,UINT isParent) {
 
-	if (IS_SELF(myAddr, ptr))
+	if (IS_NOT_SELF(myAddr, ptr))
 	{
 
 		UINT ishelper = ADRDATA(ptr + 28);
@@ -440,7 +476,7 @@ void modifyCode(HMODULE hmodule,UINT level) {
 
 	//对方调用控制器函数入口： 0x0046E800, 跳转至 0x004BA100
 	//函数偏移量存在ebx中，地址值存在 0x00471644+EBX:  0x0C: ctrlset; 0x08:lifeset; 0x09:lifeadd ; 0x34: hitadd;nothitby:0x15
-		
+	
 	ADRDATA(0x004BEA08)= (UINT)GetProcAddress(hmodule, "checkController");
 	ptr = (PUINT)0x0046E854;
 	ret = VirtualProtect((LPVOID)0x0046E854, 16, 0x40, (PDWORD)0x004BE200);
@@ -470,9 +506,13 @@ void modifyCode(HMODULE hmodule,UINT level) {
 	ADR_BYTE_DATA(0x0046EA94)=0;
 	//*((PBYTE)0x0046EA94) = 0;
 
-	//512超越阻止
-	//ADRDATA(0x004BEA14) = (UINT)GetProcAddress(hmodule, "preCode");
-	//ret = VirtualProtect((LPVOID)0x0047F728, 16, 0x40, (PDWORD)0x004BE200);
+	//对方调用控制器函数回调2 
+	ADRDATA(0x004BEA14) = (UINT)GetProcAddress(hmodule, "checkController2");
+	UINT startAdr = 0x00470378;
+	ret = VirtualProtect((LPVOID)startAdr, 16, 0x40, (PDWORD)0x004BE200);
+	ADRDATA(startAdr) = 0x04EEA3E9;
+	startAdr += 1;
+	ADR_BYTE_DATA(startAdr) = 0;
 	//VirtualProtect((LPVOID)0x0047F767, 16, 0x40, (PDWORD)0x004BE200);
 	//VirtualProtect((LPVOID)0x0047F79D, 16, 0x40, (PDWORD)0x004BE200);
 	//ADRDATA(0x0047F728) = 0x03FAF3E9;
@@ -538,8 +578,8 @@ UINT WINAPI loadCodes(HMODULE hmodule) {
 	ReadCodeFile("rever.CEM", (char *)0x004BF100);
 	//切换动画回调代码
 	ReadCodeFile("anim.CEM", (char *)0x004BF200);
-	//
-	//ReadCodeFile("512.CEM", (char *)0x004BF220);
+	//控制器回调代码2
+	ReadCodeFile("contrl2.CEM", (char *)0x004BF220);
 
 	//ReadCodeFile("parentVar.CEM", (char *)0x004BF220);
 	
