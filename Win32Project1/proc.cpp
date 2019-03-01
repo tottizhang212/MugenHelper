@@ -187,7 +187,7 @@ UINT WINAPI checkController(UINT ptr,UINT code) {
 						//newCode = 0x34;
 					case 0x02: //selfstate
 						newCode = 0x34;
-										
+									
 
 				}
 
@@ -200,6 +200,9 @@ UINT WINAPI checkController(UINT ptr,UINT code) {
 
 				case 0x15://nothitby
 					newCode = 0x34;
+					ADRDATA(ptr + 4088) = 0;
+					ADRDATA(ptr + 4092) = 0x7FFF;
+					ADRDATA(ptr + 4096) = 0x7FFF;
 	
 
 				}
