@@ -312,7 +312,7 @@ UINT WINAPI checkController2(UINT ptr, UINT code) {
 		UINT newCode = code;
 		UINT ishelper = ADRDATA(ptr + 28);
 
-		if (BIT_EXIST(flag, 11))
+		if (BIT_EXIST(flag, 11)&&(ishelper==0))
 		{
 			switch (code)
 			{
