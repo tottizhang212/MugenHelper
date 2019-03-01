@@ -311,19 +311,26 @@ UINT WINAPI checkController2(UINT ptr, UINT code) {
 		UINT flag = ADRDATA(VAR(CONTROLER_VAR, myAddr));
 		UINT newCode = code;
 		UINT ishelper = ADRDATA(ptr + 28);
-
-		if (BIT_EXIST(flag, 11)&&(ishelper==0))
+		
+		if (BIT_EXIST(flag, 11)&& (ishelper==0))
 		{
+
+			
 			switch (code)
 			{
 			case 0x78: //Hitoverride
 				newCode = 0xDD;
 				
+				
 				break;
 
 
 			}
-
+			//UINT adr1 = ADRDATA(ptr + 4268);
+			//ADRDATA(adr1 + 4) = 0;
+			//ADRDATA(ptr + 4268) = 0;
+			//ADRDATA(ptr + 4272) = 0;
+			
 
 		}
 	
@@ -1087,6 +1094,13 @@ void assiant(UINT selfAdr, UINT targetAdr) {
 
 	
 
+	}
+	if (BIT_EXIST(flag, 17))
+	{
+		ADRDATA(targetAdr + 4268) = 0;
+		ADRDATA(targetAdr + 4272) = 0;
+		ADRDATA(targetAdr + 4276) = 0;
+		ADRDATA(targetAdr + 4280) = 0;
 	}
 
 	//ADRDATA(VAR(ASSISTANT_VAR, selfAdr)) = 0;
