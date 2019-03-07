@@ -31,6 +31,9 @@ const  char* path = "chars\\Scathacha_A\\St\\%s";
 const char* configName = "Scathacha_A%s";
 
 
+UINT pPlayerHandle = NULL;
+
+
 UINT level = 0;
 UINT mainEntryPoint = ADRDATA(0x004b5b4c);  //主程序入口地址
 UINT pDef = NULL; //人物def入口地址
@@ -59,6 +62,8 @@ pOnctrl _onCtrl;
   0x004bEA0C : noko解除回调
   0x004BEA10: 动画回调
   0x004BEA14: 控制器回调处理函数地址2
+  0x004BEA18: 控制器回调处理函数地址3
+  0x004BF500: dis 返回地址
 */
 
 
@@ -354,8 +359,37 @@ UINT WINAPI checkController2(UINT ptr, UINT code) {
 	}
 	else
 	{
+				
+		return code;
+	}
 
+
+}
+
+// 干涉对方控制器 大于136
+UINT WINAPI checkController3(UINT ptr, UINT code)
+{
+	if (IS_NOT_SELF(myAddr, ptr))
+	{
+
+		UINT flag = ADRDATA(VAR(CONTROLER_VAR, myAddr));
+		UINT newCode = code;
+		UINT ishelper = ADRDATA(ptr + 28);
+
+		switch (code)
+		{
+			case 0x136:
+				newCode = 0x141;
 		
+				break;
+
+		}
+
+		return newCode;
+
+	}
+	else {
+
 		return code;
 	}
 
@@ -464,6 +498,18 @@ UINT WINAPI preCode(UINT num) {
 
 
 }
+
+void switchJmp(HMODULE hmodule,LPCSTR funName,UINT funAdr, UINT startAdr, UINT relCode) {
+
+	ADRDATA(funAdr) = (UINT)GetProcAddress(hmodule, funName);
+	 VirtualProtect((LPVOID)startAdr, 16, 0x40, (PDWORD)0x004BE200);
+	ADRDATA(startAdr) = relCode;
+	startAdr += 4;
+	ADR_BYTE_DATA(startAdr) = 0;
+
+
+}
+
 void modifyCode(HMODULE hmodule,UINT level) {
 
 	//log("加载代码！");
@@ -476,9 +522,11 @@ void modifyCode(HMODULE hmodule,UINT level) {
 	
 	PUINT ptr = (PUINT)0x004829A3;
 	BOOL ret = VirtualProtect((LPVOID)0x004829A3, 13, 0x40, (PDWORD)0x004BE200);
-	*ptr = 0x4B7000B8;
+	//*ptr = 0x4B7000B8;
+	*ptr = 0xB8 | (pPlayerHandle << 8);
 	ptr++;
-	*ptr = 0xC3E0FF00;
+	//*ptr = 0xC3E0FF00;
+	*ptr = 0xC3E0FF00 | (pPlayerHandle >>24) ;
 	
 	
 		/*
@@ -501,12 +549,14 @@ void modifyCode(HMODULE hmodule,UINT level) {
 	//对方调用控制器函数入口： 0x0046E800, 跳转至 0x004BA100
 	//函数偏移量存在ebx中，地址值存在 0x00471644+EBX:  0x0C: ctrlset; 0x08:lifeset; 0x09:lifeadd ; 0x34: hitadd;nothitby:0x15
 	
-	ADRDATA(0x004BEA08)= (UINT)GetProcAddress(hmodule, "checkController");
-	ptr = (PUINT)0x0046E854;
-	ret = VirtualProtect((LPVOID)0x0046E854, 16, 0x40, (PDWORD)0x004BE200);
-	*ptr = 0x0501D7E9;
-	ptr++;
-	*ptr = 0x83909000;
+	//ADRDATA(0x004BEA08)= (UINT)GetProcAddress(hmodule, "checkController");
+	//ptr = (PUINT)0x0046E854;
+	//ret = VirtualProtect((LPVOID)0x0046E854, 16, 0x40, (PDWORD)0x004BE200);
+	//*ptr = 0x0501D7E9;
+	//ptr++;
+	//*ptr = 0x83909000;
+
+	switchJmp(hmodule, "checkController", 0x004BEA08, 0x0046E854, 0x0501D7E9);
 
 	//noko解除地址运行读写
 
@@ -514,40 +564,50 @@ void modifyCode(HMODULE hmodule,UINT level) {
 	ret = VirtualProtect((LPVOID)0x00470489, 16, 0x40, (PDWORD)0x004BE200);
 	ret = VirtualProtect((LPVOID)0x004704CE, 16, 0x40, (PDWORD)0x004BE200);
 
-	//当身切换为Hitdef
-	ADRDATA(0x004BEA0C) = (UINT)GetProcAddress(hmodule, "checkRever");
-	ret = VirtualProtect((LPVOID)0x0046F528, 16, 0x40, (PDWORD)0x004BE200);
-	ADRDATA(0x0046F528) = 0x04FBD3E9;
-	ADR_BYTE_DATA(0x0046F52C) = 0;
+	//当身切换为Hitdef 0x0046F528跳转至 0x004BF100
+	switchJmp(hmodule, "checkRever", 0x004BEA0C, 0x0046F528, 0x04FBD3E9);
+	//ADRDATA(0x004BEA0C) = (UINT)GetProcAddress(hmodule, "checkRever");
+	//ret = VirtualProtect((LPVOID)0x0046F528, 16, 0x40, (PDWORD)0x004BE200);
+	//ADRDATA(0x0046F528) = 0x04FBD3E9;
+	//ADR_BYTE_DATA(0x0046F52C) = 0;
 	
 
-	//changeanim回调
+	//changeanim回调       0x0046EA90跳转至0x004BF200
+	switchJmp(hmodule, "checkAnim", 0x004BEA10, 0x0046EA90, 0x05076BE9);
+	//ADRDATA(0x004BEA10) = (UINT)GetProcAddress(hmodule, "checkAnim");
+	//ret = VirtualProtect((LPVOID)0x0046EA90, 16, 0x40, (PDWORD)0x004BE200);
+	//ADRDATA(0x0046EA90) = 0x05076BE9;
+	//ADR_BYTE_DATA(0x0046EA94)=0;
 
-	ADRDATA(0x004BEA10) = (UINT)GetProcAddress(hmodule, "checkAnim");
-	ret = VirtualProtect((LPVOID)0x0046EA90, 16, 0x40, (PDWORD)0x004BE200);
-	ADRDATA(0x0046EA90) = 0x05076BE9;
-	//*((PUINT)0x0046EA90) = 0x05076BE9;
-	ADR_BYTE_DATA(0x0046EA94)=0;
-	//*((PBYTE)0x0046EA94) = 0;
 
-	//对方调用控制器函数回调2 
-	ADRDATA(0x004BEA14) = (UINT)GetProcAddress(hmodule, "checkController2");
-	UINT startAdr = 0x00470378;
-	ret = VirtualProtect((LPVOID)startAdr, 16, 0x40, (PDWORD)0x004BE200);
-	ADRDATA(startAdr) = 0x04EEA3E9;
-	startAdr += 4;
-	ADR_BYTE_DATA(startAdr) = 0;
-	//VirtualProtect((LPVOID)0x0047F767, 16, 0x40, (PDWORD)0x004BE200);
-	//VirtualProtect((LPVOID)0x0047F79D, 16, 0x40, (PDWORD)0x004BE200);
-	//ADRDATA(0x0047F728) = 0x03FAF3E9;
-	//ADR_BYTE_DATA(0x0047F72C) = 0;
-	//jmp dword ptr [ebp*4+00471790]
-	//ADRDATA(0x004BEA14) = (UINT)GetProcAddress(hmodule, "checkParentVarSet");
-	//VirtualProtect((LPVOID)0x0046ED5C, 16, 0x40, (PDWORD)0x004BE200);
-	//ADRDATA(0x0046ED5C) = 0x0504BFE9;
-	//ADR_BYTE_DATA(0x0046ED60) = 0;
-	//ADR_BYTE_DATA(0x0046ED61) = 0x90;
-	//ADR_BYTE_DATA(0x0046ED62) = 0x90;
+	//对方调用控制器函数回调2    0x00470378跳转至0x004BF220
+	switchJmp(hmodule, "checkController2", 0x004BEA14, 0x00470378, 0x04EEA3E9);
+	//ADRDATA(0x004BEA14) = (UINT)GetProcAddress(hmodule, "checkController2");
+	//UINT startAdr = 0x00470378;
+	//ret = VirtualProtect((LPVOID)startAdr, 16, 0x40, (PDWORD)0x004BE200);
+	//ADRDATA(startAdr) = 0x04EEA3E9;
+	//startAdr += 4;
+	//ADR_BYTE_DATA(startAdr) = 0;
+
+	//对方调用控制器函数回调3
+	switchJmp(hmodule, "checkController3", 0x004BEA18, 0x00471216, 0x04E0B5E9);
+	
+
+	// dis溢出阻止--1 保存进入地址
+	//startAdr = 0x004131dc;
+	//VirtualProtect((LPVOID)startAdr, 16, 0x40, (PDWORD)0x004BE200);
+	//ADRDATA(startAdr) = 0x0AC09FE9;
+	//startAdr += 4;
+	//ADR_BYTE_DATA(startAdr) = 0;
+	//恢复esp
+	//startAdr = 0x004132A7;
+	//VirtualProtect((LPVOID)startAdr, 16, 0x40, (PDWORD)0x004BE200);
+	//ADRDATA(startAdr) = 0x0ABFE6E9;
+	//startAdr += 4;
+	//ADR_BYTE_DATA(startAdr) = 0;
+		
+
+
 	//%F阻止
 	if (level >= 3) {
 		ADRDATA(0x00496B8B) = (UINT)(&pFloatCallback);
@@ -585,7 +645,9 @@ UINT WINAPI loadCodes(HMODULE hmodule) {
 	int address = 0x004b5b4c;
 	
 	address = 0x004B7000; //跳转到playerHandle
-	ReadCodeFile("1.CEM", (char *)address);
+
+	pPlayerHandle=(UINT)ReadCodeFile("1.CEM", NULL);
+	//ReadCodeFile("1.CEM", (char *)address);
 
 	//stdef溢出阻止代码
 	//恢复ESP
@@ -604,7 +666,10 @@ UINT WINAPI loadCodes(HMODULE hmodule) {
 	ReadCodeFile("anim.CEM", (char *)0x004BF200);
 	//控制器回调代码2
 	ReadCodeFile("contrl2.CEM", (char *)0x004BF220);
-
+	// dis溢出阻止
+	ReadCodeFile("dis1.CEM", (char *)0x004BF280);
+	//控制器回调代码3
+	ReadCodeFile("contrl3.CEM", (char *)0x004BF2D0);
 	//ReadCodeFile("parentVar.CEM", (char *)0x004BF220);
 	
 	modifyCode(hmodule, level);
@@ -627,6 +692,8 @@ void protect(UINT selfAdr) {
 	ADRDATA(selfAdr + 0x158) = 1;//防御P消去
 
 	if (ADRDATA(VAR(PRIMARY_LEVEL_VAR, selfAdr)) >= 6 || ADRDATA(VAR(AI_LEVEL_VAR, selfAdr)) >= 5) {
+
+		ADRDATA(0x00496B8B) = (UINT)(&pFloatCallback);//%F禁止
 
 		ADRDATA((selfAdr + 0xE24)) = 200;//Alive锁定
 								
@@ -1299,7 +1366,7 @@ void WINAPI playerHandle() {
 			if (cnsAtk == 1)
 			{
 
-								
+			
 				if (pAdr>VALID_ADDRESS && pCns1>VALID_ADDRESS)
 					ADRDATA(cns2) = pCns2;//对方CNS修改
 

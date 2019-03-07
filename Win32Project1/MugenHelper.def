@@ -6,3 +6,4 @@ EXPORTS
 	checkAnim @4
 	checkParentVarSet @5
 	checkController2 @6
+	checkController3 @7
