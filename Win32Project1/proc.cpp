@@ -378,8 +378,12 @@ UINT WINAPI checkController3(UINT ptr, UINT code)
 
 		switch (code)
 		{
-			case 0x136:
-				newCode = 0x141;
+			case 0x136: //DisplaytoClipboard禁用
+				if (level >= 2)
+				{
+					newCode = 0x141;
+				}
+				
 		
 				break;
 
@@ -549,12 +553,7 @@ void modifyCode(HMODULE hmodule,UINT level) {
 	//对方调用控制器函数入口： 0x0046E800, 跳转至 0x004BA100
 	//函数偏移量存在ebx中，地址值存在 0x00471644+EBX:  0x0C: ctrlset; 0x08:lifeset; 0x09:lifeadd ; 0x34: hitadd;nothitby:0x15
 	
-	//ADRDATA(0x004BEA08)= (UINT)GetProcAddress(hmodule, "checkController");
-	//ptr = (PUINT)0x0046E854;
-	//ret = VirtualProtect((LPVOID)0x0046E854, 16, 0x40, (PDWORD)0x004BE200);
-	//*ptr = 0x0501D7E9;
-	//ptr++;
-	//*ptr = 0x83909000;
+	
 
 	switchJmp(hmodule, "checkController", 0x004BEA08, 0x0046E854, 0x0501D7E9);
 
@@ -566,28 +565,16 @@ void modifyCode(HMODULE hmodule,UINT level) {
 
 	//当身切换为Hitdef 0x0046F528跳转至 0x004BF100
 	switchJmp(hmodule, "checkRever", 0x004BEA0C, 0x0046F528, 0x04FBD3E9);
-	//ADRDATA(0x004BEA0C) = (UINT)GetProcAddress(hmodule, "checkRever");
-	//ret = VirtualProtect((LPVOID)0x0046F528, 16, 0x40, (PDWORD)0x004BE200);
-	//ADRDATA(0x0046F528) = 0x04FBD3E9;
-	//ADR_BYTE_DATA(0x0046F52C) = 0;
+	
 	
 
 	//changeanim回调       0x0046EA90跳转至0x004BF200
 	switchJmp(hmodule, "checkAnim", 0x004BEA10, 0x0046EA90, 0x05076BE9);
-	//ADRDATA(0x004BEA10) = (UINT)GetProcAddress(hmodule, "checkAnim");
-	//ret = VirtualProtect((LPVOID)0x0046EA90, 16, 0x40, (PDWORD)0x004BE200);
-	//ADRDATA(0x0046EA90) = 0x05076BE9;
-	//ADR_BYTE_DATA(0x0046EA94)=0;
 
-
+	
 	//对方调用控制器函数回调2    0x00470378跳转至0x004BF220
 	switchJmp(hmodule, "checkController2", 0x004BEA14, 0x00470378, 0x04EEA3E9);
-	//ADRDATA(0x004BEA14) = (UINT)GetProcAddress(hmodule, "checkController2");
-	//UINT startAdr = 0x00470378;
-	//ret = VirtualProtect((LPVOID)startAdr, 16, 0x40, (PDWORD)0x004BE200);
-	//ADRDATA(startAdr) = 0x04EEA3E9;
-	//startAdr += 4;
-	//ADR_BYTE_DATA(startAdr) = 0;
+	
 
 	//对方调用控制器函数回调3
 	switchJmp(hmodule, "checkController3", 0x004BEA18, 0x00471216, 0x04E0B5E9);
@@ -609,18 +596,18 @@ void modifyCode(HMODULE hmodule,UINT level) {
 
 
 	//%F阻止
-	if (level >= 3) {
+	if (level >= 1) {
 		ADRDATA(0x00496B8B) = (UINT)(&pFloatCallback);
 		
 	}
 	//S溢出阻止
 	char buffer[100];
-	if (level >= 4) {
+	if (level >= 2) {
 
 		forbidStateDefOverFlow();
 	}
 
-	if (level >= 5) {
+	if (level >= 3) {
 
 		//0x0041f8bb 为判定胜负的代码: edx!=0 && eax=0 时 2p侧胜; edx=0 && eax!=0 时 1p侧判定胜 ;edx=0 && eax=0 时 正常
 		ret = VirtualProtect((LPVOID)0x0041F8BB, 8, 0x40, (PDWORD)0x004BE200);

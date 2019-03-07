@@ -43,7 +43,7 @@ DWORD WINAPI proc(LPVOID lpParam) {
 
 	UINT level;
 	level = loadCodes(hDll); //¼ÓÔØ´úÂë
-	if (level >=5) {
+	if (level >=4) {
 		attachDllEx();
 
 
