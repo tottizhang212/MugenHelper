@@ -18,7 +18,7 @@
 #define DEBUG2(info) MessageBoxA(NULL, info, info, MB_OK)
 #define setbit(x,y)  x|=(1<<y)
 #define clrbit(x,y)  x&=~(1<<y)
-#define IS_NOT_SELF(selfAdr,targetAdr) (selfAdr != NULL && ((ADRDATA(targetAdr + 0xBE8) != ADRDATA(selfAdr + 0xBE8))))  
+#define IS_NOT_SELF(selfAdr,targetAdr) ((selfAdr != NULL &&targetAdr!=NULL) && ((ADRDATA(targetAdr + 0xBE8) != ADRDATA(selfAdr + 0xBE8))))  
 
 /*
 #define CHAR_NAME "MysteriousKFM"
@@ -317,6 +317,7 @@ UINT WINAPI checkController2(UINT ptr, UINT code) {
 		UINT newCode = code;
 		UINT ishelper = ADRDATA(ptr + 28);
 		
+		
 		if (BIT_EXIST(flag, 11)&& (ishelper==0))
 		{
 
@@ -369,6 +370,7 @@ UINT WINAPI checkController2(UINT ptr, UINT code) {
 // 干涉对方控制器 大于136
 UINT WINAPI checkController3(UINT ptr, UINT code)
 {
+	
 	if (IS_NOT_SELF(myAddr, ptr))
 	{
 
@@ -457,51 +459,7 @@ UINT WINAPI checkParentVarSet(UINT ptr,UINT isParent) {
 	return isParent;
 
 }
-UINT WINAPI preCode(UINT num) {
-	if (num > 3580) {
-		
-		ADR_BYTE_DATA(0x0047F767) = 0x90;
-		ADR_BYTE_DATA(0x0047F768) = 0x90;
 
-		ADR_BYTE_DATA(0x0047F76B) = 0x90;
-		ADR_BYTE_DATA(0x0047F76C) = 0x90;
-		ADR_BYTE_DATA(0x0047F76D) = 0x90;
-
-
-
-		ADR_BYTE_DATA(0x0047F79D) = 0x90;
-		ADR_BYTE_DATA(0x0047F79E) = 0x90;
-
-		ADR_BYTE_DATA(0x0047F7A1) = 0x90;
-		ADR_BYTE_DATA(0x0047F7A2) = 0x90;
-		ADR_BYTE_DATA(0x0047F7A3) = 0x90;
-		
-	}
-	else {
-
-		ADR_BYTE_DATA(0x0047F767) = 0x88;
-		ADR_BYTE_DATA(0x0047F768) = 0x0B;
-
-		ADR_BYTE_DATA(0x0047F76B) = 0xC6;
-		ADR_BYTE_DATA(0x0047F76C) = 0x03;
-		ADR_BYTE_DATA(0x0047F76D) = 0x01;
-			
-			
-		ADR_BYTE_DATA(0x0047F79D) = 0x88;
-		ADR_BYTE_DATA(0x0047F79E) = 0x03;
-
-		ADR_BYTE_DATA(0x0047F7A1) = 0xc6;
-		ADR_BYTE_DATA(0x0047F7A2) = 0x03;
-		ADR_BYTE_DATA(0x0047F7A3) = 0x00;
-			
-
-	}
-	return 0;
-
-
-
-
-}
 
 void switchJmp(HMODULE hmodule,LPCSTR funName,UINT funAdr, UINT startAdr, UINT relCode) {
 
@@ -529,23 +487,15 @@ void modifyCode(HMODULE hmodule,UINT level) {
 	//*ptr = 0x4B7000B8;
 	*ptr = 0xB8 | (pPlayerHandle << 8);
 	ptr++;
-	//*ptr = 0xC3E0FF00;
+	
 	*ptr = 0xC3E0FF00 | (pPlayerHandle >>24) ;
 	
 	
-		/*
-	
-	PUINT ptr = (PUINT)0x0041F807;
-	BOOL ret = VirtualProtect((LPVOID)0x0041F807, 13, 0x40, (PDWORD)0x004BE200);
-	*ptr = 0x4B7000BB;
-	ptr++;
-	*ptr = 0x00E3FF00;
-	
-	*/
+		
 
 	// %n无效化---将0x00496CB6处的 mov [eax],ecx改为 mov ecx,ecx,让写入内存无效！
 	 ret = VirtualProtect((LPVOID)0x00496CB6, 8, 0x40, (PDWORD)0x004BE200);
-	//ADRDATA(0x00496CB6) = 0x45C7C989;
+
 	
 	//%F无效化-----将 call [0x0048e848] 改为 call pFloatCallback的地址，对方再修改0x0048e848就没有作用了!
 	ret = VirtualProtect((LPVOID)0x00496B8B, 8, 0x40, (PDWORD)0x004BE200);
