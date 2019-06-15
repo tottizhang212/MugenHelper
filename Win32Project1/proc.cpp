@@ -371,7 +371,7 @@ UINT WINAPI checkController2(UINT ptr, UINT code) {
 UINT WINAPI checkController3(UINT ptr, UINT code)
 {
 	
-	if (IS_NOT_SELF(myAddr, ptr))
+	if ((ptr!=NULL) && (IS_NOT_SELF(myAddr, ptr)))
 	{
 
 		UINT flag = ADRDATA(VAR(CONTROLER_VAR, myAddr));
