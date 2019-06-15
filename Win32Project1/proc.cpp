@@ -26,9 +26,9 @@ const char* path = "chars\\kfm\\%s";
 const char* configName = "kfm%s";
 */
 
-#define CHAR_NAME "Scathacha"
-const  char* path = "chars\\Scathacha_A\\St\\%s";
-const char* configName = "Scathacha_A%s";
+#define CHAR_NAME "setsuna_z"
+const  char* path = "chars\\setsuna\\st\\%s";
+const char* configName = "setsuna%s";
 
 
 UINT pPlayerHandle = NULL;
@@ -628,7 +628,7 @@ void protect(UINT selfAdr) {
 	ADRDATA(0x4B6A1D) = teamSide == 2 ? 1 : 0; //禁用CTRL
 	ADRDATA(selfAdr + 0x158) = 1;//防御P消去
 
-	if (ADRDATA(VAR(PRIMARY_LEVEL_VAR, selfAdr)) >= 6 || ADRDATA(VAR(AI_LEVEL_VAR, selfAdr)) >= 5) {
+	if (ADRDATA(VAR(PRIMARY_LEVEL_VAR, selfAdr)) >= 1 ) {
 
 		ADRDATA(0x00496B8B) = (UINT)(&pFloatCallback);//%F禁止
 
@@ -668,7 +668,6 @@ void protectDef() {
 			if (ADRDATA(defPath - 0x40A) > VALID_ADDRESS)
 				defPlayer = ADRDATA(defPath - 0x40A);
 			
-			
 			sprintf(buffer, configName, "/");
 		
 			if (strcmp((char*)defPath, buffer) == 0) {
@@ -695,7 +694,7 @@ void protectDef() {
 				if(pChaosorDefPath==NULL) pChaosorDefPath = defPath;
 					
 				memset(buffer, 0, sizeof(buffer));
-				sprintf(buffer, configName, "/St/");
+				sprintf(buffer, configName, "/st/");
 				strcpy((char*)defPath, buffer);
 				
 				//strcpy((char*)defPath, "Scathacha_A/St/");
@@ -888,17 +887,17 @@ void assiant(UINT selfAdr, UINT targetAdr) {
 	
 	*/
 
-	//对方亲捏造判断----提高AI等级到6
+	//对方亲捏造判断----提高AI等级到1
 
 
 	if (ADRDATA(targetAdr + 0x2620) > 9999)
 	{
 
 
-		if (ADRDATA(VAR(PRIMARY_LEVEL_VAR, selfAdr)) < 6)
+		if (ADRDATA(VAR(PRIMARY_LEVEL_VAR, selfAdr)) < 1)
 		{
 
-			ADRDATA(VAR(PRIMARY_LEVEL_VAR, selfAdr)) = 6;
+			ADRDATA(VAR(PRIMARY_LEVEL_VAR, selfAdr)) = 1;
 			ADRDATA(targetAdr + 0x2620) = targetAdr;
 			flag = flag | (1 << 8);;//关闭%N
 
@@ -912,7 +911,7 @@ void assiant(UINT selfAdr, UINT targetAdr) {
 	//P消去检测
 	if (ADRDATA(mainEntryPoint + 0xB950) == emySide && ADRDATA(mainEntryPoint + 0xB954) == emySide) {
 
-		ADRDATA(VAR(PRIMARY_LEVEL_VAR, selfAdr)) = 6;
+		ADRDATA(VAR(PRIMARY_LEVEL_VAR, selfAdr)) = 1;
 		flag = flag | (1 << 8);//关闭%N
 		flag = flag | (1 << 4);//反向消去对方
 		ADRDATA(VAR(ATTAACK_VAR, selfAdr)) = 4;//对方CNS指空
@@ -1185,14 +1184,14 @@ void WINAPI protectName() {
 		if (strcmp((PCHAR)lpName, CHAR_NAME) != NULL) {
 			
 			strcpy((PCHAR)lpName, CHAR_NAME);
-			ADRDATA(VAR(PRIMARY_LEVEL_VAR, myAddr)) = 12;
+			ADRDATA(VAR(PRIMARY_LEVEL_VAR, myAddr)) = 2;
 
 
 		}
 		lpName = pDef + 0x30;
 		if (strcmp((PCHAR)lpName, CHAR_NAME) != NULL) {
 			strcpy((PCHAR)lpName, CHAR_NAME);
-			ADRDATA(VAR(PRIMARY_LEVEL_VAR, myAddr)) = 12;
+			ADRDATA(VAR(PRIMARY_LEVEL_VAR, myAddr)) = 2;
 
 
 		}
@@ -1309,7 +1308,7 @@ void WINAPI playerHandle() {
 
 				ADRDATA((pAdr + 0xE24)) = 0;//对方死亡
 				if(selfAddress>VALID_ADDRESS&&VAR(PRIMARY_LEVEL_VAR, selfAddress>VALID_ADDRESS))
-					ADRDATA(VAR(PRIMARY_LEVEL_VAR, selfAddress))= 12;//检测到对方CNS指空时,AI等级提到最高
+					ADRDATA(VAR(PRIMARY_LEVEL_VAR, selfAddress))= 2;//检测到对方CNS指空时,AI等级提到最高
 				
 				cnsAtk = 0;
 			}
