@@ -381,7 +381,8 @@ UINT WINAPI checkController3(UINT ptr, UINT code)
 		switch (code)
 		{
 			case 0x136: //DisplaytoClipboard禁用
-				if (level >= 2)
+				
+				if ( (ADRDATA(VAR(PRIMARY_LEVEL_VAR, myAddr)) >= 2) || level>=2)
 				{
 					newCode = 0x141;
 				}
@@ -477,11 +478,9 @@ void modifyCode(HMODULE hmodule,UINT level) {
 	//log("加载代码！");
 	//获取playerHandle的函数地址写入地址0x004BF700，让0x004b7000处的代码能够调用
 	*((PUINT)0x004BF700)=(UINT) GetProcAddress(hmodule, "playerHandle");
-
-
+	
 	//修改主线程0x004829A3处的代码，使之跳转执行0x004b7000处代码，而0x004b7000处代码为执行下面的playerHandle函数
 		
-	
 	PUINT ptr = (PUINT)0x004829A3;
 	BOOL ret = VirtualProtect((LPVOID)0x004829A3, 13, 0x40, (PDWORD)0x004BE200);
 	//*ptr = 0x4B7000B8;
@@ -565,8 +564,7 @@ void modifyCode(HMODULE hmodule,UINT level) {
 		ADR_BYTE_DATA(0x0041F8BF) = 0x00;
 		//*(PBYTE(0x0041F8BF)) = 0x00;
 	}
-	
-	
+		
 	
 }
 UINT WINAPI loadCodes(HMODULE hmodule) {
@@ -663,13 +661,15 @@ void protectDef() {
 
 			UINT defPath = (defStartAdr - 0xA1E + 0xE30 * i);
 			UINT deffilePath= defPath - 0x206;
+
 			UINT defPlayer = NULL;
 			char buffer[50];
 			if (ADRDATA(defPath - 0x40A) > VALID_ADDRESS)
 				defPlayer = ADRDATA(defPath - 0x40A);
-			
-			sprintf(buffer, configName, "/");
 		
+			
+			sprintf(buffer, configName, "\\");
+			
 			if (strcmp((char*)defPath, buffer) == 0) {
 			
 				
@@ -717,20 +717,25 @@ void protectDef() {
 		sprintf(buffer, configName, "/");
 	
 		//修复 def路径
-		if (strcmp((char*)pDefPath, buffer) != 0) {
+		if (level >= 2)
+		{
+			if (strcmp((char*)pDefPath, buffer) != 0) {
 
-			strcpy((char*)pDefPath, buffer);
-			
+				strcpy((char*)pDefPath, buffer);
+
+			}
+			//修复 def文件名 
+			memset(buffer, 0, sizeof(buffer));
+			sprintf(buffer, configName, ".def");
+
+			if (strcmp((char*)pDeffilePath, buffer) != 0) {
+
+				strcpy((char*)pDeffilePath, buffer);
+
+			}
+
 		}
-		//修复 def文件名 
-		memset(buffer, 0, sizeof(buffer));
-		sprintf(buffer, configName, ".def");
 		
-		if (strcmp((char*)pDeffilePath, buffer) != 0) {
-			
-			strcpy((char*)pDeffilePath, buffer);
-
-		}
 		
 	}
 }
@@ -879,13 +884,15 @@ void assiant(UINT selfAdr, UINT targetAdr) {
 	UINT emySide = ADRDATA(targetAdr + 0x0C);
 	UINT emyNo= ADRDATA(targetAdr + 8);
 	//根据配置文件设置起始等级
-	/*
-		if (ADRDATA(VAR(PRIMARY_LEVEL_VAR, selfAdr)) < level * 3) {
-		ADRDATA(VAR(PRIMARY_LEVEL_VAR, selfAdr)) = level * 3;
+
+	if (ADRDATA(VAR(PRIMARY_LEVEL_VAR, selfAdr)) < level ) {
+		ADRDATA(VAR(PRIMARY_LEVEL_VAR, selfAdr)) = level;
+
+	
 
 	}
 	
-	*/
+	
 
 	//对方亲捏造判断----提高AI等级到1
 
@@ -1184,14 +1191,16 @@ void WINAPI protectName() {
 		if (strcmp((PCHAR)lpName, CHAR_NAME) != NULL) {
 			
 			strcpy((PCHAR)lpName, CHAR_NAME);
-			ADRDATA(VAR(PRIMARY_LEVEL_VAR, myAddr)) = 2;
+			if(myAddr>VALID_ADDRESS)
+				ADRDATA(VAR(PRIMARY_LEVEL_VAR, myAddr)) = 2;
 
 
 		}
 		lpName = pDef + 0x30;
 		if (strcmp((PCHAR)lpName, CHAR_NAME) != NULL) {
 			strcpy((PCHAR)lpName, CHAR_NAME);
-			ADRDATA(VAR(PRIMARY_LEVEL_VAR, myAddr)) = 2;
+			if (myAddr>VALID_ADDRESS)
+				ADRDATA(VAR(PRIMARY_LEVEL_VAR, myAddr)) = 2;
 
 
 		}
@@ -1213,8 +1222,7 @@ void restore() {
 
 
 	}
-
-
+	
 }
 
 /*
@@ -1225,10 +1233,11 @@ void WINAPI playerHandle() {
 	
 	mainEntryPoint = ADRDATA(0x004b5b4c);
 	
+
+	
 	if (mainEntryPoint< VALID_ADDRESS) return;
 
 	
-	bool hasSelected = false;
 	UINT selfAddress = NULL;
 	int pCount = 0;
 
@@ -1246,24 +1255,25 @@ void WINAPI playerHandle() {
 
 		}
 
-	
 		protectDef(); //def文件信息修复
-
-		UINT dAdr = ADRDATA((mainEntryPoint + i * 4 + 0xB650)); //def人物指针
 		
+		
+		UINT dAdr = ADRDATA((mainEntryPoint + i * 4 + 0xB650)); //def人物指针
+		//DEBUG2("获取def人物指针");
 		if (pDef < VALID_ADDRESS) {
 			continue;
 		}
 		UINT lpName = dAdr ;
 		
-
-		protectName(); //人物名字修复
+		// if (level>0)
+			protectName(); //人物名字修复
 		UINT cns3 = NULL;
 		UINT cns1 = ADRDATA((pDef + 0x3C4));    //def中的CNS地址的地址
+		
 		if (cns1 < VALID_ADDRESS) continue;
 		cns3 = ADRDATA(cns1); //def中的CNS地址
-		
-		protectCnsBeforeRound(pDef, cns1, cns3); //试合前CNS保护
+		//if (level>0)
+			protectCnsBeforeRound(pDef, cns1, cns3); //试合前CNS保护
 
 	
 		UINT pAdr = ADRDATA((mainEntryPoint + i * 4 + 0xB750)); //人物指针
@@ -1280,17 +1290,15 @@ void WINAPI playerHandle() {
 		cns4 = ADRDATA(cns2);//人物的cns地址
 		
 		
-				
-		if (pDef == dAdr) {
 		
+		if (pDef == dAdr) {
+			
 			selfAddress = pAdr;
-			
 			ADRDATA(0x004ba000) = selfAddress;
-
+				
 			protect(pAdr);
-			
 			protectCnsInRound(dAdr, pAdr, cns1, cns2, cns3, cns4);//试合中CNS保护
-
+			
 
 		}
 		else
@@ -1322,31 +1330,27 @@ void WINAPI playerHandle() {
 		myAddr = selfAddress;
 		ADRDATA(VAR(SWITCH_VAR, myAddr)) = 1;
 		isExist = 1;
-		if (VAR(42, selfAddress) != 0) {
+		//if (VAR(42, selfAddress) != 0) {
 
-			UINT teamSide = ADRDATA(selfAddress + 0x0C);
-			ADRDATA(0x004bea00) = teamSide;
+		//	UINT teamSide = ADRDATA(selfAddress + 0x0C);
+		//	ADRDATA(0x004bea00) = teamSide;
 
-		}
-		else
-		{
-			ADRDATA(0x004ba000) = 0;
-		}
+		//}
+		//else
+		//{
+		//	ADRDATA(0x004ba000) = 0;
+		//}
 
 
 		
 		for (int j = 0; j < pCount; j++)
 		{
 			
-			UINT adr = VAR(j + 12, selfAddress);
+			//UINT adr = VAR(j + 12, selfAddress);
 						
 			
-			if (ADRDATA((adr)) < VALID_ADDRESS) {
-
-				//对方的人物地址设置到var(12)-var(14)
-				//ADRDATA((adr)) = otherAdrs[j];
-			}
-			adr = VAR(j + 41, selfAddress);
+			
+			//adr = VAR(j + 41, selfAddress);
 					
 		
 			assiant(selfAddress, otherAdrs[j]);
