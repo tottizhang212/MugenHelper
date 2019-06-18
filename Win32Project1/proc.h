@@ -10,11 +10,11 @@ const UINT SWITCH_VAR = 2;//隔离标志
 const UINT PRIMARY_LEVEL_VAR = 18; //基本隔离等级
 //const UINT AI_LEVEL_VAR = 56; //强化AI等级
 const UINT TARGET_HELPER_VAR = 25;//记录永续Helper的ID
-const UINT ATTAACK_VAR = 22;  //隔离攻击用控制变量
+const UINT ATTAACK_VAR = 28;  //隔离攻击用控制变量
 const UINT ASSISTANT_VAR = 39; //隔离辅助用控制变量
 const UINT CONTROLER_VAR = 31; //控制器干涉用控制变量
 const UINT TARGET_STATUS_VAR = 43;//记录控制对方状态号
-const UINT TARGET_ANIM_NO_VAR = 23;//记录控制对方动画号
+const UINT TARGET_ANIM_NO_VAR = 29;//记录控制对方动画号
 const UINT TARGET_LIFE_VAR = 26;//记录控制对方生命值量
 
 //----------------------------------------------------------------------------------
