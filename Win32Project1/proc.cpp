@@ -33,7 +33,7 @@ const char* configName = "setsuna%s";
 
 UINT pPlayerHandle = NULL;
 
-
+UINT version = 0;
 UINT level = 0;
 UINT mainEntryPoint = ADRDATA(0x004b5b4c);  //主程序入口地址
 UINT pDef = NULL; //人物def入口地址
@@ -664,30 +664,41 @@ void protectDef() {
 
 			UINT defPlayer = NULL;
 			char buffer[50];
+			char buffer2[50];
 			if (ADRDATA(defPath - 0x40A) > VALID_ADDRESS)
 				defPlayer = ADRDATA(defPath - 0x40A);
-		
+					
+			sprintf(buffer, configName, "/");
+			sprintf(buffer2, configName, "\\");
+			if (strcmp((char*)defPath, buffer) == 0)
+			{
+				version = 1;
+
+			}
+			else if (strcmp((char*)defPath, buffer2) == 0)
+			{
+				version = 2;
+			}
 			
-			sprintf(buffer, configName, "\\");
-			
-			if (strcmp((char*)defPath, buffer) == 0) {
-			
-				
-				
+						
+			if (version!=0)
+			{
+
 				if (pDefPath == NULL) {
 					pDefPath = defPath; //def包路径
 					pDeffilePath = deffilePath; //def包文件名
-					
-					
+
+
 
 				}
-				if (defPlayer != NULL && pDef==NULL)
+				if (defPlayer != NULL && pDef == NULL)
 				{
-					
+
 					pDef = defPlayer; //人物信息地址
 
 				}
-			 }
+
+			}			
 			else if(strcmp((char*)deffilePath, "chaosor.def") == 0)
 			{
 				//对策：混沌蛟，statedef防御代码会造成混沌蛟解析异常，此对策仅为了防止报错
@@ -714,7 +725,17 @@ void protectDef() {
 
 		}
 		char buffer[50];
-		sprintf(buffer, configName, "/");
+		if (version == 1)
+		{
+			sprintf(buffer, configName, "/");
+
+		}
+		else
+		{
+			sprintf(buffer, configName, "\\");
+		}
+		
+	
 	
 		//修复 def路径
 		if (level >= 2)
@@ -1233,7 +1254,7 @@ void WINAPI playerHandle() {
 	
 	mainEntryPoint = ADRDATA(0x004b5b4c);
 	
-
+	
 	
 	if (mainEntryPoint< VALID_ADDRESS) return;
 
@@ -1263,6 +1284,7 @@ void WINAPI playerHandle() {
 		if (pDef < VALID_ADDRESS) {
 			continue;
 		}
+
 		UINT lpName = dAdr ;
 		
 		// if (level>0)
