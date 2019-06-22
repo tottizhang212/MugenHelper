@@ -1122,6 +1122,8 @@ void assiant(UINT selfAdr, UINT targetAdr) {
 	}
 	if (BIT_EXIST(flag, 16)) {
 
+		//helperTarget获取
+
 		UINT helperId = ADRDATA(VAR(TARGET_HELPER_VAR, selfAdr));
 		//UINT helperId = 500000;
 		//DEBUG2("找到Helpr");
@@ -1143,7 +1145,13 @@ void assiant(UINT selfAdr, UINT targetAdr) {
 	}
 	if (BIT_EXIST(flag, 17))
 	{
-		
+		//本体Target获取
+		UINT L = ADRDATA(selfAdr + 544);
+		ADRDATA(L + 8) = 1; //numtarget
+		UINT target = ADRDATA(L + 24);
+		ADRDATA(target) = emyNo - 1; //对方序号
+		UINT base = ADRDATA(L + 20);
+		ADRDATA(base) = targetAdr; 
 	}
 
 	//ADRDATA(VAR(ASSISTANT_VAR, selfAdr)) = 0;
