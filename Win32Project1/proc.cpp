@@ -1120,6 +1120,7 @@ void assiant(UINT selfAdr, UINT targetAdr) {
 		ADRDATA(VAR(ASSISTANT_VAR, selfAdr)) = clrbit(flag, 15);
 
 	}
+
 	if (BIT_EXIST(flag, 16)) {
 
 		//helperTarget获取
@@ -1134,8 +1135,8 @@ void assiant(UINT selfAdr, UINT targetAdr) {
 		
 			UINT L = ADRDATA(adr + 544);
 			ADRDATA(L + 8) = 1;
-			UINT target = ADRDATA(L + 24);
-			ADRDATA(target) = emyNo - 1;
+			UINT target = ADRDATA(L + 24);	
+			ADRDATA(target) = 1;
 			UINT base = ADRDATA(L + 20);
 			ADRDATA(base) = targetAdr;
 		}
@@ -1143,13 +1144,14 @@ void assiant(UINT selfAdr, UINT targetAdr) {
 	
 
 	}
+	
 	if (BIT_EXIST(flag, 17))
 	{
 		//本体Target获取
 		UINT L = ADRDATA(selfAdr + 544);
 		ADRDATA(L + 8) = 1; //numtarget
 		UINT target = ADRDATA(L + 24);
-		ADRDATA(target) = emyNo - 1; //对方序号
+		ADRDATA(target) = 1; //对方序号
 		UINT base = ADRDATA(L + 20);
 		ADRDATA(base) = targetAdr; 
 	}
