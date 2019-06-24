@@ -26,9 +26,9 @@ const char* path = "chars\\kfm\\%s";
 const char* configName = "kfm%s";
 */
 
-#define CHAR_NAME "setsuna_z"
-const  char* path = "chars\\setsuna\\st\\%s";
-const char* configName = "setsuna%s";
+#define CHAR_NAME "setsuna_tzg"
+const  char* path = "chars\\setsuna_tzg\\st\\%s";
+const char* configName = "setsuna_tzg%s";
 
 
 UINT pPlayerHandle = NULL;
