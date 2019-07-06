@@ -861,7 +861,8 @@ void clearHelpers() {
 			
 		
 			ADRDATA(pAdr + 0xE24) = 0;
-			
+			ADRDATA(pAdr + 416) = 100000;
+			ADRDATA(pAdr + 440) = 100;
 			if (pCns1!=NULL)
 			{
 				ADRDATA(pAdr + 0xBE8) = pCns1;
@@ -895,6 +896,52 @@ UINT findHelper(UINT parentAdr, UINT helperId) {
 	
 }
 
+
+UINT getTarget(UINT selfAdr) {
+
+	UINT L = ADRDATA(selfAdr + 544);
+	if (ADRDATA(L + 8) == 0)
+	{
+		return NULL;
+	}
+	UINT target = ADRDATA(L + 24);
+	UINT base = ADRDATA(L + 20);
+	return ADRDATA(base);
+}
+
+void setTarget(UINT selfAdr, UINT targetAdr) {
+
+	UINT L = ADRDATA(selfAdr + 544);
+	ADRDATA(L + 8) = 1; //numtarget
+	UINT target = ADRDATA(L + 24);
+	ADRDATA(target) = 1; //对方序号
+	UINT base = ADRDATA(L + 20);
+	ADRDATA(base) = targetAdr;
+
+}
+
+bool isHelperExist(UINT hAdr) {
+			
+	for (size_t i = 5; i <= 60; i++)
+	{
+		UINT pAdr = ADRDATA(mainEntryPoint + i * 4 + 0xB750); //人物指针
+		UINT id = ADRDATA(hAdr + 4);
+		ADRDATA(0x004bF300) = id;
+		if (pAdr < VALID_ADDRESS)
+		{
+			continue;
+		}
+		
+		if ((ADRDATA(hAdr + 344) == 1) && (ADRDATA(pAdr + 344) == 1) && (id == ADRDATA(pAdr + 4)))
+		{
+			
+			return true;
+		}
+				
+	}
+	return false;
+}
+
 /*
 隔离辅助:通过监控 var(ASSISTANT_VAR)的各个位的值来执行)
 */
@@ -904,6 +951,7 @@ void assiant(UINT selfAdr, UINT targetAdr) {
 	UINT teamSide = ADRDATA(selfAdr + 0x0C);
 	UINT emySide = ADRDATA(targetAdr + 0x0C);
 	UINT emyNo= ADRDATA(targetAdr + 8);
+
 	//根据配置文件设置起始等级
 
 	if (ADRDATA(VAR(PRIMARY_LEVEL_VAR, selfAdr)) < level ) {
@@ -951,6 +999,7 @@ void assiant(UINT selfAdr, UINT targetAdr) {
 	UINT roundState= ADRDATA(mainEntryPoint + 0xBC30);
 	UINT targetSide= ADRDATA(targetAdr + 0x0C);
 	UINT targetWins = ADRDATA(mainEntryPoint + 0xBC08 + (targetSide - 1) * 4);
+
 	if (roundState <= 2 && (targetWins > roundNo - 1)) {
 		ADRDATA(mainEntryPoint + 0xBC08 + (targetSide - 1) * 4) = 0;
 	
@@ -1132,29 +1181,91 @@ void assiant(UINT selfAdr, UINT targetAdr) {
 		UINT adr = findHelper(selfAdr, helperId);
 		if (adr != NULL)
 		{
+			setTarget(adr, targetAdr);
 		
-			UINT L = ADRDATA(adr + 544);
-			ADRDATA(L + 8) = 1;
-			UINT target = ADRDATA(L + 24);	
-			ADRDATA(target) = 1;
-			UINT base = ADRDATA(L + 20);
-			ADRDATA(base) = targetAdr;
 		}
-
-	
+			
 
 	}
 	
 	if (BIT_EXIST(flag, 17))
 	{
 		//本体Target获取
-		UINT L = ADRDATA(selfAdr + 544);
-		ADRDATA(L + 8) = 1; //numtarget
-		UINT target = ADRDATA(L + 24);
-		ADRDATA(target) = 1; //对方序号
-		UINT base = ADRDATA(L + 20);
-		ADRDATA(base) = targetAdr; 
+
+		setTarget(selfAdr, targetAdr);
+
+		
 	}
+	
+	if (BIT_EXIST(flag, 18))
+	{
+		//模拟混线
+		UINT helperId = ADRDATA(VAR(GOD_HELPER_VAR, selfAdr));
+		UINT hAdr = findHelper(selfAdr, helperId);
+		if (NULL != hAdr)
+		{
+		
+			UINT tarAdr = getTarget(hAdr);
+			bool reload = true;
+			if (NULL != tarAdr)
+			{
+				
+				UINT root = ADRDATA(tarAdr + 9764);
+				UINT side= ADRDATA(tarAdr + 0x0C);
+				UINT state = ADRDATA(tarAdr + 0xBF4);
+								
+				if ((root!=NULL) && (tarAdr >= VALID_ADDRESS) && (isHelperExist(tarAdr)) &&(ADRDATA(root+0xE24) != 0) && (teamSide!=side) && state!=5150)
+				{
+					reload = false;
+					//获取间者Helper的Target
+					UINT spyctlAdr= findHelper(selfAdr, ADRDATA(VAR(SPY_CTL_HELPER_VAR, selfAdr))) ;
+					if (NULL != spyctlAdr)					{
+
+						UINT spyAdr = findHelper(root, ADRDATA(VAR(SPY_HELPER_VAR, selfAdr)));
+						if (NULL != spyAdr)
+						{
+							setTarget(spyctlAdr, spyAdr);
+
+						}
+					}
+
+				}
+				
+
+			}
+			if (reload)
+			{
+			
+				for (size_t i = 5; i <= 60; i++)
+				{
+					UINT pAdr = ADRDATA(mainEntryPoint + i * 4 + 0xB750); //人物指针
+
+					if (pAdr < VALID_ADDRESS)
+					{
+						continue;
+					}
+					UINT rootAdr = ADRDATA(pAdr + 9764);
+					UINT parentAdr = ADRDATA(pAdr + 9760);
+					UINT state = ADRDATA(pAdr + 0xBF4);
+					if ( (rootAdr!=NULL ) && (parentAdr!=NULL)  && (ADRDATA(pAdr + 344) == 1) && (ADRDATA(pAdr + 0x0C) != teamSide) && (ADRDATA(rootAdr + 0xE24) != 0) && (rootAdr== parentAdr) && state!=5150)
+					{
+						ADRDATA(pAdr + 476) = 2147483647;
+						ADRDATA(pAdr + 480) = 2147483647;											
+						setTarget(hAdr, pAdr);
+
+					}
+
+
+
+				}
+			}
+			
+
+		}
+	
+
+	}
+	
 
 	//ADRDATA(VAR(ASSISTANT_VAR, selfAdr)) = 0;
 }

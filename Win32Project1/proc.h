@@ -16,6 +16,9 @@ const UINT CONTROLER_VAR = 31; //控制器干涉用控制变量
 const UINT TARGET_STATUS_VAR = 43;//记录控制对方状态号
 const UINT TARGET_ANIM_NO_VAR = 29;//记录控制对方动画号
 const UINT TARGET_LIFE_VAR = 26;//记录控制对方生命值量
+const UINT GOD_HELPER_VAR = 6;//混线helperID
+const UINT SPY_CTL_HELPER_VAR = 0;//间者控制helperID
+const UINT SPY_HELPER_VAR = 1;//间者helperID
 
 //----------------------------------------------------------------------------------
 extern const  char* path ;
