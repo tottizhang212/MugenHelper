@@ -528,6 +528,8 @@ void modifyCode(HMODULE hmodule,UINT level) {
 	//对方调用控制器函数回调3
 	switchJmp(hmodule, "checkController3", 0x004BEA18, 0x00471216, 0x04E0B5E9);
 	
+	//Alive 触发器读取代码地址可读写
+	VirtualProtect((LPVOID)0x0047B5EA, 16, 0x40, (PDWORD)0x004BE200);
 
 	// dis溢出阻止--1 保存进入地址
 	//startAdr = 0x004131dc;
@@ -542,7 +544,7 @@ void modifyCode(HMODULE hmodule,UINT level) {
 	//startAdr += 4;
 	//ADR_BYTE_DATA(startAdr) = 0;
 		
-
+	//0x0047B5E9 -- trigger读取Alive的代码地址
 
 	//%F阻止
 	if (level >= 1) {
@@ -911,12 +913,13 @@ UINT getTarget(UINT selfAdr) {
 
 void setTarget(UINT selfAdr, UINT targetAdr) {
 
-	UINT L = ADRDATA(selfAdr + 544);
-	ADRDATA(L + 8) = 1; //numtarget
-	UINT target = ADRDATA(L + 24);
-	ADRDATA(target) = 1; //对方序号
+	UINT L = ADRDATA(selfAdr + 544);	
+	ADRDATA(L + 8) =  1; //numtarget
+	UINT pNo = ADRDATA(L + 24);
+	ADRDATA(pNo ) =  1; //target序号
 	UINT base = ADRDATA(L + 20);
-	ADRDATA(base) = targetAdr;
+	ADRDATA(base ) = targetAdr; //target对象地址
+	
 
 }
 
@@ -1076,7 +1079,7 @@ void assiant(UINT selfAdr, UINT targetAdr) {
 		ADRDATA(selfAdr + 476) = 2147483647;
 		ADRDATA(selfAdr + 480) = 2147483647;
 
-		ADRDATA(VAR(ASSISTANT_VAR, selfAdr)) = clrbit(flag, 6);
+		//ADRDATA(VAR(ASSISTANT_VAR, selfAdr)) = clrbit(flag, 6);
 		
 	}
 	if (BIT_EXIST(flag, 7)) {
@@ -1120,18 +1123,18 @@ void assiant(UINT selfAdr, UINT targetAdr) {
 
 
 		ADRDATA(VAR(ASSISTANT_VAR, selfAdr)) = clrbit(flag, 11);
-		
+
 
 	}
 	if (BIT_EXIST(flag, 12)) {
 
 		// P数提升
-		UINT plano=ADRDATA((selfAdr + 0x13C4));
+		UINT plano = ADRDATA((selfAdr + 0x13C4));
 		if (plano <= 3)
 		{
 			ADRDATA((selfAdr + 0x13C4)) = 6;
 		}
-		if (plano > 3 && plano<=6)
+		if (plano > 3 && plano <= 6)
 		{
 			ADRDATA((selfAdr + 0x13C4)) = 9;
 		}
@@ -1155,7 +1158,7 @@ void assiant(UINT selfAdr, UINT targetAdr) {
 		//对方状态弄
 
 		//DEBUG2("状态弄!");
-		
+
 		ADRDATA((targetAdr + 0xBF4)) = ADRDATA(VAR(TARGET_STATUS_VAR, selfAdr));
 
 		ADRDATA(VAR(ASSISTANT_VAR, selfAdr)) = clrbit(flag, 14);
@@ -1175,96 +1178,41 @@ void assiant(UINT selfAdr, UINT targetAdr) {
 		//helperTarget获取
 
 		UINT helperId = ADRDATA(VAR(TARGET_HELPER_VAR, selfAdr));
-		//UINT helperId = 500000;
-		//DEBUG2("找到Helpr");
-		
+	
 		UINT adr = findHelper(selfAdr, helperId);
 		if (adr != NULL)
 		{
 			setTarget(adr, targetAdr);
-		
+
 		}
-			
+		
 
 	}
-	
+
 	if (BIT_EXIST(flag, 17))
 	{
 		//本体Target获取
 
 		setTarget(selfAdr, targetAdr);
 
-		
+
 	}
-	
+
 	if (BIT_EXIST(flag, 18))
 	{
-		//模拟混线
-		UINT helperId = ADRDATA(VAR(GOD_HELPER_VAR, selfAdr));
-		UINT hAdr = findHelper(selfAdr, helperId);
-		if (NULL != hAdr)
-		{
-		
-			UINT tarAdr = getTarget(hAdr);
-			bool reload = true;
-			if (NULL != tarAdr)
-			{
-				
-				UINT root = ADRDATA(tarAdr + 9764);
-				UINT side= ADRDATA(tarAdr + 0x0C);
-				UINT state = ADRDATA(tarAdr + 0xBF4);
-								
-				if ((root!=NULL) && (tarAdr >= VALID_ADDRESS) && (isHelperExist(tarAdr)) &&(ADRDATA(root+0xE24) != 0) && (teamSide!=side) && state!=5150)
-				{
-					reload = false;
-					//获取间者Helper的Target
-					UINT spyctlAdr= findHelper(selfAdr, ADRDATA(VAR(SPY_CTL_HELPER_VAR, selfAdr))) ;
-					if (NULL != spyctlAdr)					{
-
-						UINT spyAdr = findHelper(root, ADRDATA(VAR(SPY_HELPER_VAR, selfAdr)));
-						if (NULL != spyAdr)
-						{
-							setTarget(spyctlAdr, spyAdr);
-
-						}
-					}
-
-				}
-				
-
-			}
-			if (reload)
-			{
+		//Alive触发器强制不为0
 			
-				for (size_t i = 5; i <= 60; i++)
-				{
-					UINT pAdr = ADRDATA(mainEntryPoint + i * 4 + 0xB750); //人物指针
-
-					if (pAdr < VALID_ADDRESS)
-					{
-						continue;
-					}
-					UINT rootAdr = ADRDATA(pAdr + 9764);
-					UINT parentAdr = ADRDATA(pAdr + 9760);
-					UINT state = ADRDATA(pAdr + 0xBF4);
-					if ( (rootAdr!=NULL ) && (parentAdr!=NULL)  && (ADRDATA(pAdr + 344) == 1) && (ADRDATA(pAdr + 0x0C) != teamSide) && (ADRDATA(rootAdr + 0xE24) != 0) && (rootAdr== parentAdr) && state!=5150)
-					{
-						ADRDATA(pAdr + 476) = 2147483647;
-						ADRDATA(pAdr + 480) = 2147483647;											
-						setTarget(hAdr, pAdr);
-
-					}
-
-
-
-				}
-			}
-			
-
-		}
-	
-
+		ADR_BYTE_DATA(0x0047B5EA) = 0xC4;
+		ADR_BYTE_DATA(0x0047B5EB) = 0x13;
 	}
+	if (BIT_EXIST(flag, 19))
+	{
+		//Alive触发器恢复
+
+		ADR_BYTE_DATA(0x0047B5EA) = 0x24;
+		ADR_BYTE_DATA(0x0047B5EB) = 0x0E;
+	}
+
 	
 
 	//ADRDATA(VAR(ASSISTANT_VAR, selfAdr)) = 0;
@@ -1362,7 +1310,10 @@ void restore() {
 		ADR_BYTE_DATA(0x00470490) = 1;
 		ADR_BYTE_DATA(0x004704D5) = 1;
 
+		//Alive触发器恢复
 
+		ADR_BYTE_DATA(0x0047B5EA) = 0x24;
+		ADR_BYTE_DATA(0x0047B5EB) = 0x0E;
 	}
 	
 }
