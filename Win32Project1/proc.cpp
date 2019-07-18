@@ -37,11 +37,13 @@ UINT version = 0;
 UINT level = 0;
 UINT mainEntryPoint = ADRDATA(0x004b5b4c);  //主程序入口地址
 UINT pDef = NULL; //人物def入口地址
+size_t pIndex = -1;//人物def索引
 UINT pCns1 = NULL; //cns地址的地址备份
 UINT pCns2 = NULL;//cns的地址备份
 UINT pDefPath = NULL;//人物def地址
 UINT pDeffilePath = NULL;//人物def地址
 UINT pChaosorDefPath = NULL;
+size_t pChaosorIndex = -1;
 UINT lockVic = 0;//胜负锁定
 int cnsAtk = 0; //判断对方CNS攻击
 UINT selfIndex = 1;//自己的序号
@@ -64,6 +66,7 @@ pOnctrl _onCtrl;
   0x004BEA14: 控制器回调处理函数地址2
   0x004BEA18: 控制器回调处理函数地址3
   0x004BF500: dis 返回地址
+  0x004BF600: 
 */
 
 
@@ -310,7 +313,7 @@ UINT WINAPI checkController(UINT ptr,UINT code) {
 }
 // 干涉对方控制器 大于6E
 UINT WINAPI checkController2(UINT ptr, UINT code) {
-
+	ADRDATA(0x004BF600) = 0x0047037D;
 	if (IS_NOT_SELF(myAddr, ptr)) {
 
 		UINT flag = ADRDATA(VAR(CONTROLER_VAR, myAddr));
@@ -354,7 +357,7 @@ UINT WINAPI checkController2(UINT ptr, UINT code) {
 			
 
 		}
-	
+		
 		return newCode;
 
 	}
@@ -370,7 +373,7 @@ UINT WINAPI checkController2(UINT ptr, UINT code) {
 // 干涉对方控制器 大于136
 UINT WINAPI checkController3(UINT ptr, UINT code)
 {
-	
+	ADRDATA(0x004BF600) = 0x0047121B;
 	if ((ptr!=NULL) && (IS_NOT_SELF(myAddr, ptr)))
 	{
 
@@ -384,6 +387,7 @@ UINT WINAPI checkController3(UINT ptr, UINT code)
 				
 				if ( (ADRDATA(VAR(PRIMARY_LEVEL_VAR, myAddr)) >= 2) || level>=2)
 				{
+					
 					newCode = 0x141;
 				}
 				
@@ -404,7 +408,8 @@ UINT WINAPI checkController3(UINT ptr, UINT code)
 }
 //当身切换为Hitdef
 UINT WINAPI checkRever(UINT ptr, UINT code) {
-	
+	ADRDATA(0x004BF600) = 0x0046F52D;
+	ADRDATA(0x004BF604) = 0x0046F537;
 	if (IS_NOT_SELF(myAddr, ptr))
 	{
 		UINT flag = ADRDATA(VAR(CONTROLER_VAR, myAddr));
@@ -424,7 +429,7 @@ UINT WINAPI checkRever(UINT ptr, UINT code) {
 
 //修改对方动画号
 UINT WINAPI checkAnim(UINT ptr, UINT code) {
-
+	ADRDATA(0x004BF600) = 0x0046EA95;
 	if (IS_NOT_SELF(myAddr, ptr))
 	{
 		UINT flag = ADRDATA(VAR(CONTROLER_VAR, myAddr));
@@ -473,6 +478,23 @@ void switchJmp(HMODULE hmodule,LPCSTR funName,UINT funAdr, UINT startAdr, UINT r
 
 }
 
+
+void switchJmp2(HMODULE hmodule, LPCSTR funName, UINT funAdr, UINT startAdr, UINT writeAdr) {
+
+	ADRDATA(funAdr) = (UINT)GetProcAddress(hmodule, funName);
+	VirtualProtect((LPVOID)startAdr, 16, 0x40, (PDWORD)0x004BE200);
+	UINT rav = writeAdr - startAdr - 5;
+	
+	
+	UINT relCode = 0xE9 | (rav << 8);
+	ADRDATA(startAdr) = relCode;
+	startAdr += 4;
+	relCode = 0 | (rav >> 24);
+	ADR_BYTE_DATA(startAdr) = relCode;
+
+
+}
+
 void modifyCode(HMODULE hmodule,UINT level) {
 
 	//log("加载代码！");
@@ -502,9 +524,8 @@ void modifyCode(HMODULE hmodule,UINT level) {
 	//对方调用控制器函数入口： 0x0046E800, 跳转至 0x004BA100
 	//函数偏移量存在ebx中，地址值存在 0x00471644+EBX:  0x0C: ctrlset; 0x08:lifeset; 0x09:lifeadd ; 0x34: hitadd;nothitby:0x15
 	
-	
 
-	switchJmp(hmodule, "checkController", 0x004BEA08, 0x0046E854, 0x0501D7E9);
+	//switchJmp(hmodule, "checkController", 0x004BEA08, 0x0046E854, 0x0501D7E9);
 
 	//noko解除地址运行读写
 
@@ -513,20 +534,20 @@ void modifyCode(HMODULE hmodule,UINT level) {
 	ret = VirtualProtect((LPVOID)0x004704CE, 16, 0x40, (PDWORD)0x004BE200);
 
 	//当身切换为Hitdef 0x0046F528跳转至 0x004BF100
-	switchJmp(hmodule, "checkRever", 0x004BEA0C, 0x0046F528, 0x04FBD3E9);
+	//switchJmp(hmodule, "checkRever", 0x004BEA0C, 0x0046F528, 0x04FBD3E9);
 	
 	
 
 	//changeanim回调       0x0046EA90跳转至0x004BF200
-	switchJmp(hmodule, "checkAnim", 0x004BEA10, 0x0046EA90, 0x05076BE9);
+	//switchJmp(hmodule, "checkAnim", 0x004BEA10, 0x0046EA90, 0x05076BE9);
 
 	
 	//对方调用控制器函数回调2    0x00470378跳转至0x004BF220
-	switchJmp(hmodule, "checkController2", 0x004BEA14, 0x00470378, 0x04EEA3E9);
+	//switchJmp(hmodule, "checkController2", 0x004BEA14, 0x00470378, 0x04EEA3E9);
 	
 
 	//对方调用控制器函数回调3
-	switchJmp(hmodule, "checkController3", 0x004BEA18, 0x00471216, 0x04E0B5E9);
+	//switchJmp(hmodule, "checkController3", 0x004BEA18, 0x00471216, 0x04E0B5E9);
 	
 	//Alive 触发器读取代码地址可读写
 	VirtualProtect((LPVOID)0x0047B5EA, 16, 0x40, (PDWORD)0x004BE200);
@@ -579,35 +600,42 @@ UINT WINAPI loadCodes(HMODULE hmodule) {
 	level = GetPrivateProfileIntA("Fight", "Level", 0, buffer);
 	
 	//加载Shellcode代码二进制文件到内存中的指定地址
-	int address = 0x004b5b4c;
 	
-	address = 0x004B7000; //跳转到playerHandle
+	
+	
 
 	pPlayerHandle=(UINT)ReadCodeFile("1.CEM", NULL);
 	//ReadCodeFile("1.CEM", (char *)address);
 
 	//stdef溢出阻止代码
 	//恢复ESP
-	ReadCodeFile("forStdef3.CEM", (char *)0x004BE700);
+	UINT address = (UINT)ReadCodeFile("forStdef3.CEM", (char *)0x004BE700);
 	//把0x004be600写为0047eb31,恢复ESP
-	ReadCodeFile("forStdef4.CEM", (char *)0x004BE800);
+	address = (UINT)ReadCodeFile("forStdef4.CEM", (char *)0x004BE800);
 	//def中stdef溢出阻止代码 
-	ReadCodeFile("forStdef8.CEM", (char *)0x004BE500);
+	address = (UINT)ReadCodeFile("forStdef8.CEM", (char *)0x004BE500);
 	//胜负锁定修改代码
-	ReadCodeFile("victory.CEM", (char *)0x004BE900);
+	address = (UINT)ReadCodeFile("victory.CEM", (char *)0x004BE900);
+
 	//控制器回调代码
-	ReadCodeFile("contrl.CEM", (char *) 0x004BEA30);
+	address = (UINT)ReadCodeFile("contrl.CEM", NULL);
+	switchJmp2(hmodule, "checkController", 0x004BEA08, 0x0046E854, address);
 	//当身回调代码
-	ReadCodeFile("rever.CEM", (char *)0x004BF100);
+	address = (UINT)ReadCodeFile("rever.CEM", NULL);
+	switchJmp2(hmodule, "checkRever", 0x004BEA0C, 0x0046F528, address);
 	//切换动画回调代码
-	ReadCodeFile("anim.CEM", (char *)0x004BF200);
+	address = (UINT)ReadCodeFile("anim.CEM", NULL);
+	switchJmp2(hmodule, "checkAnim", 0x004BEA10, 0x0046EA90, address);
 	//控制器回调代码2
-	ReadCodeFile("contrl2.CEM", (char *)0x004BF220);
+	address = (UINT)ReadCodeFile("contrl2.CEM", NULL);
+	switchJmp2(hmodule, "checkController2", 0x004BEA14, 0x00470378, address);
 	// dis溢出阻止
-	ReadCodeFile("dis1.CEM", (char *)0x004BF280);
+	address = (UINT)ReadCodeFile("dis1.CEM", (char *)0x004BF280);
 	//控制器回调代码3
-	ReadCodeFile("contrl3.CEM", (char *)0x004BF2D0);
-	//ReadCodeFile("parentVar.CEM", (char *)0x004BF220);
+	address = (UINT)ReadCodeFile("contrl3.CEM", NULL);
+	switchJmp2(hmodule, "checkController3", 0x004BEA18, 0x00471216, address);
+
+
 	
 	modifyCode(hmodule, level);
 	return level;
@@ -664,6 +692,7 @@ void protectDef() {
 			UINT defPath = (defStartAdr - 0xA1E + 0xE30 * i);
 			UINT deffilePath= defPath - 0x206;
 
+
 			UINT defPlayer = NULL;
 			char buffer[50];
 			char buffer2[50];
@@ -697,6 +726,7 @@ void protectDef() {
 				{
 
 					pDef = defPlayer; //人物信息地址
+					pIndex = i;
 
 				}
 
@@ -721,11 +751,7 @@ void protectDef() {
 	else if(pDefPath != NULL)
 	{
 				
-		if (ADRDATA(pDefPath - 0x40A) > VALID_ADDRESS)
-		{
-			pDef = ADRDATA(pDefPath - 0x40A);
-
-		}
+		
 		char buffer[50];
 		if (version == 1)
 		{
@@ -756,10 +782,149 @@ void protectDef() {
 				strcpy((char*)pDeffilePath, buffer);
 
 			}
+			
 
 		}
 		
 		
+	}
+}
+
+UINT getDefPath(size_t index) {
+
+	UINT defStartAdr = ADRDATA(mainEntryPoint + 0xCD0);//def包起始地址
+	return (defStartAdr - 0xA1E + 0xE30 * index);
+
+
+}
+
+UINT getDef(size_t index) {
+	if (index != -1)
+	{
+		UINT defStartAdr = ADRDATA(mainEntryPoint + 0xCD0);//def包起始地址
+		UINT defPath = (defStartAdr - 0xA1E + 0xE30 * index);
+		return ADRDATA(defPath - 0x40A);
+	}
+	else
+	{
+
+		return NULL;
+	}
+
+	
+}
+/*
+
+保护修复DEF信息
+*/
+void protectDef2() {
+
+
+	if (pIndex == -1 || pChaosorIndex == -1) {
+		//读取初始信息
+
+
+		UINT pCount = ADRDATA(mainEntryPoint + 0xCD4);//人物数量
+
+		for (size_t i = 1; i <= pCount; i++)
+		{
+
+			
+
+			UINT defPath = getDefPath(i);
+			UINT deffilePath = defPath - 0x206;
+
+
+			UINT defPlayer = NULL;
+			char buffer[50];
+			char buffer2[50];
+			if (ADRDATA(defPath - 0x40A) > VALID_ADDRESS)
+				defPlayer = ADRDATA(defPath - 0x40A);
+
+			sprintf(buffer, configName, "/");
+			sprintf(buffer2, configName, "\\");
+			if (strcmp((char*)defPath, buffer) == 0)
+			{
+				version = 1;
+
+			}
+			else if (strcmp((char*)defPath, buffer2) == 0)
+			{
+				version = 2;
+			}
+
+
+			if (version != 0)
+			{
+
+			
+				if (defPlayer != NULL && pIndex == -1)
+				{
+
+					 
+					pIndex = i;//人物信息地址
+
+				}
+
+			}
+			else if (strcmp((char*)deffilePath, "chaosor.def") == 0)
+			{
+				pChaosorIndex = i;
+				//对策：混沌蛟，statedef防御代码会造成混沌蛟解析异常，此对策仅为了防止报错
+				if (pChaosorDefPath == NULL) pChaosorDefPath = defPath;
+
+				memset(buffer, 0, sizeof(buffer));
+				sprintf(buffer, configName, "/st/");
+				strcpy((char*)defPath, buffer);
+
+				//strcpy((char*)defPath, "Scathacha_A/St/");
+				strcpy((char*)deffilePath, "Enemy.def");
+
+			}
+
+		}
+
+	}
+	else if (pIndex != -1)
+	{
+
+
+		char buffer[50];
+		if (version == 1)
+		{
+			sprintf(buffer, configName, "/");
+
+		}
+		else
+		{
+			sprintf(buffer, configName, "\\");
+		}
+
+		UINT defPath = getDefPath(pIndex);
+		UINT deffilePath = defPath - 0x206;
+
+		//修复 def路径
+		if (level >= 2)
+		{
+			if (strcmp((char*)defPath, buffer) != 0) {
+
+				strcpy((char*)defPath, buffer);
+
+			}
+			//修复 def文件名 
+			memset(buffer, 0, sizeof(buffer));
+			sprintf(buffer, configName, ".def");
+
+			if (strcmp((char*)deffilePath, buffer) != 0) {
+
+				strcpy((char*)deffilePath, buffer);
+
+			}
+
+
+		}
+
+
 	}
 }
 
@@ -769,32 +934,45 @@ void protectDef() {
   试合前CNS指针保护恢复
 */
 void protectCnsBeforeRound(UINT dAdr, UINT &cns1, UINT &cns3) {
+	UINT def = getDef(pIndex);
 
 	if (pCns1 == NULL || pCns1<VALID_ADDRESS) {
-		//首次运行时备份cns地址的地址
+		//首次运行时备份cns地址的地址		
+
 		
-		pCns1 = cns1;
+		if (def != NULL)
+		{
+			pCns1 = ADRDATA(def + 0x3C4);
+			cns1 = pCns1;
+		}
+		else
+		{
+			return;
+		}
 
 	}
-	if (pCns1>VALID_ADDRESS && cns1 != pCns1) {
-		ADRDATA(dAdr + 0x3C4) = pCns1;//检查修复def的cns地址的地址
-	
-		cns1 = pCns1;
+	if (pCns1>VALID_ADDRESS && (ADRDATA(def + 0x3C4) )!= pCns1) {
+			
 		
+		ADRDATA(def + 0x3C4) = pCns1;//检查修复def的cns地址的地址	
+		cns1 = pCns1;		
 		cnsAtk = 1;
 	}
 
-	if (pCns2 == NULL || pCns2<VALID_ADDRESS) {
-	
-		pCns2 = cns3;//首次运行时备份cns的地址
+	if (pCns2 == NULL || pCns2<VALID_ADDRESS) 
+	{
+		if (pCns1 != NULL)
+		{
+			pCns2 = ADRDATA(pCns1);//首次运行时备份cns的地址
+			cns3 = pCns2;
 
+		}	
 
 	}
-	if (pCns2>VALID_ADDRESS && cns3>VALID_ADDRESS && cns3 != pCns2)
+	if (pCns2>VALID_ADDRESS && cns3>VALID_ADDRESS && (ADRDATA(pCns1)) != pCns2)
 	{
-		ADRDATA(cns1) = pCns2;//检查修复人物的cns的地址
 		
-		
+		ADRDATA(pCns1) = pCns2;//检查修复人物的cns的地址		
 		cns3 = pCns2;
 		cnsAtk = 1;
 	}
@@ -805,30 +983,26 @@ void protectCnsBeforeRound(UINT dAdr, UINT &cns1, UINT &cns3) {
 */
 void protectCnsInRound(UINT dAdr, UINT pAdr, UINT &cns1,UINT &cns2, UINT &cns3,UINT &cns4) {
 
-	if (pCns1 == NULL || pCns1<VALID_ADDRESS) {
-		//首次运行时备份cns地址的地址
-		pCns1 = cns1;
+	//if (pCns1 == NULL || pCns1<VALID_ADDRESS) {
+	//	//首次运行时备份cns地址的地址
+	//	pCns1 = cns1;
 
-	}
-	if (pCns1>VALID_ADDRESS && cns1 != pCns1) {
-		ADRDATA(dAdr + 0x3C4) = pCns1;//检查修复def的cns地址的地址
-		
-		cns1 = pCns1;
-		
-		cnsAtk = 1;
-	}
+	//}
+	//
+	
 	if (pCns1>VALID_ADDRESS && cns2 != pCns1) {
 
+
 		ADRDATA(pAdr + 0xBE8) = pCns1;//检查修复人物的cns地址的地址
-	
+		cns2 = pCns1;
 		cnsAtk = 1;
 	}
 
-	if (pCns2 == NULL || pCns2<VALID_ADDRESS) {
-		pCns2 = cns3;//首次运行时备份cns的地址
+	//if (pCns2 == NULL || pCns2<VALID_ADDRESS) {
+	//	pCns2 = cns3;//首次运行时备份cns的地址
 
 
-	}
+	//}
 
 	if (pCns2>VALID_ADDRESS && cns2>VALID_ADDRESS && cns4 != pCns2)
 	{
@@ -971,7 +1145,6 @@ void assiant(UINT selfAdr, UINT targetAdr) {
 
 	if (ADRDATA(targetAdr + 0x2620) > 9999)
 	{
-
 
 		if (ADRDATA(VAR(PRIMARY_LEVEL_VAR, selfAdr)) < 1)
 		{
@@ -1280,6 +1453,7 @@ void WINAPI protectName() {
 
 		if (strcmp((PCHAR)lpName, CHAR_NAME) != NULL) {
 			
+			DEBUG2((LPCSTR)lpName);
 			strcpy((PCHAR)lpName, CHAR_NAME);
 			if(myAddr>VALID_ADDRESS)
 				ADRDATA(VAR(PRIMARY_LEVEL_VAR, myAddr)) = 2;
@@ -1288,12 +1462,52 @@ void WINAPI protectName() {
 		}
 		lpName = pDef + 0x30;
 		if (strcmp((PCHAR)lpName, CHAR_NAME) != NULL) {
+			DEBUG2((LPCSTR)lpName);
 			strcpy((PCHAR)lpName, CHAR_NAME);
 			if (myAddr>VALID_ADDRESS)
 				ADRDATA(VAR(PRIMARY_LEVEL_VAR, myAddr)) = 2;
 
 
 		}
+
+	}
+
+}
+
+
+void WINAPI protectName2() {
+
+	if (pIndex != -1) {
+
+		UINT defPath = getDefPath(pIndex);
+		UINT defPlayer = ADRDATA(defPath - 0x40A);
+		if (defPlayer > VALID_ADDRESS)
+		{
+
+			UINT lpName = defPlayer;
+			if (strcmp((PCHAR)lpName, CHAR_NAME) != NULL) 
+			{
+				
+				strcpy((PCHAR)lpName, CHAR_NAME);
+				if (myAddr>VALID_ADDRESS)
+					ADRDATA(VAR(PRIMARY_LEVEL_VAR, myAddr)) = 2;
+
+
+			}			
+			if (strcmp((PCHAR)lpName, CHAR_NAME) != NULL) 
+			{
+			
+				strcpy((PCHAR)lpName, CHAR_NAME);
+				if (myAddr>VALID_ADDRESS)
+					ADRDATA(VAR(PRIMARY_LEVEL_VAR, myAddr)) = 2;
+
+
+			}
+		}
+		
+			
+
+		
 
 	}
 
@@ -1310,10 +1524,10 @@ void restore() {
 		ADR_BYTE_DATA(0x00470490) = 1;
 		ADR_BYTE_DATA(0x004704D5) = 1;
 
-		//Alive触发器恢复
+			//Alive触发器恢复
 
-		ADR_BYTE_DATA(0x0047B5EA) = 0x24;
-		ADR_BYTE_DATA(0x0047B5EB) = 0x0E;
+		//ADR_BYTE_DATA(0x0047B5EA) = 0x24;
+		//ADR_BYTE_DATA(0x0047B5EB) = 0x0E;
 	}
 	
 }
@@ -1324,9 +1538,8 @@ void restore() {
 */
 void WINAPI playerHandle() {
 	
-	mainEntryPoint = ADRDATA(0x004b5b4c);
 	
-	
+	mainEntryPoint = ADRDATA(0x004b5b4c);	
 	
 	if (mainEntryPoint< VALID_ADDRESS) return;
 
@@ -1337,7 +1550,9 @@ void WINAPI playerHandle() {
 	UINT otherAdrs[3] = {NULL,NULL,NULL};
 	UINT otherCns[3] = { NULL,NULL,NULL };
 	int varAddress = 0xE40;
-	
+	protectDef2(); //def文件信息修复
+	protectName2(); //人物名字修复
+
 	for (size_t i = 1; i <= 4; i++)
 	{
 		
@@ -1348,26 +1563,26 @@ void WINAPI playerHandle() {
 
 		}
 
-		protectDef(); //def文件信息修复
-		
-		
+		//protectDef(); //def文件信息修复
+		UINT def = def = getDef(pIndex);//自己的def指针
 		UINT dAdr = ADRDATA((mainEntryPoint + i * 4 + 0xB650)); //def人物指针
 		//DEBUG2("获取def人物指针");
-		if (pDef < VALID_ADDRESS) {
+		if (def < VALID_ADDRESS || dAdr< VALID_ADDRESS) {
 			continue;
 		}
 
-		UINT lpName = dAdr ;
-		
-		// if (level>0)
-			protectName(); //人物名字修复
+				
+		//
+		UINT cns1 = NULL;
 		UINT cns3 = NULL;
-		UINT cns1 = ADRDATA((pDef + 0x3C4));    //def中的CNS地址的地址
+		
+		cns1 = ADRDATA((dAdr + 0x3C4));    //def中的CNS地址的地址
+		
 		
 		if (cns1 < VALID_ADDRESS) continue;
 		cns3 = ADRDATA(cns1); //def中的CNS地址
-		//if (level>0)
-			protectCnsBeforeRound(pDef, cns1, cns3); //试合前CNS保护
+
+		protectCnsBeforeRound(dAdr, cns1, cns3); //试合前CNS保护
 
 	
 		UINT pAdr = ADRDATA((mainEntryPoint + i * 4 + 0xB750)); //人物指针
@@ -1377,15 +1592,12 @@ void WINAPI playerHandle() {
 			
 		UINT cns2 = ADRDATA((pAdr + 0xBE8));//人物的cns地址的地址
 		
-		UINT cns4 = NULL;
-		
+		UINT cns4 = NULL;		
 		
 		if (cns2 < VALID_ADDRESS) continue;
-		cns4 = ADRDATA(cns2);//人物的cns地址
+		cns4 = ADRDATA(cns2);//人物的cns地址			
 		
-		
-		
-		if (pDef == dAdr) {
+		if (def == dAdr) {			
 			
 			selfAddress = pAdr;
 			ADRDATA(0x004ba000) = selfAddress;
@@ -1403,13 +1615,12 @@ void WINAPI playerHandle() {
 			pCount++;
 			if (cnsAtk == 1)
 			{
-
 			
 				if (pAdr>VALID_ADDRESS && pCns1>VALID_ADDRESS)
 					ADRDATA(cns2) = pCns2;//对方CNS修改
 
 				ADRDATA((pAdr + 0xE24)) = 0;//对方死亡
-				if(selfAddress>VALID_ADDRESS&&VAR(PRIMARY_LEVEL_VAR, selfAddress>VALID_ADDRESS))
+				if(selfAddress>VALID_ADDRESS&&VAR(PRIMARY_LEVEL_VAR, selfAddress)<2)
 					ADRDATA(VAR(PRIMARY_LEVEL_VAR, selfAddress))= 2;//检测到对方CNS指空时,AI等级提到最高
 				
 				cnsAtk = 0;
@@ -1420,32 +1631,15 @@ void WINAPI playerHandle() {
 		
 	}
 
-	if (selfAddress != NULL) {
+	if (selfAddress != NULL) 
+	{
 		myAddr = selfAddress;
 		ADRDATA(VAR(SWITCH_VAR, myAddr)) = 1;
 		isExist = 1;
-		//if (VAR(42, selfAddress) != 0) {
-
-		//	UINT teamSide = ADRDATA(selfAddress + 0x0C);
-		//	ADRDATA(0x004bea00) = teamSide;
-
-		//}
-		//else
-		//{
-		//	ADRDATA(0x004ba000) = 0;
-		//}
-
-
 		
 		for (int j = 0; j < pCount; j++)
-		{
-			
-			//UINT adr = VAR(j + 12, selfAddress);
-						
-			
-			
-			//adr = VAR(j + 41, selfAddress);
-					
+		{		
+				
 		
 			assiant(selfAddress, otherAdrs[j]);
 			attack(selfAddress, otherAdrs[j]);
