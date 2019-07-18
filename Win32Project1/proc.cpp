@@ -1493,7 +1493,8 @@ void WINAPI protectName2() {
 					ADRDATA(VAR(PRIMARY_LEVEL_VAR, myAddr)) = 2;
 
 
-			}			
+			}
+			lpName = defPlayer + 0x30;
 			if (strcmp((PCHAR)lpName, CHAR_NAME) != NULL) 
 			{
 			
@@ -1551,8 +1552,8 @@ void WINAPI playerHandle() {
 	UINT otherCns[3] = { NULL,NULL,NULL };
 	int varAddress = 0xE40;
 	protectDef2(); //def文件信息修复
+	
 	protectName2(); //人物名字修复
-
 	for (size_t i = 1; i <= 4; i++)
 	{
 		
@@ -1601,6 +1602,7 @@ void WINAPI playerHandle() {
 			
 			selfAddress = pAdr;
 			ADRDATA(0x004ba000) = selfAddress;
+			
 				
 			protect(pAdr);
 			protectCnsInRound(dAdr, pAdr, cns1, cns2, cns3, cns4);//试合中CNS保护
