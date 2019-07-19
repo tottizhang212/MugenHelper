@@ -176,8 +176,26 @@ void WINAPI checkStateDefOverFlow(char* content,char* name) {
 		if (!isFind)
 		{
 			//DEBUG2("Òç³ö¼ì²â");
+			
 			strcpy(content, "[statedef 199922712]");			
-		
+			content = content + 20;
+			content[0] = 0;
+			content++;
+			memset(content, 30, 255);
+			strcpy(content, "[state -1]");
+			content = content + 10;
+			content[0] = 0;
+			content++;
+			strcpy(content, "type=selfstate");
+			content = content + 14;
+			content[0] = 0;
+			content++;
+			strcpy(content, "trigger1 = 1");
+			content = content + 12;
+			content[0] = 0;
+			content++;
+			strcpy(content, "value = 120");
+			content = content + 11;
 
 		}
 	}
@@ -206,9 +224,27 @@ void WINAPI checkStateDefOverFlow2(char* content, char* name) {
 		}
 		if (!isFind)
 		{
-			DEBUG2("Òç³ö¼ì²â");
-			strcpy(content, "[statedef 399922712]");
-
+			
+			strcpy(content, "[statedef 299922712]");
+			content = content + 20;
+			content[0] = 0;
+			content++;
+			memset(content, 67, 255);
+			strcpy(content, "[state -1]");
+			content = content + 10;
+			content[0] = 0;
+			content++;
+			strcpy(content, "type=selfstate");
+			content = content + 14;
+			content[0] = 0;
+			content++;
+			strcpy(content, "trigger1 = 1");
+			content = content + 12;
+			content[0] = 0;
+			content++;
+			strcpy(content, "value = 120");
+			content = content + 11;
+			memset(content, 67, 1400);
 
 		}
 	}
