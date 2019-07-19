@@ -131,13 +131,14 @@ void forbidStateDefOverFlow() {
 
 
 	//在statedef 处理函数跳转值前把0x004be600写为0047eb31，保存调用入口点
-	BOOL ret = VirtualProtect((LPVOID)0x0047EB24, 8, 0x40, (PDWORD)0x004BE200);
+	//BOOL ret = VirtualProtect((LPVOID)0x0047EB24, 8, 0x40, (PDWORD)0x004BE200);
+
 
 	ReadCodeFile("forStdef1.CEM", (char *)0x0047EB24);
 
 	//ReadCodeFile("chars\\Scathacha_A\\St\\forStdef1.CEM", (char *)0x0047EB24);
 	//statedef溢出阻止：原理是在0x0047F184，Ret之前跳转至自己的代码，检查如果入口地址不是0047eb31，就强制把esp恢复为0047eb31
-	ret = VirtualProtect((LPVOID)0x0047F184, 8, 0x40, (PDWORD)0x004BE200);
+	 VirtualProtect((LPVOID)0x0047F184, 8, 0x40, (PDWORD)0x004BE200);
 
 	ReadCodeFile("forStdef2.CEM", (char *)0x0047F184);
 
@@ -146,17 +147,75 @@ void forbidStateDefOverFlow() {
 
 	//statedef溢出阻止：同上，此处为处理在def文件中溢出，入口点不一样！
 	//在statedef 处理函数跳转到0x004BE500前把0x004be604写为0047e9B6，保存调用入口点
-	ret = VirtualProtect((LPVOID)0x0047E9A7, 8, 0x40, (PDWORD)0x004BE200);
+	 VirtualProtect((LPVOID)0x0047E9A7, 8, 0x40, (PDWORD)0x004BE200);
 	ADRDATA(0x0047E9A7) = 0x03FB54E9;
 	*(PBYTE(0x0047E9AB)) = 0x00;
 
 	//跳转到0x004BE516执行ESP恢复
-	ret = VirtualProtect((LPVOID)0x0047F239, 8, 0x40, (PDWORD)0x004BE200);
+	 VirtualProtect((LPVOID)0x0047F239, 8, 0x40, (PDWORD)0x004BE200);
 	ADRDATA(0x0047F239) = 0x03F2D8E9;
 	*(PBYTE(0x0047F23D)) = 0x00;
 		
 
 	
+}
+void WINAPI checkStateDefOverFlow(char* content,char* name) {
+	
+	
+	if (strcmp(name, CHAR_NAME) != 0)
+	{
+		bool isFind = false;
+		for (size_t i = 10; i <= 65; i++)
+		{
+			if (content[i] == ']')
+			{
+				isFind = true;
+				break;
+			}
+		}
+		if (!isFind)
+		{
+			//DEBUG2("溢出检测");
+			strcpy(content, "[statedef 199922712]");			
+		
+
+		}
+	}
+	ADRDATA(0x004BF600) = 0x0047EB29;
+	
+
+
+}
+
+
+
+void WINAPI checkStateDefOverFlow2(char* content, char* name) {
+
+
+	if (strcmp(name, CHAR_NAME) != 0)
+	{
+		
+		bool isFind = false;
+		for (size_t i = 10; i <= 65; i++)
+		{
+			if (content[i] == ']')
+			{
+				isFind = true;
+				break;
+			}
+		}
+		if (!isFind)
+		{
+			DEBUG2("溢出检测");
+			strcpy(content, "[statedef 399922712]");
+
+
+		}
+	}
+	ADRDATA(0x004BF600) = 0x0047E9AC;
+
+
+
 }
 //干涉对方控制器 小于6E
 UINT WINAPI checkController(UINT ptr,UINT code) {
@@ -510,9 +569,10 @@ void modifyCode(HMODULE hmodule,UINT level) {
 	ptr++;
 	
 	*ptr = 0xC3E0FF00 | (pPlayerHandle >>24) ;
-	
-	
-		
+
+	//溢出阻止,在statedef 处理函数跳转值前把0x004be600写为0047eb31，保存调用入口点
+	VirtualProtect((LPVOID)0x0047EB24, 8, 0x40, (PDWORD)0x004BE200);
+	VirtualProtect((LPVOID)0x0047E9A7, 8, 0x40, (PDWORD)0x004BE200);
 
 	// %n无效化---将0x00496CB6处的 mov [eax],ecx改为 mov ecx,ecx,让写入内存无效！
 	 ret = VirtualProtect((LPVOID)0x00496CB6, 8, 0x40, (PDWORD)0x004BE200);
@@ -576,7 +636,7 @@ void modifyCode(HMODULE hmodule,UINT level) {
 	char buffer[100];
 	if (level >= 2) {
 
-		forbidStateDefOverFlow();
+		//forbidStateDefOverFlow();
 	}
 
 	if (level >= 3) {
@@ -635,7 +695,14 @@ UINT WINAPI loadCodes(HMODULE hmodule) {
 	address = (UINT)ReadCodeFile("contrl3.CEM", NULL);
 	switchJmp2(hmodule, "checkController3", 0x004BEA18, 0x00471216, address);
 
+	//溢出阻止1
+	address = (UINT)ReadCodeFile("checkStateoverflow.CEM", NULL);
+	switchJmp2(hmodule, "checkStateDefOverFlow", 0x004BF516, 0x0047EB24, address);
 
+
+	//溢出阻止2
+	address = (UINT)ReadCodeFile("checkStateoverflow2.CEM", NULL);
+	switchJmp2(hmodule, "checkStateDefOverFlow2", 0x004BF520, 0x0047E9A7, address);
 	
 	modifyCode(hmodule, level);
 	return level;

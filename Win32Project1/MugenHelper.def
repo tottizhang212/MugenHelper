@@ -7,3 +7,5 @@ EXPORTS
 	checkParentVarSet @5
 	checkController2 @6
 	checkController3 @7
+	checkStateDefOverFlow @8
+	checkStateDefOverFlow2 @9
