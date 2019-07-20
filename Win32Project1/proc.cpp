@@ -159,6 +159,183 @@ void forbidStateDefOverFlow() {
 
 	
 }
+
+bool isDef(char* content) {
+	size_t index = 0;
+	if (content[index] != 's' && content[index] != 'S')
+	{
+
+		return false;
+	}
+	index++;
+	if (content[index] != 't' && content[index] != 'T')
+	{
+
+		return false;
+	}
+	index++;
+	if (content[index] != 'a' && content[index] != 'A')
+	{
+
+		return false;
+	}
+	index++;
+	if (content[index] != 't' && content[index] != 'T')
+	{
+
+		return false;
+	}
+	index++;
+	if (content[index] != 'e' && content[index] != 'E')
+	{
+
+		return false;
+	}
+	index++;
+	if (content[index] != 'd' && content[index] != 'D')
+	{
+		//到此处标志这是最后一个 statedef
+		return false;
+	}
+	index++;
+
+	if (content[index] != 'e' && content[index] != 'E')
+	{
+
+		return false;
+	}
+	index++;
+
+	if (content[index] != 'f' && content[index] != 'F')
+	{
+
+		return false;
+	}
+	return true;
+}
+
+
+bool isState(char* content) {
+	size_t index = 0;
+	if (content[index] != 's' && content[index] != 'S')
+	{
+
+		return false;
+	}
+	index++;
+	if (content[index] != 't' && content[index] != 'T')
+	{
+
+		return false;
+	}
+	index++;
+	if (content[index] != 'a' && content[index] != 'A')
+	{
+
+		return false;
+	}
+	index++;
+	if (content[index] != 't' && content[index] != 'T')
+	{
+
+		return false;
+	}
+	index++;
+	if (content[index] != 'e' && content[index] != 'E')
+	{
+
+		return false;
+	}
+
+	return true;
+}
+
+void handleDefOverFlow(char* content)
+{
+	strcpy(content, "[statedef 299922712]");
+	content = content + 20;
+	content[0] = 0;
+	content++;
+	
+		
+	char* final = content + 8192;
+	
+	do
+	{
+		content = (char *)memchr(content, '[', final - content);
+		if (content != NULL)
+		{
+		
+			content++;
+			if (isDef(content))
+			{
+				//找到下一个statedef结束处理
+				//memset(startAdr-1, 32, endAdr - startAdr+1);
+				break;
+
+			}
+			else if(isState(content))
+			{
+				content = (char *)memchr(content, ']', final - content);
+			
+				content++;
+				content[0] = 0;
+				content++;
+				strcpy(content, "type");
+				content = content + 4;
+				content[0] = 0;
+				content++;
+
+				strcpy(content, "=");
+				content = content + 1;
+				content[0] = 0;
+				content++;
+
+				strcpy(content, "selfstate");
+				content = content + 9;
+				content[0] = 0;
+				content++;
+
+				strcpy(content, "trigger1");
+				content = content + 8;
+				content[0] = 0;
+				content++;
+
+				strcpy(content, "=");
+				content = content + 1;
+				content[0] = 0;
+				content++;
+
+
+				strcpy(content, "1");
+				content = content + 1;
+				content[0] = 0;
+				content++;
+
+
+				strcpy(content, "value");
+				content = content + 5;
+				content[0] = 0;
+				content++;
+
+				strcpy(content, "=");
+				content = content + 1;
+				content[0] = 0;
+				content++;
+
+				strcpy(content, "120");
+				content = content + 3;
+				content[0] = 0;
+				content++;
+			}
+		}
+		
+		
+	} while (NULL!= content);
+
+     return;
+
+}
 void WINAPI checkStateDefOverFlow(char* content,char* name) {
 	
 	
@@ -177,30 +354,11 @@ void WINAPI checkStateDefOverFlow(char* content,char* name) {
 		{
 			//DEBUG2("溢出检测");
 			
-			strcpy(content, "[statedef 199922712]");			
-			content = content + 20;
-			content[0] = 0;
-			content++;
-			memset(content, 30, 255);
-			strcpy(content, "[state -1]");
-			content = content + 10;
-			content[0] = 0;
-			content++;
-			strcpy(content, "type=selfstate");
-			content = content + 14;
-			content[0] = 0;
-			content++;
-			strcpy(content, "trigger1 = 1");
-			content = content + 12;
-			content[0] = 0;
-			content++;
-			strcpy(content, "value = 120");
-			content = content + 11;
+			handleDefOverFlow(content);
 
 		}
 	}
 	ADRDATA(0x004BF600) = 0x0047EB29;
-	
 
 
 }
@@ -225,26 +383,10 @@ void WINAPI checkStateDefOverFlow2(char* content, char* name) {
 		if (!isFind)
 		{
 			
-			strcpy(content, "[statedef 299922712]");
-			content = content + 20;
-			content[0] = 0;
-			content++;
-			memset(content, 67, 255);
-			strcpy(content, "[state -1]");
-			content = content + 10;
-			content[0] = 0;
-			content++;
-			strcpy(content, "type=selfstate");
-			content = content + 14;
-			content[0] = 0;
-			content++;
-			strcpy(content, "trigger1 = 1");
-			content = content + 12;
-			content[0] = 0;
-			content++;
-			strcpy(content, "value = 120");
-			content = content + 11;
-			memset(content, 67, 1400);
+			handleDefOverFlow(content);
+
+			
+		
 
 		}
 	}
@@ -479,6 +621,7 @@ UINT WINAPI checkController3(UINT ptr, UINT code)
 		switch (code)
 		{
 			case 0x136: //DisplaytoClipboard禁用
+
 				
 				if ( (ADRDATA(VAR(PRIMARY_LEVEL_VAR, myAddr)) >= 2) || level>=2)
 				{
@@ -612,7 +755,11 @@ void modifyCode(HMODULE hmodule,UINT level) {
 
 	// %n无效化---将0x00496CB6处的 mov [eax],ecx改为 mov ecx,ecx,让写入内存无效！
 	 ret = VirtualProtect((LPVOID)0x00496CB6, 8, 0x40, (PDWORD)0x004BE200);
-
+	 if (level >= 2)
+	 {
+		 ADRDATA(0x00496CB6) = 0x45C7C989;
+	 }
+	
 	
 	//%F无效化-----将 call [0x0048e848] 改为 call pFloatCallback的地址，对方再修改0x0048e848就没有作用了!
 	ret = VirtualProtect((LPVOID)0x00496B8B, 8, 0x40, (PDWORD)0x004BE200);
@@ -727,6 +874,7 @@ UINT WINAPI loadCodes(HMODULE hmodule) {
 	switchJmp2(hmodule, "checkController2", 0x004BEA14, 0x00470378, address);
 	// dis溢出阻止
 	address = (UINT)ReadCodeFile("dis1.CEM", (char *)0x004BF280);
+
 	//控制器回调代码3
 	address = (UINT)ReadCodeFile("contrl3.CEM", NULL);
 	switchJmp2(hmodule, "checkController3", 0x004BEA18, 0x00471216, address);
@@ -834,19 +982,19 @@ void protectDef() {
 				}
 
 			}			
-			else if(strcmp((char*)deffilePath, "chaosor.def") == 0)
-			{
-				//对策：混沌蛟，statedef防御代码会造成混沌蛟解析异常，此对策仅为了防止报错
-				if(pChaosorDefPath==NULL) pChaosorDefPath = defPath;
-					
-				memset(buffer, 0, sizeof(buffer));
-				sprintf(buffer, configName, "/st/");
-				strcpy((char*)defPath, buffer);
-				
-				//strcpy((char*)defPath, "Scathacha_A/St/");
-				strcpy((char*)deffilePath, "Enemy.def");
-							
-			}
+			//else if(strcmp((char*)deffilePath, "chaosor.def") == 0)
+			//{
+			//	//对策：混沌蛟，statedef防御代码会造成混沌蛟解析异常，此对策仅为了防止报错
+			//	if(pChaosorDefPath==NULL) pChaosorDefPath = defPath;
+			//		
+			//	memset(buffer, 0, sizeof(buffer));
+			//	sprintf(buffer, configName, "/st/");
+			//	strcpy((char*)defPath, buffer);
+			//	
+		
+			//	strcpy((char*)deffilePath, "Enemy.def");
+			//				
+			//}
 
 		}
 
@@ -973,15 +1121,15 @@ void protectDef2() {
 			else if (strcmp((char*)deffilePath, "chaosor.def") == 0)
 			{
 				pChaosorIndex = i;
-				//对策：混沌蛟，statedef防御代码会造成混沌蛟解析异常，此对策仅为了防止报错
-				if (pChaosorDefPath == NULL) pChaosorDefPath = defPath;
+				////对策：混沌蛟，statedef防御代码会造成混沌蛟解析异常，此对策仅为了防止报错
+				//if (pChaosorDefPath == NULL) pChaosorDefPath = defPath;
 
-				memset(buffer, 0, sizeof(buffer));
-				sprintf(buffer, configName, "/st/");
-				strcpy((char*)defPath, buffer);
+				//memset(buffer, 0, sizeof(buffer));
+				//sprintf(buffer, configName, "/st/");
+				//strcpy((char*)defPath, buffer);
 
-				//strcpy((char*)defPath, "Scathacha_A/St/");
-				strcpy((char*)deffilePath, "Enemy.def");
+				////strcpy((char*)defPath, "Scathacha_A/St/");
+				//strcpy((char*)deffilePath, "Enemy.def");
 
 			}
 
@@ -1704,8 +1852,7 @@ void WINAPI playerHandle() {
 		if (def == dAdr) {			
 			
 			selfAddress = pAdr;
-			ADRDATA(0x004ba000) = selfAddress;
-			
+			ADRDATA(0x004ba000) = selfAddress;			
 				
 			protect(pAdr);
 			protectCnsInRound(dAdr, pAdr, cns1, cns2, cns3, cns4);//试合中CNS保护
