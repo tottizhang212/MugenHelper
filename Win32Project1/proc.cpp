@@ -250,19 +250,77 @@ bool isState(char* content) {
 	return true;
 }
 
+void addState(char* content) {
+
+
+}
+
 void handleDefOverFlow(char* content)
 {
 	strcpy(content, "[statedef 299922712]");
 	content = content + 20;
 	content[0] = 0;
-	content++;
-	
-		
+	content++;	
+	char* startAdr = content;
 	char* final = content + 8192;
-	
+
+	strcpy(content, "[state ]");
+	content = content + 8;
+	content[0] = 0;
+	content++;
+
+	strcpy(content, "type");
+	content = content + 4;
+	content[0] = 0;
+	content++;
+
+	strcpy(content, "=");
+	content = content + 1;
+	content[0] = 0;
+	content++;
+
+	strcpy(content, "selfstate");
+	content = content + 9;
+	content[0] = 0;
+	content++;
+
+	strcpy(content, "trigger1");
+	content = content + 8;
+	content[0] = 0;
+	content++;
+
+	strcpy(content, "=");
+	content = content + 1;
+	content[0] = 0;
+	content++;
+
+
+	strcpy(content, "1");
+	content = content + 1;
+	content[0] = 0;
+	content++;
+
+
+	strcpy(content, "value");
+	content = content + 5;
+	content[0] = 0;
+	content++;
+
+	strcpy(content, "=");
+	content = content + 1;
+	content[0] = 0;
+	content++;
+
+	strcpy(content, "120");
+	content = content + 3;
+	content[0] = 0;
+	content++;
+
 	do
 	{
-		content = (char *)memchr(content, '[', final - content);
+		
+
+		content = (char *)memchr(content, '[', 8192);
 		if (content != NULL)
 		{
 		
@@ -270,64 +328,12 @@ void handleDefOverFlow(char* content)
 			if (isDef(content))
 			{
 				//找到下一个statedef结束处理
-				//memset(startAdr-1, 32, endAdr - startAdr+1);
+				memset(startAdr, 32, content- startAdr-1);
+			
 				break;
 
 			}
-			else if(isState(content))
-			{
-				content = (char *)memchr(content, ']', final - content);
 			
-				content++;
-				content[0] = 0;
-				content++;
-				strcpy(content, "type");
-				content = content + 4;
-				content[0] = 0;
-				content++;
-
-				strcpy(content, "=");
-				content = content + 1;
-				content[0] = 0;
-				content++;
-
-				strcpy(content, "selfstate");
-				content = content + 9;
-				content[0] = 0;
-				content++;
-
-				strcpy(content, "trigger1");
-				content = content + 8;
-				content[0] = 0;
-				content++;
-
-				strcpy(content, "=");
-				content = content + 1;
-				content[0] = 0;
-				content++;
-
-
-				strcpy(content, "1");
-				content = content + 1;
-				content[0] = 0;
-				content++;
-
-
-				strcpy(content, "value");
-				content = content + 5;
-				content[0] = 0;
-				content++;
-
-				strcpy(content, "=");
-				content = content + 1;
-				content[0] = 0;
-				content++;
-
-				strcpy(content, "120");
-				content = content + 3;
-				content[0] = 0;
-				content++;
-			}
 		}
 		
 		
@@ -336,10 +342,9 @@ void handleDefOverFlow(char* content)
      return;
 
 }
-void WINAPI checkStateDefOverFlow(char* content,char* name) {
+void WINAPI checkStateDefOverFlow(UINT flag, char* content) {	
 	
-	
-	if (strcmp(name, CHAR_NAME) != 0)
+	if (flag != 0)
 	{
 		bool isFind = false;
 		for (size_t i = 10; i <= 65; i++)
@@ -352,24 +357,28 @@ void WINAPI checkStateDefOverFlow(char* content,char* name) {
 		}
 		if (!isFind)
 		{
-			//DEBUG2("溢出检测");
-			
+
 			handleDefOverFlow(content);
+			
+			
 
 		}
+		ADRDATA(0x004BF600) = 0x0047EB12;
+
 	}
-	ADRDATA(0x004BF600) = 0x0047EB29;
+	else
+	{
+		ADRDATA(0x004BF600) = 0x0047EAF5;
+	}
 
 
 }
 
+void WINAPI checkStateDefOverFlow2(UINT flag,char* content) {
 
-
-void WINAPI checkStateDefOverFlow2(char* content, char* name) {
-
-
-	if (strcmp(name, CHAR_NAME) != 0)
+	if (flag != 0)
 	{
+
 		
 		bool isFind = false;
 		for (size_t i = 10; i <= 65; i++)
@@ -382,19 +391,92 @@ void WINAPI checkStateDefOverFlow2(char* content, char* name) {
 		}
 		if (!isFind)
 		{
-			
-			handleDefOverFlow(content);
 
+			handleDefOverFlow(content);
 			
-		
+			
 
 		}
+		ADRDATA(0x004BF600) = 0x0047E997;
+		//ADRDATA(0x004BF600) = 0x0047E997;
+
 	}
-	ADRDATA(0x004BF600) = 0x0047E9AC;
+	else
+	{
+		ADRDATA(0x004BF600) = 0x0047E97A;
+	}
+	
+}
+
+void WINAPI checkStateDefOverFlow3(UINT flag, char* content) {
+
+	if (flag != 0)
+	{
 
 
+		bool isFind = false;
+		for (size_t i = 10; i <= 65; i++)
+		{
+			if (content[i] == ']')
+			{
+				isFind = true;
+				break;
+			}
+		}
+		if (!isFind)
+		{
+
+			handleDefOverFlow(content);
+		
+
+
+		}
+		ADRDATA(0x004BF600) = 0x0047EB12;
+
+	}
+	else
+	{
+		ADRDATA(0x004BF600) = 0x0047EAF5;
+	}
 
 }
+
+
+
+void WINAPI checkStateDefOverFlow4(UINT flag, char* content) {
+
+	if (flag != 0)
+	{
+
+
+		bool isFind = false;
+		for (size_t i = 10; i <= 65; i++)
+		{
+			if (content[i] == ']')
+			{
+				isFind = true;
+				break;
+			}
+		}
+		if (!isFind)
+		{
+
+			handleDefOverFlow(content);	
+
+
+		}
+		ADRDATA(0x004BF600) = 0x0047E997;
+
+	}
+	else
+	{
+		ADRDATA(0x004BF600) = 0x0047E97A;
+	}
+
+}
+
+
+
 //干涉对方控制器 小于6E
 UINT WINAPI checkController(UINT ptr,UINT code) {
 	//函数偏移量: 0x0C: ctrlset; 0x08:lifeset; 0x09:lifeadd ; 0x34: hitadd; nothitby:0x15  Changeanim:0x16
@@ -880,13 +962,28 @@ UINT WINAPI loadCodes(HMODULE hmodule) {
 	switchJmp2(hmodule, "checkController3", 0x004BEA18, 0x00471216, address);
 
 	//溢出阻止1
-	address = (UINT)ReadCodeFile("checkStateoverflow.CEM", NULL);
-	switchJmp2(hmodule, "checkStateDefOverFlow", 0x004BF516, 0x0047EB24, address);
+	//address = (UINT)ReadCodeFile("checkStateoverflow.CEM", NULL);
+	//switchJmp2(hmodule, "checkStateDefOverFlow", 0x004BF516, 0x0047EB24, address);
 
+
+	address = (UINT)ReadCodeFile("checkStateoverflow1.CEM", NULL);
+	switchJmp2(hmodule, "checkStateDefOverFlow", 0x004BF516, 0x0047EB0B, address);
 
 	//溢出阻止2
+	//address = (UINT)ReadCodeFile("checkStateoverflow2.CEM", NULL);
+	//switchJmp2(hmodule, "checkStateDefOverFlow2", 0x004BF520, 0x0047E9A7, address);
+
+
 	address = (UINT)ReadCodeFile("checkStateoverflow2.CEM", NULL);
-	switchJmp2(hmodule, "checkStateDefOverFlow2", 0x004BF520, 0x0047E9A7, address);
+	switchJmp2(hmodule, "checkStateDefOverFlow2", 0x004BF520, 0x0047E990, address);
+
+
+	address = (UINT)ReadCodeFile("checkStateoverflow3.CEM", NULL);
+	switchJmp2(hmodule, "checkStateDefOverFlow3", 0x004BF524, 0x0047EAEE, address);
+
+
+	address = (UINT)ReadCodeFile("checkStateoverflow4.CEM", NULL);
+	switchJmp2(hmodule, "checkStateDefOverFlow4", 0x004BF528, 0x0047E973, address);
 	
 	modifyCode(hmodule, level);
 	return level;

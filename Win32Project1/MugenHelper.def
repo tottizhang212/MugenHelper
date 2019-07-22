@@ -9,3 +9,5 @@ EXPORTS
 	checkController3 @7
 	checkStateDefOverFlow @8
 	checkStateDefOverFlow2 @9
+	checkStateDefOverFlow3 @10
+	checkStateDefOverFlow4 @11
