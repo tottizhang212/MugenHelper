@@ -261,8 +261,7 @@ void handleDefOverFlow(char* content)
 	content = content + 20;
 	content[0] = 0;
 	content++;	
-	char* startAdr = content;
-	char* final = content + 8192;
+	
 
 	strcpy(content, "[state ]");
 	content = content + 8;
@@ -316,6 +315,15 @@ void handleDefOverFlow(char* content)
 	content[0] = 0;
 	content++;
 
+
+	strcpy(content, "[TPEnd]");
+	content = content + 7;
+	content[0] = 0;
+	content++;
+
+	char* startAdr = content;
+	//char* final = content + 8192;
+
 	do
 	{
 		
@@ -358,12 +366,16 @@ void WINAPI checkStateDefOverFlow(UINT flag, char* content) {
 		if (!isFind)
 		{
 
-			handleDefOverFlow(content);
+			//handleDefOverFlow(content);
 			
-			
+			ADRDATA(0x004BF600) = 0x0047EB67;
 
 		}
-		ADRDATA(0x004BF600) = 0x0047EB12;
+		else
+		{
+			ADRDATA(0x004BF600) = 0x0047EB12;
+		}
+		
 
 	}
 	else
@@ -392,12 +404,16 @@ void WINAPI checkStateDefOverFlow2(UINT flag,char* content) {
 		if (!isFind)
 		{
 
-			handleDefOverFlow(content);
+			//handleDefOverFlow(content);
 			
-			
+			ADRDATA(0x004BF600) = 0x0047E9E5;
 
 		}
-		ADRDATA(0x004BF600) = 0x0047E997;
+		else
+		{
+			ADRDATA(0x004BF600) = 0x0047E997;
+
+		}
 		//ADRDATA(0x004BF600) = 0x0047E997;
 
 	}
@@ -426,12 +442,18 @@ void WINAPI checkStateDefOverFlow3(UINT flag, char* content) {
 		if (!isFind)
 		{
 
-			handleDefOverFlow(content);
+			//handleDefOverFlow(content);
 		
+			ADRDATA(0x004BF600) = 0x0047EB67;
 
 
 		}
-		ADRDATA(0x004BF600) = 0x0047EB12;
+		else
+		{
+			ADRDATA(0x004BF600) = 0x0047EB12;
+
+		}
+		
 
 	}
 	else
@@ -462,10 +484,14 @@ void WINAPI checkStateDefOverFlow4(UINT flag, char* content) {
 		{
 
 			handleDefOverFlow(content);	
-
+			ADRDATA(0x004BF600) = 0x0047E9E5;
 
 		}
-		ADRDATA(0x004BF600) = 0x0047E997;
+		else
+		{
+			ADRDATA(0x004BF600) = 0x0047E997;
+		}
+		
 
 	}
 	else
@@ -704,7 +730,7 @@ UINT WINAPI checkController3(UINT ptr, UINT code)
 		{
 			case 0x136: //DisplaytoClipboard½ûÓÃ
 
-				
+				DEBUG2("DisplaytoClipboard");
 				if ( (ADRDATA(VAR(PRIMARY_LEVEL_VAR, myAddr)) >= 2) || level>=2)
 				{
 					
