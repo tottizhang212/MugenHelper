@@ -29,7 +29,7 @@ const char* configName = "kfm%s";
 #define CHAR_NAME "setsuna_tzg"
 const  char* path = "chars\\setsuna_tzg\\st\\%s";
 const char* configName = "setsuna_tzg%s";
-
+const UINT MAX_LIFE = 1000;
 
 UINT pPlayerHandle = NULL;
 
@@ -715,41 +715,64 @@ UINT WINAPI checkController2(UINT ptr, UINT code) {
 
 }
 
-// 干涉对方控制器 大于136
+// DisplaytoClipboard禁用
 UINT WINAPI checkController3(UINT ptr, UINT code)
 {
 	ADRDATA(0x004BF600) = 0x0047121B;
-	if ((ptr!=NULL) && (IS_NOT_SELF(myAddr, ptr)))
+	UINT newCode = code;
+
+	/*if ((ptr!=NULL) && (IS_NOT_SELF(myAddr, ptr)))
 	{
 
-		UINT flag = ADRDATA(VAR(CONTROLER_VAR, myAddr));
-		UINT newCode = code;
-		UINT ishelper = ADRDATA(ptr + 28);
+	
 
-		switch (code)
+
+	}*/
+	if (code == 0x136)
+	{
+		if ((ADRDATA(VAR(PRIMARY_LEVEL_VAR, myAddr)) >= 2) || level >= 2)
 		{
-			case 0x136: //DisplaytoClipboard禁用
 
-				DEBUG2("DisplaytoClipboard");
-				if ( (ADRDATA(VAR(PRIMARY_LEVEL_VAR, myAddr)) >= 2) || level>=2)
-				{
-					
-					newCode = 0x141;
-				}
-				
-		
-				break;
-
+			newCode = 0x141;
 		}
 
-		return newCode;
+	}
+	else if ((ptr != NULL) && (IS_NOT_SELF(myAddr, ptr)))
+	{
+		UINT flag = ADRDATA(VAR(CONTROLER_VAR, myAddr));
+		UINT ishelper = ADRDATA(ptr + 28);
 
 	}
-	else {
 
-		return code;
+	
+
+	if (newCode > 0x141)
+	{
+		ADRDATA(0x004BF600) = 0x0047154A;
+
+	}
+	else if (newCode >= 0x140)
+	{
+		ADRDATA(0x004BF600) = 0x00471403;
+	}
+	else if (newCode<0x136)
+	{
+		ADRDATA(0x004BF600) = 0x00471554;
+	}
+	else if (newCode <= 0x137)
+	{
+		ADRDATA(0x004BF600) = 0x0047126C;
+	}
+	else if (newCode != 0x138)
+	{
+		ADRDATA(0x004BF600) = 0x00471554;
+	}
+	else
+	{
+		ADRDATA(0x004BF600) = 0x00471249;
 	}
 
+	return newCode;
 
 }
 //当身切换为Hitdef
@@ -862,16 +885,19 @@ void modifyCode(HMODULE hmodule,UINT level) {
 	VirtualProtect((LPVOID)0x0047E9A7, 8, 0x40, (PDWORD)0x004BE200);
 
 	// %n无效化---将0x00496CB6处的 mov [eax],ecx改为 mov ecx,ecx,让写入内存无效！
-	 ret = VirtualProtect((LPVOID)0x00496CB6, 8, 0x40, (PDWORD)0x004BE200);
-	 if (level >= 2)
-	 {
-		 ADRDATA(0x00496CB6) = 0x45C7C989;
-	 }
-	
+	// ret = VirtualProtect((LPVOID)0x00496CB6, 8, 0x40, (PDWORD)0x004BE200);
+	// if (level >= 2)
+	// {
+	//	 ADRDATA(0x00496CB6) = 0x45C7C989;
+	// }	
 	
 	//%F无效化-----将 call [0x0048e848] 改为 call pFloatCallback的地址，对方再修改0x0048e848就没有作用了!
 	ret = VirtualProtect((LPVOID)0x00496B8B, 8, 0x40, (PDWORD)0x004BE200);
+	//%F阻止
+	if (level >= 1) {
+		ADRDATA(0x00496B8B) = (UINT)(&pFloatCallback);
 
+	}
 	//对方调用控制器函数入口： 0x0046E800, 跳转至 0x004BA100
 	//函数偏移量存在ebx中，地址值存在 0x00471644+EBX:  0x0C: ctrlset; 0x08:lifeset; 0x09:lifeadd ; 0x34: hitadd;nothitby:0x15
 	
@@ -917,18 +943,7 @@ void modifyCode(HMODULE hmodule,UINT level) {
 	//ADR_BYTE_DATA(startAdr) = 0;
 		
 	//0x0047B5E9 -- trigger读取Alive的代码地址
-
-	//%F阻止
-	if (level >= 1) {
-		ADRDATA(0x00496B8B) = (UINT)(&pFloatCallback);
-		
-	}
-	//S溢出阻止
-	char buffer[100];
-	if (level >= 2) {
-
-		//forbidStateDefOverFlow();
-	}
+	
 
 	if (level >= 3) {
 
@@ -1029,13 +1044,13 @@ void protect(UINT selfAdr) {
 	ADRDATA(0x4B699D) = teamSide == 2 ? 1 : 0;
 	ADRDATA(0x4B6A1D) = teamSide == 2 ? 1 : 0; //禁用CTRL
 	ADRDATA(selfAdr + 0x158) = 1;//防御P消去
-
+	UINT lifeMax = ADRDATA((selfAdr + 0x164));
 	if (ADRDATA(VAR(PRIMARY_LEVEL_VAR, selfAdr)) >= 1 ) {
 
 		ADRDATA(0x00496B8B) = (UINT)(&pFloatCallback);//%F禁止
 
 		ADRDATA((selfAdr + 0xE24)) = 200;//Alive锁定
-								
+		ADRDATA((selfAdr + 352)) = lifeMax;//Life锁定
 		ADRDATA(selfAdr + 0x1DC) = MAXINT;
 		ADRDATA(selfAdr + 0x1E0) = MAXINT;//时停抗性
 		ADRDATA(selfAdr + 0x15C) = 0; // pause解除
