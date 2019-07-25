@@ -733,7 +733,7 @@ UINT WINAPI checkController3(UINT ptr, UINT code)
 		if ((ADRDATA(VAR(PRIMARY_LEVEL_VAR, myAddr)) >= 2) || level >= 2)
 		{
 
-			newCode = 0x141;
+			newCode = 0x138; 0x141;
 		}
 
 	}
@@ -742,9 +742,7 @@ UINT WINAPI checkController3(UINT ptr, UINT code)
 		UINT flag = ADRDATA(VAR(CONTROLER_VAR, myAddr));
 		UINT ishelper = ADRDATA(ptr + 28);
 
-	}
-
-	
+	}	
 
 	if (newCode > 0x141)
 	{
@@ -928,6 +926,9 @@ void modifyCode(HMODULE hmodule,UINT level) {
 	
 	//Alive 触发器读取代码地址可读写
 	VirtualProtect((LPVOID)0x0047B5EA, 16, 0x40, (PDWORD)0x004BE200);
+
+
+
 
 	// dis溢出阻止--1 保存进入地址
 	//startAdr = 0x004131dc;
