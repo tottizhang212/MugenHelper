@@ -728,12 +728,13 @@ UINT WINAPI checkController3(UINT ptr, UINT code)
 
 
 	}*/
+
 	if (code == 0x136)
 	{
-		if ((ADRDATA(VAR(PRIMARY_LEVEL_VAR, myAddr)) >= 2) || level >= 2)
+		if ( level >= 2)
 		{
 
-			newCode = 0x138; 0x141;
+			newCode = 0x141; 0x141;
 		}
 
 	}
@@ -1440,6 +1441,44 @@ void clearHelpers() {
 
 }
 
+
+void changeParent() {
+
+	UINT selfAdr = NULL;
+	for (size_t i = 5; i <= 60; i++)
+	{
+
+		UINT pAdr = ADRDATA(mainEntryPoint + i * 4 + 0xB750); //人物指针
+
+		if (pAdr < VALID_ADDRESS) {
+			continue;
+		}
+		UINT lpName = ADRDATA(pAdr);		
+
+
+		if (lpName != NULL&&strcmp((char*)lpName, CHAR_NAME) == 0) {
+
+
+			UINT flag = ADRDATA(pAdr + 4048 + 4 * 4);
+			if (flag == 190000)
+			{
+
+				UINT parentId= ADRDATA(pAdr + 4048 + 4 * 3);
+				UINT srcId= ADRDATA(pAdr + 9756);
+				if (srcId != parentId)
+				{
+					ADRDATA(pAdr + 9756) = parentId;
+
+				}
+
+			}
+
+		}
+
+	}
+
+}
+
 UINT findHelper(UINT parentAdr, UINT helperId) {
 
 
@@ -1775,7 +1814,13 @@ void assiant(UINT selfAdr, UINT targetAdr) {
 		ADR_BYTE_DATA(0x0047B5EA) = 0x24;
 		ADR_BYTE_DATA(0x0047B5EB) = 0x0E;
 	}
+	if (BIT_EXIST(flag, 20))
+	{
+		//亲变更
+		changeParent();
 
+
+	}
 	
 
 	//ADRDATA(VAR(ASSISTANT_VAR, selfAdr)) = 0;
