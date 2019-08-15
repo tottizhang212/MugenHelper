@@ -1796,7 +1796,7 @@ void assiant(UINT selfAdr, UINT targetAdr) {
 		//本体Target获取
 
 		setTarget(selfAdr, targetAdr);
-
+		ADRDATA(VAR(ASSISTANT_VAR, selfAdr)) = clrbit(flag, 17);
 
 	}
 
