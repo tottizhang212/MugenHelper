@@ -1794,9 +1794,14 @@ void assiant(UINT selfAdr, UINT targetAdr) {
 	if (BIT_EXIST(flag, 17))
 	{
 		//本体Target获取
+		if (IS_NOT_SELF(myAddr, targetAdr))
+		{
+			setTarget(selfAdr, targetAdr);
+			ADRDATA(VAR(ASSISTANT_VAR, selfAdr)) = clrbit(flag, 17);
 
-		setTarget(selfAdr, targetAdr);
-		ADRDATA(VAR(ASSISTANT_VAR, selfAdr)) = clrbit(flag, 17);
+
+		}
+		
 
 	}
 
@@ -2040,6 +2045,7 @@ void WINAPI playerHandle() {
 				
 			protect(pAdr);
 			protectCnsInRound(dAdr, pAdr, cns1, cns2, cns3, cns4);//试合中CNS保护
+			
 			
 
 		}
