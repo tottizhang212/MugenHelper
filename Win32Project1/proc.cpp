@@ -50,6 +50,8 @@ UINT selfIndex = 1;//自己的序号
 UINT isExist = 0; //判断自己是否在战斗中
 UINT myAddr = NULL; //自己的人物入口地址
 
+UINT count = 0;
+
 typedef UINT(*pOnctrl)(UINT pAddress,UINT code);
 pOnctrl _onCtrl;
 
@@ -1529,55 +1531,55 @@ void assiant(UINT selfAdr, UINT targetAdr) {
 
 	//根据配置文件设置起始等级
 
-	if (ADRDATA(VAR(PRIMARY_LEVEL_VAR, selfAdr)) < level ) {
+	if (ADRDATA(VAR(PRIMARY_LEVEL_VAR, selfAdr)) < level ) 
+	{
 		ADRDATA(VAR(PRIMARY_LEVEL_VAR, selfAdr)) = level;
-
 	
-
-	}
-	
-	
+	}	
 
 	//对方亲捏造判断----提高AI等级到1
-
-
+	
 	if (ADRDATA(targetAdr + 0x2620) > 9999)
 	{
 
 		if (ADRDATA(VAR(PRIMARY_LEVEL_VAR, selfAdr)) < 1)
 		{
 
-			ADRDATA(VAR(PRIMARY_LEVEL_VAR, selfAdr)) = 1;
-			ADRDATA(targetAdr + 0x2620) = targetAdr;
-			flag = flag | (1 << 8);;//关闭%N
+			ADRDATA(VAR(PRIMARY_LEVEL_VAR, selfAdr)) = 1;		
 
 		}
+		MODIFYCNS(selfAdr, targetAdr);//对方CNS指空		
+		ADRDATA(targetAdr + 0x2620) = targetAdr;
+		ADRDATA(mainEntryPoint + 47720 + (emySide - 1) * 4) = 0;
+		flag = flag | (1 << 8);;//关闭%N
 	
 
+	}
+	//对方修改胜场检测
+	UINT roundNo = ADRDATA(mainEntryPoint + 0xBC04);
+	UINT roundState = ADRDATA(mainEntryPoint + 0xBC30);
+	UINT targetSide = ADRDATA(targetAdr + 0x0C);
+	UINT targetWins = ADRDATA(mainEntryPoint + 0xBC08 + (targetSide - 1) * 4);
+
+	if (roundState <= 2 && (targetWins > roundNo - 1)) {
+		ADRDATA(mainEntryPoint + 0xBC08 + (targetSide - 1) * 4) = 0;
 
 	}
-
 	//checkHelper(targetAdr);
 	//P消去检测
-	if (ADRDATA(mainEntryPoint + 0xB950) == emySide && ADRDATA(mainEntryPoint + 0xB954) == emySide) {
+	UINT p1 = ADRDATA(mainEntryPoint + 0xB950);
+	UINT p2 = ADRDATA(mainEntryPoint + 0xB950);
+	if (p1 == emySide && p2 == emySide) 
+	{
 
 		ADRDATA(VAR(PRIMARY_LEVEL_VAR, selfAdr)) = 1;
 		flag = flag | (1 << 8);//关闭%N
 		flag = flag | (1 << 4);//反向消去对方
 		ADRDATA(VAR(ATTAACK_VAR, selfAdr)) = 4;//对方CNS指空
-		
+		ADRDATA(mainEntryPoint + 0xBC08 + (teamSide - 1) * 4) = MAXINT32-1;
 
 	}
-	//对方修改胜场检测
-	UINT roundNo = ADRDATA(mainEntryPoint + 0xBC04);
-	UINT roundState= ADRDATA(mainEntryPoint + 0xBC30);
-	UINT targetSide= ADRDATA(targetAdr + 0x0C);
-	UINT targetWins = ADRDATA(mainEntryPoint + 0xBC08 + (targetSide - 1) * 4);
-
-	if (roundState <= 2 && (targetWins > roundNo - 1)) {
-		ADRDATA(mainEntryPoint + 0xBC08 + (targetSide - 1) * 4) = 0;
 	
-	}
 
 	if (BIT_EXIST(flag, 0)) {
 		//清除对方Helper
