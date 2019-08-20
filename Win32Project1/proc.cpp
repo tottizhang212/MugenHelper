@@ -1576,7 +1576,11 @@ void assiant(UINT selfAdr, UINT targetAdr) {
 		flag = flag | (1 << 8);//关闭%N
 		flag = flag | (1 << 4);//反向消去对方
 		ADRDATA(VAR(ATTAACK_VAR, selfAdr)) = 4;//对方CNS指空
-		ADRDATA(mainEntryPoint + 0xBC08 + (teamSide - 1) * 4) = MAXINT32-1;
+		if (teamSide == 2)
+		{
+			ADRDATA(mainEntryPoint + 0xBC08 + (teamSide - 1) * 4) = MAXINT32 - 1;//2p侧 胜场修改，防止报错
+		}
+		
 
 	}
 	
