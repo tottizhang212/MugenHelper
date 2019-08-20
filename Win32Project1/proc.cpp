@@ -112,6 +112,34 @@ char* WINAPI ReadCodeFile(char* file, char* startAddress) {
 
 	return startAddress;
 }
+void switchJmp(HMODULE hmodule, LPCSTR funName, UINT funAdr, UINT startAdr, UINT relCode) {
+
+	ADRDATA(funAdr) = (UINT)GetProcAddress(hmodule, funName);
+	VirtualProtect((LPVOID)startAdr, 16, 0x40, (PDWORD)0x004BE200);
+	ADRDATA(startAdr) = relCode;
+	startAdr += 4;
+	ADR_BYTE_DATA(startAdr) = 0;
+
+
+}
+
+
+void switchJmp2(HMODULE hmodule, LPCSTR funName, UINT funAdr, UINT startAdr, UINT writeAdr) {
+
+	ADRDATA(funAdr) = (UINT)GetProcAddress(hmodule, funName);
+	VirtualProtect((LPVOID)startAdr, 16, 0x40, (PDWORD)0x004BE200);
+	UINT rav = writeAdr - startAdr - 5;
+
+
+	UINT relCode = 0xE9 | (rav << 8);
+	ADRDATA(startAdr) = relCode;
+	startAdr += 4;
+	relCode = 0 | (rav >> 24);
+	ADR_BYTE_DATA(startAdr) = relCode;
+
+
+}
+
 void log(const char* content) {
 
 	FILE * pFile;
@@ -130,20 +158,22 @@ UINT pFloatCallback = 0x00496651;//替代用%F入口跳转地址变量
 void forbidStateDefOverFlow() {
 
 
+	//恢复ESP
+	UINT address = (UINT)ReadCodeFile("forStdef3.CEM", (char *)0x004BE700);
+	//把0x004be600写为0047eb31,恢复ESP
+	address = (UINT)ReadCodeFile("forStdef4.CEM", (char *)0x004BE800);
+	//def中stdef溢出阻止代码 
+	address = (UINT)ReadCodeFile("forStdef8.CEM", (char *)0x004BE500);
+
 	//在statedef 处理函数跳转值前把0x004be600写为0047eb31，保存调用入口点
-	//BOOL ret = VirtualProtect((LPVOID)0x0047EB24, 8, 0x40, (PDWORD)0x004BE200);
+	 VirtualProtect((LPVOID)0x0047EB24, 8, 0x40, (PDWORD)0x004BE200);
+	 ReadCodeFile("forStdef1.CEM", (char *)0x0047EB24);
 
-
-	ReadCodeFile("forStdef1.CEM", (char *)0x0047EB24);
-
-	//ReadCodeFile("chars\\Scathacha_A\\St\\forStdef1.CEM", (char *)0x0047EB24);
+	
 	//statedef溢出阻止：原理是在0x0047F184，Ret之前跳转至自己的代码，检查如果入口地址不是0047eb31，就强制把esp恢复为0047eb31
 	 VirtualProtect((LPVOID)0x0047F184, 8, 0x40, (PDWORD)0x004BE200);
-
-	ReadCodeFile("forStdef2.CEM", (char *)0x0047F184);
-
-	//ReadCodeFile("chars\\Scathacha_A\\St\\forStdef2.CEM", (char *)0x0047F184);
-
+	 ReadCodeFile("forStdef2.CEM", (char *)0x0047F184);
+	 
 
 	//statedef溢出阻止：同上，此处为处理在def文件中溢出，入口点不一样！
 	//在statedef 处理函数跳转到0x004BE500前把0x004be604写为0047e9B6，保存调用入口点
@@ -158,6 +188,29 @@ void forbidStateDefOverFlow() {
 		
 
 	
+}
+//实验中，会报错，待解决
+void forbidStateDefOverFlowEx(HMODULE hmodule)
+{
+	UINT address = (UINT)ReadCodeFile("checkStateoverflow1.CEM", NULL);
+	switchJmp2(hmodule, "checkStateDefOverFlow", 0x004BF516, 0x0047EB0B, address);
+
+	//溢出阻止2
+	//address = (UINT)ReadCodeFile("checkStateoverflow2.CEM", NULL);
+	//switchJmp2(hmodule, "checkStateDefOverFlow2", 0x004BF520, 0x0047E9A7, address);
+
+
+	address = (UINT)ReadCodeFile("checkStateoverflow2.CEM", NULL);
+	switchJmp2(hmodule, "checkStateDefOverFlow2", 0x004BF520, 0x0047E990, address);
+
+
+	address = (UINT)ReadCodeFile("checkStateoverflow3.CEM", NULL);
+	switchJmp2(hmodule, "checkStateDefOverFlow3", 0x004BF524, 0x0047EAEE, address);
+
+
+	address = (UINT)ReadCodeFile("checkStateoverflow4.CEM", NULL);
+	switchJmp2(hmodule, "checkStateDefOverFlow4", 0x004BF528, 0x0047E973, address);
+
 }
 
 bool isDef(char* content) {
@@ -536,8 +589,7 @@ UINT WINAPI checkController(UINT ptr,UINT code) {
 				//脱离-selfstate-禁止
 				switch (code)
 				{
-					//case 0x01: //changestate
-						//newCode = 0x34;
+					
 					case 0x02: //selfstate
 						newCode = 0x34;
 									
@@ -720,30 +772,26 @@ UINT WINAPI checkController3(UINT ptr, UINT code)
 {
 	ADRDATA(0x004BF600) = 0x0047121B;
 	UINT newCode = code;
-
-	/*if ((ptr!=NULL) && (IS_NOT_SELF(myAddr, ptr)))
+	bool flag = false;
+	if ((ptr != NULL) && (IS_NOT_SELF(myAddr, ptr)))
 	{
-
+		 flag = BIT_EXIST(ADRDATA(VAR(CONTROLER_VAR, myAddr)), 12);
+		 
+	}
 	
-
-
-	}*/
 
 	if (code == 0x136)
 	{
-		if ( level >= 2)
+
+		
+		if ( level >= 2 || flag )
 		{
 
-			newCode = 0x141; 0x141;
+			newCode = 0x141; 
 		}
 
 	}
-	else if ((ptr != NULL) && (IS_NOT_SELF(myAddr, ptr)))
-	{
-		UINT flag = ADRDATA(VAR(CONTROLER_VAR, myAddr));
-		UINT ishelper = ADRDATA(ptr + 28);
-
-	}	
+	
 
 	if (newCode > 0x141)
 	{
@@ -835,33 +883,6 @@ UINT WINAPI checkParentVarSet(UINT ptr,UINT isParent) {
 }
 
 
-void switchJmp(HMODULE hmodule,LPCSTR funName,UINT funAdr, UINT startAdr, UINT relCode) {
-
-	ADRDATA(funAdr) = (UINT)GetProcAddress(hmodule, funName);
-	 VirtualProtect((LPVOID)startAdr, 16, 0x40, (PDWORD)0x004BE200);
-	ADRDATA(startAdr) = relCode;
-	startAdr += 4;
-	ADR_BYTE_DATA(startAdr) = 0;
-
-
-}
-
-
-void switchJmp2(HMODULE hmodule, LPCSTR funName, UINT funAdr, UINT startAdr, UINT writeAdr) {
-
-	ADRDATA(funAdr) = (UINT)GetProcAddress(hmodule, funName);
-	VirtualProtect((LPVOID)startAdr, 16, 0x40, (PDWORD)0x004BE200);
-	UINT rav = writeAdr - startAdr - 5;
-	
-	
-	UINT relCode = 0xE9 | (rav << 8);
-	ADRDATA(startAdr) = relCode;
-	startAdr += 4;
-	relCode = 0 | (rav >> 24);
-	ADR_BYTE_DATA(startAdr) = relCode;
-
-
-}
 
 void modifyCode(HMODULE hmodule,UINT level) {
 
@@ -883,12 +904,8 @@ void modifyCode(HMODULE hmodule,UINT level) {
 	VirtualProtect((LPVOID)0x0047EB24, 8, 0x40, (PDWORD)0x004BE200);
 	VirtualProtect((LPVOID)0x0047E9A7, 8, 0x40, (PDWORD)0x004BE200);
 
-	// %n无效化---将0x00496CB6处的 mov [eax],ecx改为 mov ecx,ecx,让写入内存无效！
-	// ret = VirtualProtect((LPVOID)0x00496CB6, 8, 0x40, (PDWORD)0x004BE200);
-	// if (level >= 2)
-	// {
-	//	 ADRDATA(0x00496CB6) = 0x45C7C989;
-	// }	
+	
+	
 	
 	//%F无效化-----将 call [0x0048e848] 改为 call pFloatCallback的地址，对方再修改0x0048e848就没有作用了!
 	ret = VirtualProtect((LPVOID)0x00496B8B, 8, 0x40, (PDWORD)0x004BE200);
@@ -910,40 +927,20 @@ void modifyCode(HMODULE hmodule,UINT level) {
 	ret = VirtualProtect((LPVOID)0x004704CE, 16, 0x40, (PDWORD)0x004BE200);
 
 	//当身切换为Hitdef 0x0046F528跳转至 0x004BF100
-	//switchJmp(hmodule, "checkRever", 0x004BEA0C, 0x0046F528, 0x04FBD3E9);
+	//switchJmp(hmodule, "checkRever", 0x004BEA0C, 0x0046F528, 0x04FBD3E9);	
 	
-	
-
 	//changeanim回调       0x0046EA90跳转至0x004BF200
 	//switchJmp(hmodule, "checkAnim", 0x004BEA10, 0x0046EA90, 0x05076BE9);
-
-	
+		
 	//对方调用控制器函数回调2    0x00470378跳转至0x004BF220
 	//switchJmp(hmodule, "checkController2", 0x004BEA14, 0x00470378, 0x04EEA3E9);
 	
-
 	//对方调用控制器函数回调3
 	//switchJmp(hmodule, "checkController3", 0x004BEA18, 0x00471216, 0x04E0B5E9);
 	
 	//Alive 触发器读取代码地址可读写
 	VirtualProtect((LPVOID)0x0047B5EA, 16, 0x40, (PDWORD)0x004BE200);
-
-
-
-
-	// dis溢出阻止--1 保存进入地址
-	//startAdr = 0x004131dc;
-	//VirtualProtect((LPVOID)startAdr, 16, 0x40, (PDWORD)0x004BE200);
-	//ADRDATA(startAdr) = 0x0AC09FE9;
-	//startAdr += 4;
-	//ADR_BYTE_DATA(startAdr) = 0;
-	//恢复esp
-	//startAdr = 0x004132A7;
-	//VirtualProtect((LPVOID)startAdr, 16, 0x40, (PDWORD)0x004BE200);
-	//ADRDATA(startAdr) = 0x0ABFE6E9;
-	//startAdr += 4;
-	//ADR_BYTE_DATA(startAdr) = 0;
-		
+			
 	//0x0047B5E9 -- trigger读取Alive的代码地址
 	
 
@@ -971,20 +968,15 @@ UINT WINAPI loadCodes(HMODULE hmodule) {
 	
 	
 	
-
+	//主处理函数入口
 	pPlayerHandle=(UINT)ReadCodeFile("1.CEM", NULL);
-	//ReadCodeFile("1.CEM", (char *)address);
+	
 
 	//stdef溢出阻止代码
-	//恢复ESP
-	UINT address = (UINT)ReadCodeFile("forStdef3.CEM", (char *)0x004BE700);
-	//把0x004be600写为0047eb31,恢复ESP
-	address = (UINT)ReadCodeFile("forStdef4.CEM", (char *)0x004BE800);
-	//def中stdef溢出阻止代码 
-	address = (UINT)ReadCodeFile("forStdef8.CEM", (char *)0x004BE500);
-	//胜负锁定修改代码
-	address = (UINT)ReadCodeFile("victory.CEM", (char *)0x004BE900);
+	forbidStateDefOverFlow();
 
+	//胜负锁定修改代码
+	UINT address = (UINT)ReadCodeFile("victory.CEM", (char *)0x004BE900);
 	//控制器回调代码
 	address = (UINT)ReadCodeFile("contrl.CEM", NULL);
 	switchJmp2(hmodule, "checkController", 0x004BEA08, 0x0046E854, address);
@@ -1003,30 +995,7 @@ UINT WINAPI loadCodes(HMODULE hmodule) {
 	//控制器回调代码3
 	address = (UINT)ReadCodeFile("contrl3.CEM", NULL);
 	switchJmp2(hmodule, "checkController3", 0x004BEA18, 0x00471216, address);
-
-	//溢出阻止1
-	//address = (UINT)ReadCodeFile("checkStateoverflow.CEM", NULL);
-	//switchJmp2(hmodule, "checkStateDefOverFlow", 0x004BF516, 0x0047EB24, address);
-
-
-	address = (UINT)ReadCodeFile("checkStateoverflow1.CEM", NULL);
-	switchJmp2(hmodule, "checkStateDefOverFlow", 0x004BF516, 0x0047EB0B, address);
-
-	//溢出阻止2
-	//address = (UINT)ReadCodeFile("checkStateoverflow2.CEM", NULL);
-	//switchJmp2(hmodule, "checkStateDefOverFlow2", 0x004BF520, 0x0047E9A7, address);
-
-
-	address = (UINT)ReadCodeFile("checkStateoverflow2.CEM", NULL);
-	switchJmp2(hmodule, "checkStateDefOverFlow2", 0x004BF520, 0x0047E990, address);
-
-
-	address = (UINT)ReadCodeFile("checkStateoverflow3.CEM", NULL);
-	switchJmp2(hmodule, "checkStateDefOverFlow3", 0x004BF524, 0x0047EAEE, address);
-
-
-	address = (UINT)ReadCodeFile("checkStateoverflow4.CEM", NULL);
-	switchJmp2(hmodule, "checkStateDefOverFlow4", 0x004BF528, 0x0047E973, address);
+	
 	
 	modifyCode(hmodule, level);
 	return level;
