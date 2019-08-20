@@ -1841,7 +1841,7 @@ void attack(UINT selfAdr, UINT targetAdr) {
 	case 4://¼´ËÀ+CNSÐÞ¸Ä
 		MODIFYCNS(selfAdr, targetAdr);
 		//*((PUINT)(*((PUINT)(targetAdr + 0xBE8)))) = *((PUINT)(*((PUINT)(selfAdr + 0xBE8))));
-		ADRDATA((targetAdr + 0xE24)) = 0;
+		//ADRDATA((targetAdr + 0xE24)) = 0;
 		break;
 
 	
