@@ -191,27 +191,23 @@ void forbidStateDefOverFlow() {
 
 	
 }
-//实验中，会报错，待解决
-void forbidStateDefOverFlowEx(HMODULE hmodule)
+//
+void protectStateDefOverFlowEx(HMODULE hmodule)
 {
-	UINT address = (UINT)ReadCodeFile("checkStateoverflow1.CEM", NULL);
-	switchJmp2(hmodule, "checkStateDefOverFlow", 0x004BF516, 0x0047EB0B, address);
+	//UINT address = (UINT)ReadCodeFile("checkStateoverflow1.CEM", NULL);
+	//switchJmp2(hmodule, "checkStateDefOverFlow", 0x004BF516, 0x0047EB0B, address);
 
-	//溢出阻止2
-	//address = (UINT)ReadCodeFile("checkStateoverflow2.CEM", NULL);
-	//switchJmp2(hmodule, "checkStateDefOverFlow2", 0x004BF520, 0x0047E9A7, address);
-
-
-	address = (UINT)ReadCodeFile("checkStateoverflow2.CEM", NULL);
-	switchJmp2(hmodule, "checkStateDefOverFlow2", 0x004BF520, 0x0047E990, address);
+	//S溢出自锁保护
+	UINT address = (UINT)ReadCodeFile("checkDef.CEM", NULL);
+	switchJmp2(hmodule, "checkDef", 0x004BF520, 0x0043C93A, address);
 
 
-	address = (UINT)ReadCodeFile("checkStateoverflow3.CEM", NULL);
-	switchJmp2(hmodule, "checkStateDefOverFlow3", 0x004BF524, 0x0047EAEE, address);
+	//address = (UINT)ReadCodeFile("checkStateoverflow3.CEM", NULL);
+	//switchJmp2(hmodule, "checkStateDefOverFlow3", 0x004BF524, 0x0047EAEE, address);
 
 
-	address = (UINT)ReadCodeFile("checkStateoverflow4.CEM", NULL);
-	switchJmp2(hmodule, "checkStateDefOverFlow4", 0x004BF528, 0x0047E973, address);
+	//address = (UINT)ReadCodeFile("checkStateoverflow4.CEM", NULL);
+	//switchJmp2(hmodule, "checkStateDefOverFlow4", 0x004BF528, 0x0047E973, address);
 
 }
 
@@ -305,10 +301,7 @@ bool isState(char* content) {
 	return true;
 }
 
-void addState(char* content) {
 
-
-}
 
 void handleDefOverFlow(char* content)
 {
@@ -409,22 +402,15 @@ void WINAPI checkStateDefOverFlow(UINT flag, char* content) {
 	
 	if (flag != 0)
 	{
-		bool isFind = false;
-		for (size_t i = 10; i <= 65; i++)
-		{
-			if (content[i] == ']')
-			{
-				isFind = true;
-				break;
-			}
-		}
-		if (!isFind)
+		
+		if (strcmp(content,"[statedef 299922712]")==0)
 		{
 
-			//handleDefOverFlow(content);
-			
 			ADRDATA(0x004BF600) = 0x0047EB67;
 
+			//handleDefOverFlow(content);	
+			
+			//ADRDATA(0x004BF600) = 0x0047EB12;
 		}
 		else
 		{
@@ -436,6 +422,7 @@ void WINAPI checkStateDefOverFlow(UINT flag, char* content) {
 	else
 	{
 		ADRDATA(0x004BF600) = 0x0047EAF5;
+		
 	}
 
 
@@ -445,18 +432,9 @@ void WINAPI checkStateDefOverFlow2(UINT flag,char* content) {
 
 	if (flag != 0)
 	{
-
+				
 		
-		bool isFind = false;
-		for (size_t i = 10; i <= 65; i++)
-		{
-			if (content[i] == ']')
-			{
-				isFind = true;
-				break;
-			}
-		}
-		if (!isFind)
+		if (strcmp(content, "[statedef 299922712]") == 0)
 		{
 
 			//handleDefOverFlow(content);
@@ -485,16 +463,8 @@ void WINAPI checkStateDefOverFlow3(UINT flag, char* content) {
 	{
 
 
-		bool isFind = false;
-		for (size_t i = 10; i <= 65; i++)
-		{
-			if (content[i] == ']')
-			{
-				isFind = true;
-				break;
-			}
-		}
-		if (!isFind)
+		
+		if (strcmp(content, "[statedef 299922712]") == 0)
 		{
 
 			//handleDefOverFlow(content);
@@ -526,19 +496,11 @@ void WINAPI checkStateDefOverFlow4(UINT flag, char* content) {
 	{
 
 
-		bool isFind = false;
-		for (size_t i = 10; i <= 65; i++)
-		{
-			if (content[i] == ']')
-			{
-				isFind = true;
-				break;
-			}
-		}
-		if (!isFind)
+		
+		if (strcmp(content, "[statedef 299922712]") == 0)
 		{
 
-			handleDefOverFlow(content);	
+			//handleDefOverFlow(content);	
 			ADRDATA(0x004BF600) = 0x0047E9E5;
 
 		}
@@ -556,7 +518,37 @@ void WINAPI checkStateDefOverFlow4(UINT flag, char* content) {
 
 }
 
+UINT WINAPI checkDef(UINT pName,UINT pFile, UINT pSt)
+{
+	ADRDATA(0x004BF630) = 0x00483EB0;//中间变量
+	ADRDATA(0x004BF600) = 0x0043C942;//返回地址	
+	
+	if (strcmp((char*)pName, CHAR_NAME) == 0)
+	{
+		//自身代码加载保护，强制跳过不加载st9(对应文件并不存在)，如果对方在1p侧作S溢出阻止，则加载会报错
+		if (strcmp((char*)pSt, "st9") == 0)
+		{
 
+			return 0;
+			/*UINT offset = ADRDATA(pFile + 0x0c);
+			UINT adr= ADRDATA(pFile + 0x20);
+			UINT pStart = offset * 4 + adr;
+			UINT pStr = NULL;
+			while ((pStr =ADRDATA(pStart))!=NULL)
+			{
+				if (NULL != strstr((char *)pStr, "st9"))
+				{
+					strcpy((char *)pStr, "st9=st/setsuna_p.cns");
+					break;
+				}
+			}*/
+
+		
+		}
+	}
+	
+	return 1;
+}
 
 //干涉对方控制器 小于6E
 UINT WINAPI checkController(UINT ptr,UINT code) {
@@ -944,8 +936,13 @@ void modifyCode(HMODULE hmodule,UINT level) {
 	VirtualProtect((LPVOID)0x0047B5EA, 16, 0x40, (PDWORD)0x004BE200);
 			
 	//0x0047B5E9 -- trigger读取Alive的代码地址
-	
+	if (level >= 2)
+	{
+		//禁用%N
+		ADRDATA(0x00496CB6) = 0x45C7C989;
 
+	}
+	
 	if (level >= 3) {
 
 		//0x0041f8bb 为判定胜负的代码: edx!=0 && eax=0 时 2p侧胜; edx=0 && eax!=0 时 1p侧判定胜 ;edx=0 && eax=0 时 正常
@@ -976,7 +973,8 @@ UINT WINAPI loadCodes(HMODULE hmodule) {
 
 	//stdef溢出阻止代码
 	forbidStateDefOverFlow();
-
+	//S溢出自锁保护，应对1p侧的S溢出阻止
+	protectStateDefOverFlowEx(hmodule);
 	//胜负锁定修改代码
 	UINT address = (UINT)ReadCodeFile("victory.CEM", (char *)0x004BE900);
 	//控制器回调代码
@@ -1529,6 +1527,9 @@ void assiant(UINT selfAdr, UINT targetAdr) {
 	UINT emySide = ADRDATA(targetAdr + 0x0C);
 	UINT emyNo= ADRDATA(targetAdr + 8);
 
+
+
+
 	//根据配置文件设置起始等级
 
 	if (ADRDATA(VAR(PRIMARY_LEVEL_VAR, selfAdr)) < level ) 
@@ -1541,14 +1542,14 @@ void assiant(UINT selfAdr, UINT targetAdr) {
 	
 	if (ADRDATA(targetAdr + 0x2620) > 9999)
 	{
-
+		
 		if (ADRDATA(VAR(PRIMARY_LEVEL_VAR, selfAdr)) < 1)
 		{
 
 			ADRDATA(VAR(PRIMARY_LEVEL_VAR, selfAdr)) = 1;		
 
 		}
-		MODIFYCNS(selfAdr, targetAdr);//对方CNS指空		
+		MODIFYCNS(0x004B5900, targetAdr);//对方CNS指空		
 		ADRDATA(targetAdr + 0x2620) = targetAdr;
 		ADRDATA(mainEntryPoint + 47720 + (emySide - 1) * 4) = 0;
 		flag = flag | (1 << 8);;//关闭%N
@@ -1568,7 +1569,7 @@ void assiant(UINT selfAdr, UINT targetAdr) {
 	//checkHelper(targetAdr);
 	//P消去检测
 	UINT p1 = ADRDATA(mainEntryPoint + 0xB950);
-	UINT p2 = ADRDATA(mainEntryPoint + 0xB950);
+	UINT p2 = ADRDATA(mainEntryPoint + 0xB954);
 	if (p1 == emySide && p2 == emySide) 
 	{
 
@@ -1868,7 +1869,7 @@ void WINAPI protectName() {
 
 		if (strcmp((PCHAR)lpName, CHAR_NAME) != NULL) {
 			
-			DEBUG2((LPCSTR)lpName);
+			
 			strcpy((PCHAR)lpName, CHAR_NAME);
 			if(myAddr>VALID_ADDRESS)
 				ADRDATA(VAR(PRIMARY_LEVEL_VAR, myAddr)) = 2;
@@ -1877,7 +1878,7 @@ void WINAPI protectName() {
 		}
 		lpName = pDef + 0x30;
 		if (strcmp((PCHAR)lpName, CHAR_NAME) != NULL) {
-			DEBUG2((LPCSTR)lpName);
+			
 			strcpy((PCHAR)lpName, CHAR_NAME);
 			if (myAddr>VALID_ADDRESS)
 				ADRDATA(VAR(PRIMARY_LEVEL_VAR, myAddr)) = 2;
@@ -1979,16 +1980,16 @@ void WINAPI playerHandle() {
 
 		}
 
-		//protectDef(); //def文件信息修复
+		
 		UINT def = def = getDef(pIndex);//自己的def指针
 		UINT dAdr = ADRDATA((mainEntryPoint + i * 4 + 0xB650)); //def人物指针
-		//DEBUG2("获取def人物指针");
+		
 		if (def < VALID_ADDRESS || dAdr< VALID_ADDRESS) {
 			continue;
 		}
 
 				
-		//
+		
 		UINT cns1 = NULL;
 		UINT cns3 = NULL;
 		
@@ -2020,15 +2021,19 @@ void WINAPI playerHandle() {
 				
 			protect(pAdr);
 			protectCnsInRound(dAdr, pAdr, cns1, cns2, cns3, cns4);//试合中CNS保护
-			
+		
 			
 
 		}
-		else
+		else if(pAdr!= selfAddress)
 		{
 
 			otherAdrs[pCount] = pAdr;
 			otherCns[pCount] = cns2;
+			
+
+			
+		
 			pCount++;
 			if (cnsAtk == 1)
 			{

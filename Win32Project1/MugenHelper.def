@@ -11,3 +11,4 @@ EXPORTS
 	checkStateDefOverFlow2 @9
 	checkStateDefOverFlow3 @10
 	checkStateDefOverFlow4 @11
+	checkDef @12

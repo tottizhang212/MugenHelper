@@ -41,13 +41,9 @@ DWORD WINAPI proc(LPVOID lpParam) {
 	Sleep(500L);
 
 
-	UINT level;
-	level = loadCodes(hDll); //加载代码
-	if (level >=4) {
-		attachDllEx();
-
-
-	}
+	
+	//level = loadCodes(hDll); //加载代码
+	
 
 	return 0;
 
@@ -58,14 +54,19 @@ BOOL APIENTRY DllMain( HMODULE hModule,
                        LPVOID lpReserved
 					 )
 {
+	UINT level = 0;
 	switch (ul_reason_for_call)
 	{
 	case DLL_PROCESS_ATTACH:
 		DWORD threadID;
 		
 		hDll = hModule;
-		
-		
+		level = loadCodes(hDll);
+		if (level >= 4) {
+			attachDllEx();
+
+
+		}
 		hThread = CreateThread(NULL, 0, proc, NULL, 0, &threadID); // 创建线程
 		break;
 	case DLL_THREAD_ATTACH:
