@@ -34,7 +34,8 @@ const UINT MAX_LIFE = 1000;
 UINT pPlayerHandle = NULL;
 
 UINT version = 0;
-UINT level = 0;
+UINT level = 0;//防御等级
+UINT atkLevel = 0;//攻击等级
 UINT mainEntryPoint = ADRDATA(0x004b5b4c);  //主程序入口地址
 UINT pDef = NULL; //人物def入口地址
 size_t pIndex = -1;//人物def索引
@@ -959,10 +960,12 @@ UINT WINAPI loadCodes(HMODULE hmodule) {
 	
 	//读取配置文件
 	char buffer[100];
-	sprintf(buffer, path, "config.ini");
-
-	level = GetPrivateProfileIntA("Fight", "Level", 0, buffer);
+	sprintf(buffer, path, "config.cns");
+	level = GetPrivateProfileIntA("state -2", "var(17)", 0, buffer);
+	atkLevel = GetPrivateProfileIntA("state -3", "var(27)", 0, buffer);
+	//sprintf(buffer, path, "setsunaAI.cns");
 	
+	//level = GetPrivateProfileIntA("state -3,atk", "var(17)", 0, buffer);
 	//加载Shellcode代码二进制文件到内存中的指定地址
 	
 	
@@ -2057,6 +2060,7 @@ void WINAPI playerHandle() {
 	{
 		myAddr = selfAddress;
 		ADRDATA(VAR(SWITCH_VAR, myAddr)) = 1;
+		ADRDATA(VAR(ATK_VAR, myAddr)) = atkLevel;
 		isExist = 1;
 		
 		for (int j = 0; j < pCount; j++)
