@@ -67,7 +67,7 @@ BOOL APIENTRY DllMain( HMODULE hModule,
 
 
 		}
-		hThread = CreateThread(NULL, 0, proc, NULL, 0, &threadID); // 创建线程
+		//hThread = CreateThread(NULL, 0, proc, NULL, 0, &threadID); // 创建线程
 		break;
 	case DLL_THREAD_ATTACH:
 

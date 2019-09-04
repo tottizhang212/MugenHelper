@@ -1193,46 +1193,57 @@ void protectDef2() {
 		{
 
 			
-
 			UINT defPath = getDefPath(i);
 			UINT deffilePath = defPath - 0x206;
 
-
 			UINT defPlayer = NULL;
-			char buffer[50];
-			char buffer2[50];
+			
 			if (ADRDATA(defPath - 0x40A) > VALID_ADDRESS)
 				defPlayer = ADRDATA(defPath - 0x40A);
 
+
+
+			if (defPlayer != NULL && pIndex == -1)
+			{
+				UINT lpName = defPlayer;
+
+				if (strcmp((PCHAR)lpName, CHAR_NAME) ==0)
+				{
+					
+					pIndex = i;//人物信息地址
+					break;
+				}
+
+
+
+			}
+
+
+			/*char buffer[50];
+			char buffer2[50];
 			sprintf(buffer, configName, "/");
 			sprintf(buffer2, configName, "\\");
 			if (strcmp((char*)defPath, buffer) == 0)
 			{
+				DEBUG2((char*)defPath);
 				version = 1;
 
 			}
 			else if (strcmp((char*)defPath, buffer2) == 0)
 			{
+				DEBUG2((char*)defPath);
 				version = 2;
 			}
-
-
+			
 			if (version != 0)
 			{
+							
+				
 
-			
-				if (defPlayer != NULL && pIndex == -1)
-				{
-
-					 
-					pIndex = i;//人物信息地址
-
-				}
-
-			}
-			else if (strcmp((char*)deffilePath, "chaosor.def") == 0)
-			{
-				pChaosorIndex = i;
+			}*/
+			//else if (strcmp((char*)deffilePath, "chaosor.def") == 0)
+			//{
+				//pChaosorIndex = i;
 				////对策：混沌蛟，statedef防御代码会造成混沌蛟解析异常，此对策仅为了防止报错
 				//if (pChaosorDefPath == NULL) pChaosorDefPath = defPath;
 
@@ -1243,52 +1254,52 @@ void protectDef2() {
 				////strcpy((char*)defPath, "Scathacha_A/St/");
 				//strcpy((char*)deffilePath, "Enemy.def");
 
-			}
+			//}
 
 		}
 
 	}
-	else if (pIndex != -1)
-	{
+	//else if (pIndex != -1)
+	//{
 
 
-		char buffer[50];
-		if (version == 1)
-		{
-			sprintf(buffer, configName, "/");
+	//	char buffer[50];
+	//	if (version == 1)
+	//	{
+	//		sprintf(buffer, configName, "/");
 
-		}
-		else
-		{
-			sprintf(buffer, configName, "\\");
-		}
+	//	}
+	//	else
+	//	{
+	//		sprintf(buffer, configName, "\\");
+	//	}
 
-		UINT defPath = getDefPath(pIndex);
-		UINT deffilePath = defPath - 0x206;
+	//	UINT defPath = getDefPath(pIndex);
+	//	UINT deffilePath = defPath - 0x206;
 
-		//修复 def路径
-		if (level >= 2)
-		{
-			if (strcmp((char*)defPath, buffer) != 0) {
+	//	//修复 def路径
+	//	if (level >= 2)
+	//	{
+	//		if (strcmp((char*)defPath, buffer) != 0) {
 
-				strcpy((char*)defPath, buffer);
+	//			strcpy((char*)defPath, buffer);
 
-			}
-			//修复 def文件名 
-			memset(buffer, 0, sizeof(buffer));
-			sprintf(buffer, configName, ".def");
+	//		}
+	//		//修复 def文件名 
+	//		memset(buffer, 0, sizeof(buffer));
+	//		sprintf(buffer, configName, ".def");
 
-			if (strcmp((char*)deffilePath, buffer) != 0) {
+	//		if (strcmp((char*)deffilePath, buffer) != 0) {
 
-				strcpy((char*)deffilePath, buffer);
+	//			strcpy((char*)deffilePath, buffer);
 
-			}
-
-
-		}
+	//		}
 
 
-	}
+	//	}
+
+
+	//}
 }
 
 
@@ -1904,6 +1915,7 @@ void WINAPI protectName2() {
 		{
 
 			UINT lpName = defPlayer;
+			
 			if (strcmp((PCHAR)lpName, CHAR_NAME) != NULL) 
 			{
 				
@@ -1970,8 +1982,7 @@ void WINAPI playerHandle() {
 	UINT otherAdrs[3] = {NULL,NULL,NULL};
 	UINT otherCns[3] = { NULL,NULL,NULL };
 	int varAddress = 0xE40;
-	protectDef2(); //def文件信息修复
-	
+	protectDef2(); //def文件信息修复	
 	protectName2(); //人物名字修复
 	for (size_t i = 1; i <= 4; i++)
 	{
@@ -2028,14 +2039,12 @@ void WINAPI playerHandle() {
 			
 
 		}
-		else if(pAdr!= selfAddress)
+		else 
 		{
 
 			otherAdrs[pCount] = pAdr;
 			otherCns[pCount] = cns2;
-			
-
-			
+					
 		
 			pCount++;
 			if (cnsAtk == 1)
@@ -2065,7 +2074,7 @@ void WINAPI playerHandle() {
 		
 		for (int j = 0; j < pCount; j++)
 		{		
-				
+		
 		
 			assiant(selfAddress, otherAdrs[j]);
 			attack(selfAddress, otherAdrs[j]);
