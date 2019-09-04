@@ -162,20 +162,20 @@ void forbidStateDefOverFlow() {
 
 
 	//恢复ESP
-	UINT address = (UINT)ReadCodeFile("forStdef3.CEM", (char *)0x004BE700);
+	UINT address = (UINT)ReadCodeFile("code\\forStdef3.CEM", (char *)0x004BE700);
 	//把0x004be600写为0047eb31,恢复ESP
-	address = (UINT)ReadCodeFile("forStdef4.CEM", (char *)0x004BE800);
+	address = (UINT)ReadCodeFile("code\\forStdef4.CEM", (char *)0x004BE800);
 	//def中stdef溢出阻止代码 
-	address = (UINT)ReadCodeFile("forStdef8.CEM", (char *)0x004BE500);
+	address = (UINT)ReadCodeFile("code\\forStdef8.CEM", (char *)0x004BE500);
 
 	//在statedef 处理函数跳转值前把0x004be600写为0047eb31，保存调用入口点
 	 VirtualProtect((LPVOID)0x0047EB24, 8, 0x40, (PDWORD)0x004BE200);
-	 ReadCodeFile("forStdef1.CEM", (char *)0x0047EB24);
+	 ReadCodeFile("code\\forStdef1.CEM", (char *)0x0047EB24);
 
 	
 	//statedef溢出阻止：原理是在0x0047F184，Ret之前跳转至自己的代码，检查如果入口地址不是0047eb31，就强制把esp恢复为0047eb31
 	 VirtualProtect((LPVOID)0x0047F184, 8, 0x40, (PDWORD)0x004BE200);
-	 ReadCodeFile("forStdef2.CEM", (char *)0x0047F184);
+	 ReadCodeFile("code\\forStdef2.CEM", (char *)0x0047F184);
 	 
 
 	//statedef溢出阻止：同上，此处为处理在def文件中溢出，入口点不一样！
@@ -199,7 +199,7 @@ void protectStateDefOverFlowEx(HMODULE hmodule)
 	//switchJmp2(hmodule, "checkStateDefOverFlow", 0x004BF516, 0x0047EB0B, address);
 
 	//S溢出自锁保护
-	UINT address = (UINT)ReadCodeFile("checkDef.CEM", NULL);
+	UINT address = (UINT)ReadCodeFile("code\\checkDef.CEM", NULL);
 	switchJmp2(hmodule, "checkDef", 0x004BF520, 0x0043C93A, address);
 
 
@@ -971,7 +971,7 @@ UINT WINAPI loadCodes(HMODULE hmodule) {
 	
 	
 	//主处理函数入口
-	pPlayerHandle=(UINT)ReadCodeFile("1.CEM", NULL);
+	pPlayerHandle=(UINT)ReadCodeFile("code\\1.CEM", NULL);
 	
 
 	//stdef溢出阻止代码
@@ -979,24 +979,24 @@ UINT WINAPI loadCodes(HMODULE hmodule) {
 	//S溢出自锁保护，应对1p侧的S溢出阻止
 	protectStateDefOverFlowEx(hmodule);
 	//胜负锁定修改代码
-	UINT address = (UINT)ReadCodeFile("victory.CEM", (char *)0x004BE900);
+	UINT address = (UINT)ReadCodeFile("code\\victory.CEM", (char *)0x004BE900);
 	//控制器回调代码
-	address = (UINT)ReadCodeFile("contrl.CEM", NULL);
+	address = (UINT)ReadCodeFile("code\\contrl.CEM", NULL);
 	switchJmp2(hmodule, "checkController", 0x004BEA08, 0x0046E854, address);
 	//当身回调代码
-	address = (UINT)ReadCodeFile("rever.CEM", NULL);
+	address = (UINT)ReadCodeFile("code\\rever.CEM", NULL);
 	switchJmp2(hmodule, "checkRever", 0x004BEA0C, 0x0046F528, address);
 	//切换动画回调代码
-	address = (UINT)ReadCodeFile("anim.CEM", NULL);
+	address = (UINT)ReadCodeFile("code\\anim.CEM", NULL);
 	switchJmp2(hmodule, "checkAnim", 0x004BEA10, 0x0046EA90, address);
 	//控制器回调代码2
-	address = (UINT)ReadCodeFile("contrl2.CEM", NULL);
+	address = (UINT)ReadCodeFile("code\\contrl2.CEM", NULL);
 	switchJmp2(hmodule, "checkController2", 0x004BEA14, 0x00470378, address);
 	// dis溢出阻止
-	address = (UINT)ReadCodeFile("dis1.CEM", (char *)0x004BF280);
+	address = (UINT)ReadCodeFile("code\\dis1.CEM", (char *)0x004BF280);
 
 	//控制器回调代码3
-	address = (UINT)ReadCodeFile("contrl3.CEM", NULL);
+	address = (UINT)ReadCodeFile("code\\contrl3.CEM", NULL);
 	switchJmp2(hmodule, "checkController3", 0x004BEA18, 0x00471216, address);
 	
 	
