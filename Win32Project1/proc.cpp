@@ -1540,7 +1540,9 @@ void assiant(UINT selfAdr, UINT targetAdr) {
 	UINT teamSide = ADRDATA(selfAdr + 0x0C);
 	UINT emySide = ADRDATA(targetAdr + 0x0C);
 	UINT emyNo= ADRDATA(targetAdr + 8);
-
+	UINT roundNo = ADRDATA(mainEntryPoint + 0xBC04);
+	UINT roundState = ADRDATA(mainEntryPoint + 0xBC30);
+	UINT targetSide = ADRDATA(targetAdr + 0x0C);
 
 
 
@@ -1563,7 +1565,7 @@ void assiant(UINT selfAdr, UINT targetAdr) {
 			ADRDATA(VAR(PRIMARY_LEVEL_VAR, selfAdr)) = 1;		
 
 		}
-		MODIFYCNS(0x004B5900, targetAdr);//对方CNS指空		
+		//MODIFYCNS(0x004B5900, targetAdr);//对方CNS指空		
 		ADRDATA(targetAdr + 0x2620) = targetAdr;
 		ADRDATA(mainEntryPoint + 47720 + (emySide - 1) * 4) = 0;
 		flag = flag | (1 << 8);;//关闭%N
@@ -1571,9 +1573,7 @@ void assiant(UINT selfAdr, UINT targetAdr) {
 
 	}
 	//对方修改胜场检测
-	UINT roundNo = ADRDATA(mainEntryPoint + 0xBC04);
-	UINT roundState = ADRDATA(mainEntryPoint + 0xBC30);
-	UINT targetSide = ADRDATA(targetAdr + 0x0C);
+
 	UINT targetWins = ADRDATA(mainEntryPoint + 0xBC08 + (targetSide - 1) * 4);
 
 	if (roundState <= 2 && (targetWins > roundNo - 1)) {
