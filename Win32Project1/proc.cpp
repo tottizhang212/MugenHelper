@@ -1817,7 +1817,13 @@ void assiant(UINT selfAdr, UINT targetAdr) {
 
 	}
 	
+	if (BIT_EXIST(flag, 21))
+	{
+		//对方power上限修改
+		ADRDATA((targetAdr + 380)) = 10;
+		ADRDATA(VAR(ASSISTANT_VAR, selfAdr)) = clrbit(flag, 21);
 
+	}
 	//ADRDATA(VAR(ASSISTANT_VAR, selfAdr)) = 0;
 }
 
