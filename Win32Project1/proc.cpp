@@ -1850,9 +1850,9 @@ void attack(UINT selfAdr, UINT targetAdr) {
 		ADRDATA(VAR(TARGET_LIFE_VAR, selfAdr)) = 0;
 		break;
 	case 2:
-		//生命值归0
+		//生命上限修改
 		
-		ADRDATA((targetAdr + 0x160)) = 0;
+		ADRDATA((targetAdr + 356)) = -1500;
 		
 		
 		break;
