@@ -50,7 +50,8 @@ int cnsAtk = 0; //判断对方CNS攻击
 UINT selfIndex = 1;//自己的序号
 UINT isExist = 0; //判断自己是否在战斗中
 UINT myAddr = NULL; //自己的人物入口地址
-
+UINT lifeMax = 0;//LifeMax
+UINT powerMax = 0;//PowerMax
 UINT count = 0;
 
 typedef UINT(*pOnctrl)(UINT pAddress,UINT code);
@@ -1018,7 +1019,25 @@ void protect(UINT selfAdr) {
 	ADRDATA(0x4B699D) = teamSide == 2 ? 1 : 0;
 	ADRDATA(0x4B6A1D) = teamSide == 2 ? 1 : 0; //禁用CTRL
 	ADRDATA(selfAdr + 0x158) = 1;//防御P消去
-	UINT lifeMax = ADRDATA((selfAdr + 0x164));
+
+
+	if (lifeMax == 0)
+	{
+		lifeMax= ADRDATA((selfAdr + 356));
+	}
+
+	if (powerMax == 0)
+	{
+		powerMax= ADRDATA((selfAdr + 380));
+	}
+	
+	if(lifeMax>0)
+		ADRDATA((selfAdr + 356)) = lifeMax;//LifeMax保护
+
+	if (powerMax>0)
+		ADRDATA((selfAdr + 380)) = powerMax;//PowerMax保护
+
+
 	if (ADRDATA(VAR(PRIMARY_LEVEL_VAR, selfAdr)) >= 1 ) {
 
 		ADRDATA(0x00496B8B) = (UINT)(&pFloatCallback);//%F禁止
