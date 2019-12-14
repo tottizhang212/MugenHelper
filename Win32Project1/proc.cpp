@@ -779,8 +779,7 @@ UINT WINAPI checkController3(UINT ptr, UINT code)
 	if (code == 0x136)
 	{
 
-		
-		if ( level >= 2 || flag )
+	    if ( level >= 2 || flag )
 		{
 
 			newCode = 0x141; 
@@ -1585,7 +1584,7 @@ void assiant(UINT selfAdr, UINT targetAdr) {
 
 		}
 		//MODIFYCNS(0x004B5900, targetAdr);//对方CNS指空		
-		ADRDATA(targetAdr + 0x2620) = targetAdr;
+		//ADRDATA(targetAdr + 0x2620) = targetAdr;
 		ADRDATA(mainEntryPoint + 47720 + (emySide - 1) * 4) = 0;
 		flag = flag | (1 << 8);;//关闭%N
 	
