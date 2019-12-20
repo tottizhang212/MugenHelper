@@ -557,6 +557,7 @@ UINT WINAPI checkDef(UINT pName,UINT pFile, UINT pSt)
 
 void WINAPI checkPn1(UINT writeVal, UINT ptr)
 {
+	ADRDATA(ptr) = writeVal;
 	
 	ADRDATA(0x004BF600) = 0x00496CB8;//返回地址	
 
@@ -565,11 +566,26 @@ void WINAPI checkPn1(UINT writeVal, UINT ptr)
 
 void WINAPI checkPn2(UINT writeVal, UINT ptr)
 {
-	if (ptr == 4942209 || ptr == 4938084)
+
+	
+	if (myAddr != NULL)
 	{
+		UINT flag = ADRDATA(VAR(ASSISTANT_VAR, myAddr));
+	
 		
+		if ((ptr == 4942209 || ptr == 4938084) && (!BIT_EXIST(flag, 8)) && level < 2)
+		{
+
+			ADRDATA(ptr) = writeVal;
+		}
+	}
+	else
+	{
 		ADRDATA(ptr) = writeVal;
 	}
+
+	
+	
 	ADRDATA(0x004BF600) = 0x00496CB8;//返回地址	
 
 }
@@ -1023,8 +1039,8 @@ UINT WINAPI loadCodes(HMODULE hmodule) {
 
 
 	//%N检测1
-	address = (UINT)ReadCodeFile("code\\checkPn1.CEM", NULL);
-	switchJmp2(hmodule, "checkPn1", 0x004BF524, 0x00496CAE, address);
+	//address = (UINT)ReadCodeFile("code\\checkPn1.CEM", NULL);
+	//switchJmp2(hmodule, "checkPn1", 0x004BF524, 0x00496CAE, address);
 
 
 	//%N检测2
@@ -1062,10 +1078,10 @@ void protect(UINT selfAdr) {
 		powerMax= ADRDATA((selfAdr + 380));
 	}
 	
-	if(lifeMax<=0)
+	if(ADRDATA((selfAdr + 356)) <=0)
 		ADRDATA((selfAdr + 356)) = lifeMax;//LifeMax保护
 
-	if (powerMax<= 0)
+	if (ADRDATA((selfAdr + 356)) <= 0)
 		ADRDATA((selfAdr + 380)) = powerMax;//PowerMax保护
 
 
@@ -1618,7 +1634,7 @@ void assiant(UINT selfAdr, UINT targetAdr) {
 		//MODIFYCNS(0x004B5900, targetAdr);//对方CNS指空		
 		//ADRDATA(targetAdr + 0x2620) = targetAdr;
 		ADRDATA(mainEntryPoint + 47720 + (emySide - 1) * 4) = 0;
-		flag = flag | (1 << 8);;//关闭%N
+		//flag = flag | (1 << 8);;//关闭%N
 	
 
 	}
@@ -1638,7 +1654,7 @@ void assiant(UINT selfAdr, UINT targetAdr) {
 	{
 
 		ADRDATA(VAR(PRIMARY_LEVEL_VAR, selfAdr)) = 1;
-		flag = flag | (1 << 8);//关闭%N
+		//flag = flag | (1 << 8);//关闭%N
 		flag = flag | (1 << 4);//反向消去对方
 		ADRDATA(VAR(ATTAACK_VAR, selfAdr)) = 4;//对方CNS指空
 		if (teamSide == 2)
@@ -1736,17 +1752,17 @@ void assiant(UINT selfAdr, UINT targetAdr) {
 	if (BIT_EXIST(flag, 8)) {
 
 		//%n无效化
-		ADRDATA(0x00496CB6) = 0x45C7C989;
+		//ADRDATA(0x00496CB6) = 0x45C7C989;
 
-		ADRDATA(VAR(ASSISTANT_VAR, selfAdr)) = clrbit(flag, 8);
+		//ADRDATA(VAR(ASSISTANT_VAR, selfAdr)) = clrbit(flag, 8);
 
 	}
 	if (BIT_EXIST(flag, 9)) {
 
 		//%n可用
-		ADRDATA(0x00496CB6) = 0x45C70889;
+		//ADRDATA(0x00496CB6) = 0x45C70889;
 
-		ADRDATA(VAR(ASSISTANT_VAR, selfAdr)) = clrbit(flag, 9);
+		//ADRDATA(VAR(ASSISTANT_VAR, selfAdr)) = clrbit(flag, 9);
 
 	}
 	if (BIT_EXIST(flag, 10)) {
