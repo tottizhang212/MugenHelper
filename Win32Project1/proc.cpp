@@ -565,7 +565,11 @@ void WINAPI checkPn1(UINT writeVal, UINT ptr)
 
 void WINAPI checkPn2(UINT writeVal, UINT ptr)
 {
-	
+	if (ptr == 4942209 || ptr == 4938084)
+	{
+		
+		ADRDATA(ptr) = writeVal;
+	}
 	ADRDATA(0x004BF600) = 0x00496CB8;//∑µªÿµÿ÷∑	
 
 }
