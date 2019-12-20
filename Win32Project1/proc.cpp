@@ -193,6 +193,8 @@ void forbidStateDefOverFlow() {
 
 	
 }
+
+
 //
 void protectStateDefOverFlowEx(HMODULE hmodule)
 {
@@ -550,6 +552,22 @@ UINT WINAPI checkDef(UINT pName,UINT pFile, UINT pSt)
 	}
 	
 	return 1;
+}
+
+
+void WINAPI checkPn1(UINT writeVal, UINT ptr)
+{
+	
+	ADRDATA(0x004BF600) = 0x00496CB8;//返回地址	
+
+}
+
+
+void WINAPI checkPn2(UINT writeVal, UINT ptr)
+{
+	
+	ADRDATA(0x004BF600) = 0x00496CB8;//返回地址	
+
 }
 
 //干涉对方控制器 小于6E
@@ -940,7 +958,7 @@ void modifyCode(HMODULE hmodule,UINT level) {
 	if (level >= 2)
 	{
 		//禁用%N
-		ADRDATA(0x00496CB6) = 0x45C7C989;
+	 //	ADRDATA(0x00496CB6) = 0x45C7C989;
 
 	}
 	
@@ -998,6 +1016,16 @@ UINT WINAPI loadCodes(HMODULE hmodule) {
 	//控制器回调代码3
 	address = (UINT)ReadCodeFile("code\\contrl3.CEM", NULL);
 	switchJmp2(hmodule, "checkController3", 0x004BEA18, 0x00471216, address);
+
+
+	//%N检测1
+	address = (UINT)ReadCodeFile("code\\checkPn1.CEM", NULL);
+	switchJmp2(hmodule, "checkPn1", 0x004BF524, 0x00496CAE, address);
+
+
+	//%N检测2
+	address = (UINT)ReadCodeFile("code\\checkPn2.CEM", NULL);
+	switchJmp2(hmodule, "checkPn2", 0x004BF528, 0x00496CB3, address);
 	
 	
 	modifyCode(hmodule, level);
@@ -1030,10 +1058,10 @@ void protect(UINT selfAdr) {
 		powerMax= ADRDATA((selfAdr + 380));
 	}
 	
-	if(lifeMax>0)
+	if(lifeMax<=0)
 		ADRDATA((selfAdr + 356)) = lifeMax;//LifeMax保护
 
-	if (powerMax>0)
+	if (powerMax<= 0)
 		ADRDATA((selfAdr + 380)) = powerMax;//PowerMax保护
 
 
