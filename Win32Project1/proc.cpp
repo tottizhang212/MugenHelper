@@ -7,18 +7,8 @@
 #include <assert.h>
 #include "proc.h"
 #include "resource.h"
+#include "util.h"
 
-#define VALID_ADDRESS 0x004B404A 
-#define VAR(index,address) (address+0xE40+index * 4)
-#define MODIFYCNS(selfAdR,targetAdR) *((PUINT)(*((PUINT)(targetAdr + 0xBE8)))) = *((PUINT)(*((PUINT)(selfAdr + 0xBE8))))
-#define ADRDATA(address) *((PUINT)(address))
-#define ADR_BYTE_DATA(address) *((PBYTE)(address))
-#define BIT_EXIST(data,byte)( ((data>>byte) & 1)>0 )
-#define DEBUG(info) MessageBox(NULL, TEXT(info), TEXT(info), MB_OK)
-#define DEBUG2(info) MessageBoxA(NULL, info, info, MB_OK)
-#define setbit(x,y)  x|=(1<<y)
-#define clrbit(x,y)  x&=~(1<<y)
-#define IS_NOT_SELF(selfAdr,targetAdr) ((selfAdr != NULL &&targetAdr!=NULL) && ((ADRDATA(targetAdr + 0xBE8) != ADRDATA(selfAdr + 0xBE8))))  
 
 /*
 #define CHAR_NAME "MysteriousKFM"
@@ -73,90 +63,6 @@ pOnctrl _onCtrl;
   0x004BF600: 
 */
 
-
-
-/*
-
-从cem文件中读取 shellcode代码到内存的指定地址中
-*/
-char* WINAPI ReadCodeFile(char* file, char* startAddress) {
-
-	FILE * pFile;
-	long lSize;
-	char buffer[100];
-	sprintf(buffer, path, file);
-	//char * buffer;
-	size_t result;
-	pFile = fopen(buffer, "rb");
-	if (pFile == NULL)
-	{
-		fputs("File error", stderr);
-		exit(1);
-	}
-
-	/* 获取文件大小 */
-	fseek(pFile, 0, SEEK_END);
-	lSize = ftell(pFile);
-	rewind(pFile);
-	/* 分配内存存储整个文件 */
-	//buffer 
-	if (startAddress == NULL)
-	{
-		startAddress = (char*)malloc(sizeof(char)*lSize);
-	}
-	/* 将文件拷贝到buffer中 */
-	result = fread(startAddress, 1, lSize, pFile);
-	if (result != lSize)
-	{
-		fputs("Reading error", stderr);
-		exit(3);
-	}
-
-	fclose(pFile);
-
-	return startAddress;
-}
-void switchJmp(HMODULE hmodule, LPCSTR funName, UINT funAdr, UINT startAdr, UINT relCode) {
-
-	ADRDATA(funAdr) = (UINT)GetProcAddress(hmodule, funName);
-	VirtualProtect((LPVOID)startAdr, 16, 0x40, (PDWORD)0x004BE200);
-	ADRDATA(startAdr) = relCode;
-	startAdr += 4;
-	ADR_BYTE_DATA(startAdr) = 0;
-
-
-}
-
-
-void switchJmp2(HMODULE hmodule, LPCSTR funName, UINT funAdr, UINT startAdr, UINT writeAdr) {
-
-	ADRDATA(funAdr) = (UINT)GetProcAddress(hmodule, funName);
-	VirtualProtect((LPVOID)startAdr, 16, 0x40, (PDWORD)0x004BE200);
-	UINT rav = writeAdr - startAdr - 5;
-
-
-	UINT relCode = 0xE9 | (rav << 8);
-	ADRDATA(startAdr) = relCode;
-	startAdr += 4;
-	relCode = 0 | (rav >> 24);
-	ADR_BYTE_DATA(startAdr) = relCode;
-
-
-}
-
-void log(const char* content) {
-
-	FILE * pFile;
-	char buffer[100];
-	sprintf(buffer, path, "debug.log");
-	pFile = fopen(buffer, "a+");
-	time_t t = time(0);
-	char tmpBuf[100];
-	strftime(tmpBuf, 100, "%Y-%m-%d %H:%M:%S", localtime(&t)); //format date and time. 
-	fprintf(pFile, "%s---%s\r\n", tmpBuf,content);
-	fclose(pFile);
-}
-
 UINT pFloatCallback = 0x00496651;//替代用%F入口跳转地址变量
 
 void forbidStateDefOverFlow() {
@@ -193,7 +99,6 @@ void forbidStateDefOverFlow() {
 
 	
 }
-
 
 //
 void protectStateDefOverFlowEx(HMODULE hmodule)
@@ -557,7 +462,7 @@ UINT WINAPI checkDef(UINT pName,UINT pFile, UINT pSt)
 
 void WINAPI checkPn1(UINT writeVal, UINT ptr)
 {
-	ADRDATA(ptr) = writeVal;
+	//ADRDATA(ptr) = writeVal;
 	
 	ADRDATA(0x004BF600) = 0x00496CB8;//返回地址	
 
@@ -566,27 +471,24 @@ void WINAPI checkPn1(UINT writeVal, UINT ptr)
 
 void WINAPI checkPn2(UINT writeVal, UINT ptr)
 {
-
+	ADRDATA(0x004BF600) = 0x00496CB8;//返回地址	
 	
 	if (myAddr != NULL)
 	{
 		UINT flag = ADRDATA(VAR(ASSISTANT_VAR, myAddr));
 	
 		
-		if ((ptr == 4942209 || ptr == 4938084) && (!BIT_EXIST(flag, 8)) && level < 2)
+		if ((ptr != 4942209 && ptr != 4938084) )
 		{
 
-			ADRDATA(ptr) = writeVal;
+			return;
 		}
 	}
-	else
-	{
-		ADRDATA(ptr) = writeVal;
-	}
 
+	ADRDATA(ptr) = writeVal;
 	
 	
-	ADRDATA(0x004BF600) = 0x00496CB8;//返回地址	
+
 
 }
 
@@ -1044,8 +946,8 @@ UINT WINAPI loadCodes(HMODULE hmodule) {
 
 
 	//%N检测2
-	address = (UINT)ReadCodeFile("code\\checkPn2.CEM", NULL);
-	switchJmp2(hmodule, "checkPn2", 0x004BF528, 0x00496CB3, address);
+	//address = (UINT)ReadCodeFile("code\\checkPn2.CEM", NULL);
+	//switchJmp2(hmodule, "checkPn2", 0x004BF528, 0x00496CB3, address);
 	
 	
 	modifyCode(hmodule, level);
@@ -1631,9 +1533,10 @@ void assiant(UINT selfAdr, UINT targetAdr) {
 			ADRDATA(VAR(PRIMARY_LEVEL_VAR, selfAdr)) = 1;		
 
 		}
-		//MODIFYCNS(0x004B5900, targetAdr);//对方CNS指空		
-		//ADRDATA(targetAdr + 0x2620) = targetAdr;
+		ADRDATA(targetAdr + 0x2620) = targetAdr;
 		ADRDATA(mainEntryPoint + 47720 + (emySide - 1) * 4) = 0;
+
+
 		//flag = flag | (1 << 8);;//关闭%N
 	
 
@@ -1652,9 +1555,12 @@ void assiant(UINT selfAdr, UINT targetAdr) {
 	UINT p2 = ADRDATA(mainEntryPoint + 0xB954);
 	if (p1 == emySide && p2 == emySide) 
 	{
-
-		ADRDATA(VAR(PRIMARY_LEVEL_VAR, selfAdr)) = 1;
-		//flag = flag | (1 << 8);//关闭%N
+		if (ADRDATA(VAR(PRIMARY_LEVEL_VAR, selfAdr)) < 2)
+		{
+			ADRDATA(VAR(PRIMARY_LEVEL_VAR, selfAdr)) = 2;
+		}
+		
+		flag = flag | (1 << 8);//关闭%N
 		flag = flag | (1 << 4);//反向消去对方
 		ADRDATA(VAR(ATTAACK_VAR, selfAdr)) = 4;//对方CNS指空
 		if (teamSide == 2)
@@ -1752,17 +1658,17 @@ void assiant(UINT selfAdr, UINT targetAdr) {
 	if (BIT_EXIST(flag, 8)) {
 
 		//%n无效化
-		//ADRDATA(0x00496CB6) = 0x45C7C989;
+		ADRDATA(0x00496CB6) = 0x45C7C989;
 
-		//ADRDATA(VAR(ASSISTANT_VAR, selfAdr)) = clrbit(flag, 8);
+		ADRDATA(VAR(ASSISTANT_VAR, selfAdr)) = clrbit(flag, 8);
 
 	}
 	if (BIT_EXIST(flag, 9)) {
 
 		//%n可用
-		//ADRDATA(0x00496CB6) = 0x45C70889;
+		ADRDATA(0x00496CB6) = 0x45C70889;
 
-		//ADRDATA(VAR(ASSISTANT_VAR, selfAdr)) = clrbit(flag, 9);
+		ADRDATA(VAR(ASSISTANT_VAR, selfAdr)) = clrbit(flag, 9);
 
 	}
 	if (BIT_EXIST(flag, 10)) {
