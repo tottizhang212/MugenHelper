@@ -77,6 +77,7 @@ void checkThreads() {
 	
 	// 把所有进程拍一个快照
 	DWORD processId = GetCurrentProcessId();
+	HANDLE hPro = OpenProcess(PROCESS_ALL_ACCESS, false, processId);
 	te32.dwSize = sizeof(THREADENTRY32);
 	
 	hProcessSnap = CreateToolhelp32Snapshot(TH32CS_SNAPTHREAD, processId);
@@ -121,22 +122,14 @@ void checkThreads() {
 			NULL
 		);
 		// 检查入口地址是否位于某模块中
-		GetMappedFileName(
-			OpenProcess(						// 进程句柄
-				PROCESS_ALL_ACCESS,									// 访问权限，THREAD_ALL_ACCESS ：所有权限
-				FALSE,												// 由此线程创建的进程不继承线程的句柄
-				(DWORD)tbi.ClientId.UniqueProcess					// 唯一进程 ID
-			),
-			startaddr,							// 要检查的地址
-			modname,							// 用来接收模块名的指针
-			MAX_PATH							// 缓冲区大小
-		);
-		if (modname[0] == '?')
-		{
-			//非法线程
-			log("线程非法");
+		MEMORY_BASIC_INFORMATION mbiProcess;
+		VirtualQueryEx(hPro, startaddr, &mbiProcess,
 
-		}
+			sizeof(mbiProcess));
+		
+
+		log("ddd");
+		
 		
 	} while (Thread32Next(hProcessSnap, &te32));
 
