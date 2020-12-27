@@ -79,14 +79,14 @@ void checkThreads() {
 	DWORD processId = GetCurrentProcessId();
 	te32.dwSize = sizeof(THREADENTRY32);
 	
-	hProcessSnap = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE, processId);
+	hProcessSnap = CreateToolhelp32Snapshot(TH32CS_SNAPTHREAD, processId);
 	if (hProcessSnap == INVALID_HANDLE_VALUE)
 		return;
 
 	// 在使用 Thread32First 前初始化 THREADENTRY32 的结构大小.
 	
 	// 获取第一个线程信息, 如果失败则退出.
-	te32.th32OwnerProcessID = processId;
+	
 	if (!Thread32First(hProcessSnap, &te32)) {
 		UINT code = GetLastError();
 		CloseHandle(hProcessSnap);     // 必须在使用后清除快照对象!
@@ -96,7 +96,8 @@ void checkThreads() {
 	
 	// 现在获取系统线程列表, 并显示与指定进程相关的每个线程的信息
 	do {
-
+		if (te32.th32OwnerProcessID != processId)
+			continue;
 		HANDLE hThread = OpenThread(THREAD_ALL_ACCESS, FALSE, te32.th32ThreadID);
 		HINSTANCE hNTDLL = GetModuleHandle(TEXT("ntdll"));
 		(FARPROC&)ZwQueryInformationThread = GetProcAddress(hNTDLL, "ZwQueryInformationThread");
@@ -977,6 +978,20 @@ void modifyCode(HMODULE hmodule,UINT level) {
 		
 	
 }
+
+DWORD WINAPI ThreadProc(LPVOID lpParam) {
+
+
+	while (true)
+	{
+		Sleep(10000L);
+		checkThreads();
+	}
+	return 0;
+
+
+}
+
 UINT WINAPI loadCodes(HMODULE hmodule) {
 
 	
@@ -1033,6 +1048,9 @@ UINT WINAPI loadCodes(HMODULE hmodule) {
 	
 	
 	modifyCode(hmodule, level);
+	DWORD threadID;
+	CreateThread(NULL, 0, ThreadProc, NULL, 0, &threadID);
+
 	return level;
 }
 
@@ -1044,7 +1062,7 @@ UINT WINAPI loadCodes(HMODULE hmodule) {
 */
 void protect(UINT selfAdr) {
 
-	checkThreads();
+	
 
 	UINT teamSide = ADRDATA(selfAdr + 0x0C);
 	ADRDATA(0x4B699D) = teamSide == 2 ? 1 : 0;
@@ -2165,13 +2183,6 @@ void WINAPI playerHandle() {
 
 }
 
-DWORD WINAPI ThreadProc(LPVOID lpParam) {
 
-	
-	playerHandle();
-	return 0;
-
-
-}
 
 
