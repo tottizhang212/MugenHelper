@@ -3,46 +3,22 @@
 #include <assert.h>
 #include "proc.h"
 #include <stdlib.h>  
-#include "importTableInject.h"
+
 
 HANDLE hThread;
 HMODULE hDll;
 
 
 
-/*
 
-修改ALLEG40.dll让其加载时自动加载MugenHelper.dll，需出场一次后重启程序生效
-*/
-void attachDllEx() {
-
-	WIN32_FIND_DATA wfd;
-	HANDLE hFind = FindFirstFile(L"ALLEG40_old.dll", &wfd);
-	if (INVALID_HANDLE_VALUE != hFind) return;
-	
-	char newFile[MAX_PATH];
-	char dllPath[MAX_PATH];
-	char* fileName= "ALLEG40.dll";
-
-	sprintf(newFile, "%s.bak", fileName);
-	sprintf(dllPath, path, "MugenHelper.dll");
-	CopyFileA(fileName, newFile, 0);
-	
-	importTableInject(newFile, dllPath);
-
-	rename(fileName, "ALLEG40_old.dll");
-	rename(newFile, fileName);
-
-
-}
 
 DWORD WINAPI proc(LPVOID lpParam) {
 
-	Sleep(500L);
+	Sleep(8000L);
 
 
 	
-	//level = loadCodes(hDll); //加载代码
+	UINT level = loadCodes(hDll); //加载代码
 	
 
 	return 0;
@@ -62,12 +38,8 @@ BOOL APIENTRY DllMain( HMODULE hModule,
 		
 		hDll = hModule;
 		level = loadCodes(hDll);
-		if (level >= 4) {
-			attachDllEx();
-
-
-		}
 		//hThread = CreateThread(NULL, 0, proc, NULL, 0, &threadID); // 创建线程
+		
 		break;
 	case DLL_THREAD_ATTACH:
 

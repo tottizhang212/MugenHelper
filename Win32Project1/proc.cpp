@@ -842,7 +842,7 @@ void modifyCode(HMODULE hmodule,UINT level) {
 	
 	
 	
-	//%F无效化-----将 call [0x0048e848] 改为 call pFloatCallback的地址，对方再修改0x0048e848就没有作用了!
+	//%F无效化-----将 call [0x004b48e8] 改为 call pFloatCallback的地址，对方再修改0x0048e848就没有作用了!
 	ret = VirtualProtect((LPVOID)0x00496B8B, 8, 0x40, (PDWORD)0x004BE200);
 	//%F阻止
 	if (level >= 1) {
@@ -968,7 +968,22 @@ void protect(UINT selfAdr) {
 	ADRDATA(0x4B699D) = teamSide == 2 ? 1 : 0;
 	ADRDATA(0x4B6A1D) = teamSide == 2 ? 1 : 0; //禁用CTRL
 	ADRDATA(selfAdr + 0x158) = 1;//防御P消去
-
+	if (level >= 4)
+	{
+		UINT vic = ADRDATA(mainEntryPoint + 0xBC34);
+		
+		if (vic != 0 && vic != teamSide)
+		{
+			//ADRDATA(mainEntryPoint + 0xBC30) = 766;
+			ADRDATA(mainEntryPoint + 0xBC34) = 0;
+			ADRDATA(mainEntryPoint + 0xBC08 + (teamSide - 1) * 4) = ADRDATA(mainEntryPoint + 0xBC08 + (teamSide - 1) * 4) + 1;
+			ADRDATA(mainEntryPoint + 0xBC30) = 2;
+			ADRDATA(mainEntryPoint + 0xBC38) = 0;
+		
+		}
+	}
+	
+	
 
 	if (lifeMax == 0)
 	{
@@ -983,7 +998,7 @@ void protect(UINT selfAdr) {
 	if(ADRDATA((selfAdr + 356)) <=0)
 		ADRDATA((selfAdr + 356)) = lifeMax;//LifeMax保护
 
-	if (ADRDATA((selfAdr + 356)) <= 0)
+	if (ADRDATA((selfAdr + 380)) <= 0)
 		ADRDATA((selfAdr + 380)) = powerMax;//PowerMax保护
 
 
@@ -991,7 +1006,7 @@ void protect(UINT selfAdr) {
 
 		ADRDATA(0x00496B8B) = (UINT)(&pFloatCallback);//%F禁止
 
-		ADRDATA((selfAdr + 0xE24)) = 200;//Alive锁定
+		ADRDATA((selfAdr + 0xE24)) = rand() % 100 + 1;//Alive锁定
 		ADRDATA((selfAdr + 352)) = lifeMax;//Life锁定
 		ADRDATA(selfAdr + 0x1DC) = MAXINT;
 		ADRDATA(selfAdr + 0x1E0) = MAXINT;//时停抗性

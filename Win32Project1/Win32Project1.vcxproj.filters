@@ -30,9 +30,6 @@
     <ClInclude Include="proc.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="importTableInject.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
     <ClInclude Include="util.h">
       <Filter>头文件</Filter>
     </ClInclude>
@@ -45,9 +42,6 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="proc.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="importTableInject.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="util.cpp">
