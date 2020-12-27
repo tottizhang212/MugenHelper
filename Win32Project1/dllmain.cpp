@@ -14,13 +14,8 @@ HMODULE hDll;
 
 DWORD WINAPI proc(LPVOID lpParam) {
 
-	Sleep(8000L);
-
-
-	
+	Sleep(8000L);	
 	UINT level = loadCodes(hDll); //МгдиДњТы
-	
-
 	return 0;
 
 }

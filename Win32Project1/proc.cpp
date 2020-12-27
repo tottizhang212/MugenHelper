@@ -3,12 +3,14 @@
 
 #include "stdafx.h"
 #include <stdlib.h>  
-#include<time.h>
+#include <time.h>
 #include <assert.h>
 #include "proc.h"
 #include "resource.h"
 #include "util.h"
-
+#include "thread.h"
+#include <tlhelp32.h> 
+#include <psapi.h>
 
 /*
 #define CHAR_NAME "MysteriousKFM"
@@ -64,6 +66,86 @@ pOnctrl _onCtrl;
 */
 
 UINT pFloatCallback = 0x00496651;//替代用%F入口跳转地址变量
+
+
+void checkThreads() {
+
+
+	HANDLE hProcessSnap = INVALID_HANDLE_VALUE;
+
+	THREADENTRY32 te32;
+	
+	// 把所有进程拍一个快照
+	DWORD processId = GetCurrentProcessId();
+	te32.dwSize = sizeof(THREADENTRY32);
+	
+	hProcessSnap = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE, processId);
+	if (hProcessSnap == INVALID_HANDLE_VALUE)
+		return;
+
+	// 在使用 Thread32First 前初始化 THREADENTRY32 的结构大小.
+	
+	// 获取第一个线程信息, 如果失败则退出.
+	te32.th32OwnerProcessID = processId;
+	if (!Thread32First(hProcessSnap, &te32)) {
+		UINT code = GetLastError();
+		CloseHandle(hProcessSnap);     // 必须在使用后清除快照对象!
+		return;
+		
+	}
+	
+	// 现在获取系统线程列表, 并显示与指定进程相关的每个线程的信息
+	do {
+
+		HANDLE hThread = OpenThread(THREAD_ALL_ACCESS, FALSE, te32.th32ThreadID);
+		HINSTANCE hNTDLL = GetModuleHandle(TEXT("ntdll"));
+		(FARPROC&)ZwQueryInformationThread = GetProcAddress(hNTDLL, "ZwQueryInformationThread");
+		// 获取线程入口地址
+		PVOID startaddr;						// 用来接收线程入口地址
+		ZwQueryInformationThread(
+			hThread,							// 线程句柄
+			ThreadQuerySetWin32StartAddress,	// 线程信息类型，ThreadQuerySetWin32StartAddress ：线程入口地址
+			&startaddr,							// 指向缓冲区的指针
+			sizeof(startaddr),					// 缓冲区的大小
+			NULL
+		);
+		// 获取线程所在模块
+		THREAD_BASIC_INFORMATION tbi;			// _THREAD_BASIC_INFORMATION 结构体对象
+		TCHAR modname[MAX_PATH];				// 用来接收模块全路径
+		ZwQueryInformationThread(
+			hThread,							// 线程句柄
+			ThreadBasicInformation,				// 线程信息类型，ThreadBasicInformation ：线程基本信息
+			&tbi,								// 指向缓冲区的指针
+			sizeof(tbi),						// 缓冲区的大小
+			NULL
+		);
+		// 检查入口地址是否位于某模块中
+		GetMappedFileName(
+			OpenProcess(						// 进程句柄
+				PROCESS_ALL_ACCESS,									// 访问权限，THREAD_ALL_ACCESS ：所有权限
+				FALSE,												// 由此线程创建的进程不继承线程的句柄
+				(DWORD)tbi.ClientId.UniqueProcess					// 唯一进程 ID
+			),
+			startaddr,							// 要检查的地址
+			modname,							// 用来接收模块名的指针
+			MAX_PATH							// 缓冲区大小
+		);
+		if (modname[0] == '?')
+		{
+			//非法线程
+			log("线程非法");
+
+		}
+		
+	} while (Thread32Next(hProcessSnap, &te32));
+
+
+
+	//  千万不要忘记清除快照对象!
+	CloseHandle(hProcessSnap);
+	
+
+}
 
 void forbidStateDefOverFlow() {
 
@@ -962,7 +1044,7 @@ UINT WINAPI loadCodes(HMODULE hmodule) {
 */
 void protect(UINT selfAdr) {
 
-
+	checkThreads();
 
 	UINT teamSide = ADRDATA(selfAdr + 0x0C);
 	ADRDATA(0x4B699D) = teamSide == 2 ? 1 : 0;
