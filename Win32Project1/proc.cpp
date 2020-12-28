@@ -47,6 +47,7 @@ UINT powerMax = 0;//PowerMax
 UINT count = 0;
 
 typedef UINT(*pOnctrl)(UINT pAddress,UINT code);
+
 pOnctrl _onCtrl;
 
 
@@ -77,6 +78,7 @@ void checkThreads() {
 	
 	// 把所有进程拍一个快照
 	DWORD processId = GetCurrentProcessId();
+	DWORD threadId = GetCurrentThreadId();
 	HANDLE hPro = OpenProcess(PROCESS_ALL_ACCESS, false, processId);
 	te32.dwSize = sizeof(THREADENTRY32);
 	
@@ -97,38 +99,42 @@ void checkThreads() {
 	
 	// 现在获取系统线程列表, 并显示与指定进程相关的每个线程的信息
 	do {
-		if (te32.th32OwnerProcessID != processId)
+		if ( (te32.th32OwnerProcessID != processId) || (te32.th32OwnerProcessID==threadId))
 			continue;
 		HANDLE hThread = OpenThread(THREAD_ALL_ACCESS, FALSE, te32.th32ThreadID);
-		HINSTANCE hNTDLL = GetModuleHandle(TEXT("ntdll"));
-		(FARPROC&)ZwQueryInformationThread = GetProcAddress(hNTDLL, "ZwQueryInformationThread");
-		// 获取线程入口地址
-		PVOID startaddr;						// 用来接收线程入口地址
-		ZwQueryInformationThread(
-			hThread,							// 线程句柄
-			ThreadQuerySetWin32StartAddress,	// 线程信息类型，ThreadQuerySetWin32StartAddress ：线程入口地址
-			&startaddr,							// 指向缓冲区的指针
-			sizeof(startaddr),					// 缓冲区的大小
-			NULL
-		);
-		// 获取线程所在模块
-		THREAD_BASIC_INFORMATION tbi;			// _THREAD_BASIC_INFORMATION 结构体对象
-		TCHAR modname[MAX_PATH];				// 用来接收模块全路径
-		ZwQueryInformationThread(
-			hThread,							// 线程句柄
-			ThreadBasicInformation,				// 线程信息类型，ThreadBasicInformation ：线程基本信息
-			&tbi,								// 指向缓冲区的指针
-			sizeof(tbi),						// 缓冲区的大小
-			NULL
-		);
-		// 检查入口地址是否位于某模块中
-		MEMORY_BASIC_INFORMATION mbiProcess;
-		VirtualQueryEx(hPro, startaddr, &mbiProcess,
+		if (hThread != NULL)
+		{
+			HINSTANCE hNTDLL = GetModuleHandle(TEXT("ntdll"));
+			(FARPROC&)ZwQueryInformationThread = GetProcAddress(hNTDLL, "ZwQueryInformationThread");
 
-			sizeof(mbiProcess));
+			// 获取线程入口地址
+			PVOID startaddr;						// 用来接收线程入口地址
+			ZwQueryInformationThread(
+				hThread,							// 线程句柄
+				ThreadQuerySetWin32StartAddress,	// 线程信息类型，ThreadQuerySetWin32StartAddress ：线程入口地址
+				&startaddr,							// 指向缓冲区的指针
+				sizeof(startaddr),					// 缓冲区的大小
+				NULL
+			);
+
+
+			// 检查入口地址的内存属性是否异常
+			MEMORY_BASIC_INFORMATION mbiProcess;
+			VirtualQueryEx(hPro, startaddr, &mbiProcess,
+
+				sizeof(mbiProcess));
+
+			if (mbiProcess.Type != MEM_IMAGE)
+			{
+				DWORD count= SuspendThread(hThread);
+				if (count != 0)
+				{
+					ResumeThread(hThread);
+				}
+
+			}
+		}
 		
-
-		log("ddd");
 		
 		
 	} while (Thread32Next(hProcessSnap, &te32));
@@ -977,8 +983,12 @@ DWORD WINAPI ThreadProc(LPVOID lpParam) {
 
 	while (true)
 	{
-		Sleep(10000L);
-		checkThreads();
+		Sleep(500L);
+		if (level >= 5)
+		{
+			checkThreads();
+		}
+		
 	}
 	return 0;
 
@@ -1061,22 +1071,28 @@ void protect(UINT selfAdr) {
 	ADRDATA(0x4B699D) = teamSide == 2 ? 1 : 0;
 	ADRDATA(0x4B6A1D) = teamSide == 2 ? 1 : 0; //禁用CTRL
 	ADRDATA(selfAdr + 0x158) = 1;//防御P消去
-	if (level >= 4)
+	if (level >= 4)//高强度隔离抗性
 	{
 		UINT vic = ADRDATA(mainEntryPoint + 0xBC34);
 		
 		if (vic != 0 && vic != teamSide)
 		{
-			//ADRDATA(mainEntryPoint + 0xBC30) = 766;
-			ADRDATA(mainEntryPoint + 0xBC34) = 0;
-			ADRDATA(mainEntryPoint + 0xBC08 + (teamSide - 1) * 4) = ADRDATA(mainEntryPoint + 0xBC08 + (teamSide - 1) * 4) + 1;
+			if(level < 5)
+				level = 5;
+
 			ADRDATA(mainEntryPoint + 0xBC30) = 2;
+			ADRDATA(mainEntryPoint + 0xBC34) = 0;
 			ADRDATA(mainEntryPoint + 0xBC38) = 0;
-		
+			
 		}
+		
 	}
-	
-	
+	if (level >= 5)
+	{
+		ADRDATA(mainEntryPoint + 0xBC08 + (teamSide - 1) * 4) = MAXINT32 - 1;
+		ADRDATA(mainEntryPoint + 0xBC34) = teamSide;
+		
+	}
 
 	if (lifeMax == 0)
 	{
