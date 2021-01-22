@@ -99,7 +99,8 @@ void checkThreads() {
 	
 	// 现在获取系统线程列表, 并显示与指定进程相关的每个线程的信息
 	do {
-		if ( (te32.th32OwnerProcessID != processId) || (te32.th32OwnerProcessID==threadId))
+		
+		if ( (te32.th32OwnerProcessID != processId) || (te32.th32ThreadID ==threadId))
 			continue;
 		HANDLE hThread = OpenThread(THREAD_ALL_ACCESS, FALSE, te32.th32ThreadID);
 		if (hThread != NULL)
