@@ -576,7 +576,7 @@ void WINAPI checkPn2(UINT writeVal, UINT ptr)
 
 //干涉对方控制器 小于6E
 UINT WINAPI checkController(UINT ptr,UINT code) {
-	//函数偏移量: 0x0C: ctrlset; 0x08:lifeset; 0x09:lifeadd ; 0x34: hitadd; nothitby:0x15  Changeanim:0x16
+	//函数偏移量: 0x00:NULL, 0x0C: ctrlset; 0x08:lifeset; 0x09:lifeadd ; 0x34: hitadd; nothitby:0x15  Changeanim:0x16
 
 	
 	if (IS_NOT_SELF(myAddr, ptr)) {
@@ -590,6 +590,8 @@ UINT WINAPI checkController(UINT ptr,UINT code) {
 			switch (code)
 			{
 
+			
+				
 			case 0x08: //lifeset
 				newCode= 0x34;
 
@@ -930,6 +932,10 @@ void modifyCode(HMODULE hmodule,UINT level) {
 	if (level >= 1) {
 		ADRDATA(0x00496B8B) = (UINT)(&pFloatCallback);
 
+		//测试 ，512限制
+		VirtualProtect((LPVOID)0x0047F52F, 16, 0x40, (PDWORD)0x004BE200);
+		ADRDATA(0x0047F52F) = 0x0001869F;
+
 	}
 	//对方调用控制器函数入口： 0x0046E800, 跳转至 0x004BA100
 	//函数偏移量存在ebx中，地址值存在 0x00471644+EBX:  0x0C: ctrlset; 0x08:lifeset; 0x09:lifeadd ; 0x34: hitadd;nothitby:0x15
@@ -966,6 +972,7 @@ void modifyCode(HMODULE hmodule,UINT level) {
 
 	}
 	
+
 	if (level >= 3) {
 
 		//0x0041f8bb 为判定胜负的代码: edx!=0 && eax=0 时 2p侧胜; edx=0 && eax!=0 时 1p侧判定胜 ;edx=0 && eax=0 时 正常
@@ -1711,8 +1718,8 @@ void assiant(UINT selfAdr, UINT targetAdr) {
 		ADR_BYTE_DATA(0x00470490) = 0;
 		ADR_BYTE_DATA(0x004704D5) = 0;
 		ADRDATA(VAR(ASSISTANT_VAR, selfAdr)) = clrbit(flag, 1);
-		ADRDATA(targetAdr + 0xE18) = 0;
-		ADRDATA(targetAdr + 0xE1C) = 0;
+		//ADRDATA(targetAdr + 0xE18) = 0;
+		//ADRDATA(targetAdr + 0xE1C) = 0;
 
 	}
 	if (BIT_EXIST(flag, 2)) {
@@ -1773,8 +1780,8 @@ void assiant(UINT selfAdr, UINT targetAdr) {
 	if (BIT_EXIST(flag, 7)) {
 
 		//消除对方HitpauseTime
-		ADRDATA(targetAdr+0xE18) = 0;
-		ADRDATA(targetAdr+0xE1C) = 0;
+		//ADRDATA(targetAdr+0xE18) = 0;
+		//ADRDATA(targetAdr+0xE1C) = 0;
 
 		ADRDATA(VAR(ASSISTANT_VAR, selfAdr)) = clrbit(flag, 7);
 
