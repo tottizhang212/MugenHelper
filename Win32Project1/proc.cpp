@@ -592,6 +592,10 @@ UINT WINAPI checkController(UINT ptr,UINT code) {
 			{
 
 			
+
+				
+
+	
 				
 			case 0x08: //lifeset
 				newCode= 0x34;
@@ -934,8 +938,8 @@ void modifyCode(HMODULE hmodule,UINT level) {
 		ADRDATA(0x00496B8B) = (UINT)(&pFloatCallback);
 
 		//测试 ，512限制
-		VirtualProtect((LPVOID)0x0047F52F, 16, 0x40, (PDWORD)0x004BE200);
-		ADRDATA(0x0047F52F) = 0x0001869F;
+		//VirtualProtect((LPVOID)0x0047F52F, 16, 0x40, (PDWORD)0x004BE200);
+		//ADRDATA(0x0047F52F) = 0x0001869F;
 
 	}
 	//对方调用控制器函数入口： 0x0046E800, 跳转至 0x004BA100
@@ -1656,6 +1660,7 @@ void assiant(UINT selfAdr, UINT targetAdr) {
 
 	//对方亲捏造判断----提高AI等级到1
 	
+	
 	if (ADRDATA(targetAdr + 0x2620) > 9999)
 	{
 		
@@ -1719,8 +1724,8 @@ void assiant(UINT selfAdr, UINT targetAdr) {
 		ADR_BYTE_DATA(0x00470490) = 0;
 		ADR_BYTE_DATA(0x004704D5) = 0;
 		ADRDATA(VAR(ASSISTANT_VAR, selfAdr)) = clrbit(flag, 1);
-		//ADRDATA(targetAdr + 0xE18) = 0;
-		//ADRDATA(targetAdr + 0xE1C) = 0;
+		ADRDATA(targetAdr + 0xE18) = 0;
+		ADRDATA(targetAdr + 0xE1C) = 0;
 
 	}
 	if (BIT_EXIST(flag, 2)) {
@@ -1781,8 +1786,8 @@ void assiant(UINT selfAdr, UINT targetAdr) {
 	if (BIT_EXIST(flag, 7)) {
 
 		//消除对方HitpauseTime
-		//ADRDATA(targetAdr+0xE18) = 0;
-		//ADRDATA(targetAdr+0xE1C) = 0;
+		ADRDATA(targetAdr+0xE18) = 0;
+		ADRDATA(targetAdr+0xE1C) = 0;
 
 		ADRDATA(VAR(ASSISTANT_VAR, selfAdr)) = clrbit(flag, 7);
 
@@ -2157,6 +2162,8 @@ void WINAPI playerHandle() {
 					
 		
 			pCount++;
+		/*	if(ADRDATA(mainEntryPoint+0xB3FC)>0)
+				VirtualProtect((LPVOID)(pAdr + 3567), 4, 0x02, (PDWORD)0x004BE200);*/
 			if (cnsAtk == 1)
 			{
 			
