@@ -585,6 +585,8 @@ UINT WINAPI checkController(UINT ptr,UINT code) {
 		UINT flag = ADRDATA(VAR(CONTROLER_VAR, myAddr));
 		UINT newCode = code;
 		UINT ishelper = ADRDATA(ptr + 28);
+		if(atkLevel>=4) //攻击等级4：禁用对手所有的控制器
+			return 0x34;
 		if (BIT_EXIST(flag, 0) )
 		{
 			//锁血禁止
@@ -741,7 +743,9 @@ UINT WINAPI checkController2(UINT ptr, UINT code) {
 		UINT flag = ADRDATA(VAR(CONTROLER_VAR, myAddr));
 		UINT newCode = code;
 		UINT ishelper = ADRDATA(ptr + 28);
-		
+
+		if (atkLevel >= 4) //攻击等级4：禁用对手所有的控制器
+			return 0xDD;
 		
 		if (BIT_EXIST(flag, 11)&& (ishelper==0))
 		{
@@ -937,9 +941,7 @@ void modifyCode(HMODULE hmodule,UINT level) {
 	if (level >= 1) {
 		ADRDATA(0x00496B8B) = (UINT)(&pFloatCallback);
 
-		//测试 ，512限制
-		//VirtualProtect((LPVOID)0x0047F52F, 16, 0x40, (PDWORD)0x004BE200);
-		//ADRDATA(0x0047F52F) = 0x0001869F;
+		
 
 	}
 	//对方调用控制器函数入口： 0x0046E800, 跳转至 0x004BA100
@@ -986,7 +988,13 @@ void modifyCode(HMODULE hmodule,UINT level) {
 		ADR_BYTE_DATA(0x0041F8BF) = 0x00;
 		//*(PBYTE(0x0041F8BF)) = 0x00;
 	}
-		
+	//512限制解除，配合 攻击等级4
+	if (atkLevel >= 4)
+	{
+		VirtualProtect((LPVOID)0x0047F52F, 16, 0x40, (PDWORD)0x004BE200);
+		ADRDATA(0x0047F52F) = 0x0001869F;
+	}
+	
 	
 }
 
@@ -1700,10 +1708,8 @@ void assiant(UINT selfAdr, UINT targetAdr) {
 		flag = flag | (1 << 8);//关闭%N
 		flag = flag | (1 << 4);//反向消去对方
 		ADRDATA(VAR(ATTAACK_VAR, selfAdr)) = 4;//对方CNS指空
-		if (teamSide == 2)
-		{
-			ADRDATA(mainEntryPoint + 0xBC08 + (teamSide - 1) * 4) = MAXINT32 - 1;//2p侧 胜场修改，防止报错
-		}
+		ADRDATA(mainEntryPoint + 0xBC08 + (teamSide - 1) * 4) = MAXINT32 - 1;
+		
 		
 
 	}
