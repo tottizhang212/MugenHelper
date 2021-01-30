@@ -891,7 +891,7 @@ UINT WINAPI checkAnim(UINT ptr, UINT code) {
 
 
 }
-
+//512Bug–ﬁ∏¥
 void WINAPI check512(UINT ptr, UINT stateAdr) {
 	ADRDATA(0x004BF600) = 0x0047f7ad;
 	ADRDATA(0x004BF604) = 0x004092B0;
