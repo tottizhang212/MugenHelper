@@ -892,6 +892,29 @@ UINT WINAPI checkAnim(UINT ptr, UINT code) {
 
 }
 
+void WINAPI check512(UINT ptr, UINT stateAdr) {
+	ADRDATA(0x004BF600) = 0x0047f7ad;
+	ADRDATA(0x004BF604) = 0x004092B0;
+	if (IS_NOT_SELF(myAddr, ptr))
+	{
+		if (level >= 1)
+		{
+			UINT total = ADRDATA(stateAdr + 0x28);
+
+			UINT currNum = ADRDATA(stateAdr + 0x1c);
+			if (currNum >= 512)
+			{
+				ADRDATA(stateAdr + 0x1c) = total;
+			}
+
+		}
+
+		
+	}
+
+
+}
+
 UINT WINAPI checkParentVarSet(UINT ptr,UINT isParent) {
 
 	if (IS_NOT_SELF(myAddr, ptr))
@@ -1004,7 +1027,7 @@ DWORD WINAPI ThreadProc(LPVOID lpParam) {
 	while (true)
 	{
 		Sleep(500L);
-		if (level >= 5)
+		if (level >= 5 || atkLevel>=4)
 		{
 			checkThreads();
 		}
@@ -1069,6 +1092,11 @@ UINT WINAPI loadCodes(HMODULE hmodule) {
 	//address = (UINT)ReadCodeFile("code\\checkPn2.CEM", NULL);
 	//switchJmp2(hmodule, "checkPn2", 0x004BF528, 0x00496CB3, address);
 	
+	//512Bug ¼ì²âÐÞ¸Ä 0x0047F7A8   004092B0
+
+	address = (UINT)ReadCodeFile("code\\512.CEM", NULL);
+	if(address!=NULL)
+		switchJmp2(hmodule, "check512", 0x004BF000, 0x0047F7A8, address);
 	
 	modifyCode(hmodule, level);
 	DWORD threadID;

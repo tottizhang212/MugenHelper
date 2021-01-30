@@ -65,6 +65,8 @@ void switchJmp(HMODULE hmodule, LPCSTR funName, UINT funAdr, UINT startAdr, UINT
 void switchJmp2(HMODULE hmodule, LPCSTR funName, UINT funAdr, UINT startAdr, UINT writeAdr) {
 
 	ADRDATA(funAdr) = (UINT)GetProcAddress(hmodule, funName);
+
+	
 	VirtualProtect((LPVOID)startAdr, 16, 0x40, (PDWORD)0x004BE200);
 	UINT rav = writeAdr - startAdr - 5;
 

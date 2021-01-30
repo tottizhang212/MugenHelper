@@ -14,3 +14,4 @@ EXPORTS
 	checkDef @12
 	checkPn1 @13
 	checkPn2 @14
+	check512 @15
