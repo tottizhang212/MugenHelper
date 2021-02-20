@@ -20,3 +20,5 @@ char* WINAPI ReadCodeFile(char* file, char* startAddress);
 void log(const char* content);
 void switchJmp(HMODULE hmodule, LPCSTR funName, UINT funAdr, UINT startAdr, UINT relCode);
 void switchJmp2(HMODULE hmodule, LPCSTR funName, UINT funAdr, UINT startAdr, UINT writeAdr);
+void switchJmp3(UINT jumpAdr, UINT targetAdr);
+UINT copyAsmCode(UINT begin, int len);

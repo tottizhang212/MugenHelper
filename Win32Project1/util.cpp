@@ -80,6 +80,33 @@ void switchJmp2(HMODULE hmodule, LPCSTR funName, UINT funAdr, UINT startAdr, UIN
 
 }
 
+void switchJmp3(UINT jumpAdr, UINT targetAdr) {
+
+	
+	VirtualProtect((LPVOID)jumpAdr, 16, 0x40, (PDWORD)0x004BE200);
+	UINT rav = targetAdr - jumpAdr - 5;
+	
+	UINT relCode = 0xE9 | (rav << 8);
+	ADRDATA(jumpAdr) = relCode;
+	jumpAdr += 4;
+	relCode = 0 | (rav >> 24);
+	ADR_BYTE_DATA(jumpAdr) = relCode;
+
+
+}
+
+
+UINT copyAsmCode(UINT begin, int len) {
+
+	char* startAddress = (char*)malloc(sizeof(char)*len);
+	memcpy(startAddress, (void*)begin, len);
+	//ËÄ×Ö½Ú¶ÔÆë
+	int fill = (len - len % 4) % 4;
+	while (fill--)startAddress[len + fill] = 0x90;
+	return (UINT)startAddress;
+
+}
+
 void log(const char* content) {
 
 	FILE * pFile;

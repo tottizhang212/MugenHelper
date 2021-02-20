@@ -148,36 +148,172 @@ void checkThreads() {
 
 }
 
-void forbidStateDefOverFlow() {
+//st: 在statedef 处理函数跳转值前,保存调用入口点
+UINT saveEsp1() {
 
+	goto END;
+BEGIN:
+	__asm {
+		MOV DWORD PTR DS : [0x4BE600], 0x0047EB31;
+		PUSH EDX;
+		LEA EAX, [ESP + 0x1C];
+		mov  ecx, 0x0047EB29;
+		jmp ecx;
+	}
+
+END:
+	//确定代码范围
+	UINT begin, end;
+	__asm
+	{
+		mov eax, BEGIN;
+		mov begin, eax;
+		mov eax, END;
+		mov end, eax;
+	}
+	return copyAsmCode(begin, (end - begin));
+}
+//st:恢复S溢出的ESP
+UINT restoreEsp1() {
+
+	goto END;
+BEGIN:
+	__asm {
+		add esp, 0x90;
+		CMP DWORD PTR DS : [0x4BE600], 0x0047EB31
+		jne  _end;
+		mov  DWORD PTR DS : [esp], 0x0047EB31;
+		mov  DWORD PTR DS : [0x4BE600],0;
+	 _end:
+		retn;
+
+	}
+
+END:
+	//确定代码范围
+	UINT begin, end;
+	__asm
+	{
+		mov eax, BEGIN;
+		mov begin, eax;
+		mov eax, END;
+		mov end, eax;
+	}
+
+	return copyAsmCode(begin, (end - begin));
+}
+//cmd:在statedef 处理函数跳转值前,保存调用入口点
+UINT saveEsp2() {
+
+	goto END;
+BEGIN:
+	__asm {
+		LEA EDX, [ESP + 0x1C];
+		PUSH ECX;
+		MOV DWORD PTR DS : [0x004BE604], 0x0047E9B6;
+		MOV EBX, 0x0047E9AC;
+		JMP EBX;
+	}
+
+END:
+	//确定代码范围
+	UINT begin, end;
+	__asm
+	{
+		mov eax, BEGIN;
+		mov begin, eax;
+		mov eax, END;
+		mov end, eax;
+	}
+	return copyAsmCode(begin, (end - begin));
+}
+
+
+//cmd:恢复S溢出的ESP
+UINT restoreEsp2() {
+
+	goto END;
+BEGIN:
+	__asm {
+		add esp, 0x90;
+		CMP DWORD PTR DS : [0x4BE604], 0x0047E9B6
+			jne  _end;
+		mov  DWORD PTR DS : [esp], 0x0047E9B6;
+		mov  DWORD PTR DS : [0x4BE604], 0;
+	_end:
+		retn;
+
+	}
+
+END:
+	//确定代码范围
+	UINT begin, end;
+	__asm
+	{
+		mov eax, BEGIN;
+		mov begin, eax;
+		mov eax, END;
+		mov end, eax;
+	}
+
+	return copyAsmCode(begin, (end - begin));
+}
+
+void forbidStateDefOverFlow() {
+	//保存ESP
+	UINT address = saveEsp1();
+	switchJmp3(0x0047EB24, address);
 
 	//恢复ESP
-	UINT address = (UINT)ReadCodeFile("code\\forStdef3.CEM", (char *)0x004BE700);
-	//把0x004be600写为0047eb31,恢复ESP
-	address = (UINT)ReadCodeFile("code\\forStdef4.CEM", (char *)0x004BE800);
-	//def中stdef溢出阻止代码 
-	address = (UINT)ReadCodeFile("code\\forStdef8.CEM", (char *)0x004BE500);
+	//UINT address = (UINT)ReadCodeFile("code\\forStdef3.CEM", (char *)0x004BE700);
+	// switchJmp3(0x0047F184, 0x004be700);
+	
+	 address = restoreEsp1();
+	switchJmp3(0x0047F184, address);
+	
 
+	//address = (UINT)ReadCodeFile("code\\forStdef4.CEM", (char *)0x004BE800);
+	//switchJmp3(0x0047EB24, 0x004be800);	
 	//在statedef 处理函数跳转值前把0x004be600写为0047eb31，保存调用入口点
-	 VirtualProtect((LPVOID)0x0047EB24, 8, 0x40, (PDWORD)0x004BE200);
-	 ReadCodeFile("code\\forStdef1.CEM", (char *)0x0047EB24);
+	 
+	 //VirtualProtect((LPVOID)0x0047EB24, 8, 0x40, (PDWORD)0x004BE200);
+	 //ReadCodeFile("code\\forStdef1.CEM", (char *)0x0047EB24);//jmp 0x004be800
 
 	
 	//statedef溢出阻止：原理是在0x0047F184，Ret之前跳转至自己的代码，检查如果入口地址不是0047eb31，就强制把esp恢复为0047eb31
-	 VirtualProtect((LPVOID)0x0047F184, 8, 0x40, (PDWORD)0x004BE200);
-	 ReadCodeFile("code\\forStdef2.CEM", (char *)0x0047F184);
 	 
 
-	//statedef溢出阻止：同上，此处为处理在def文件中溢出，入口点不一样！
-	//在statedef 处理函数跳转到0x004BE500前把0x004be604写为0047e9B6，保存调用入口点
-	 VirtualProtect((LPVOID)0x0047E9A7, 8, 0x40, (PDWORD)0x004BE200);
-	ADRDATA(0x0047E9A7) = 0x03FB54E9;
-	*(PBYTE(0x0047E9AB)) = 0x00;
+	 
+	 //VirtualProtect((LPVOID)0x0047F184, 8, 0x40, (PDWORD)0x004BE200);
+	 //ReadCodeFile("code\\forStdef2.CEM", (char *)0x0047F184); //jmp 0x004be700
+	 
+
+	//statedef溢出阻止：同上，此处为处理在cmd文件中溢出，入口点不一样！
+	 
+	//cmd中stdef溢出阻止代码 
+	address = saveEsp2();
+	switchJmp3(0x0047E9A7, address);
+	address = restoreEsp2();
+	switchJmp3(0x0047F239, address);
+
+
+	// address = (UINT)ReadCodeFile("code\\forStdef8.CEM", (char *)0x004BE500);
+
+	 //在statedef 处理函数跳转到0x004BE500前把0x004be604写为0047e9B6，保存调用入口点
+	 //switchJmp3(0x0047E9A7, 0x004BE500);
+	// VirtualProtect((LPVOID)0x0047E9A7, 8, 0x40, (PDWORD)0x004BE200);
+	//ADRDATA(0x0047E9A7) = 0x03FB54E9;
+	//*(PBYTE(0x0047E9AB)) = 0x00; // jmp 0x004BE500
 
 	//跳转到0x004BE516执行ESP恢复
-	 VirtualProtect((LPVOID)0x0047F239, 8, 0x40, (PDWORD)0x004BE200);
-	ADRDATA(0x0047F239) = 0x03F2D8E9;
-	*(PBYTE(0x0047F23D)) = 0x00;
+	 //switchJmp3(0x0047F239, 0x004BE516);
+
+	// VirtualProtect((LPVOID)0x0047F239, 8, 0x40, (PDWORD)0x004BE200);
+	//ADRDATA(0x0047F239) = 0x03F2D8E9;
+	//*(PBYTE(0x0047F23D)) = 0x00; // jmp 0x004BE516
+
+	//
+
 		
 
 	
@@ -520,7 +656,7 @@ UINT WINAPI checkDef(UINT pName,UINT pFile, UINT pSt)
 		//自身代码加载保护，强制跳过不加载st9(对应文件并不存在)，如果对方在1p侧作S溢出阻止，则加载会报错
 		if (strcmp((char*)pSt, "st9") == 0)
 		{
-
+		
 			return 0;
 			/*UINT offset = ADRDATA(pFile + 0x0c);
 			UINT adr= ADRDATA(pFile + 0x20);
@@ -538,6 +674,8 @@ UINT WINAPI checkDef(UINT pName,UINT pFile, UINT pSt)
 		
 		}
 	}
+	
+
 	
 	return 1;
 }
@@ -1094,9 +1232,9 @@ UINT WINAPI loadCodes(HMODULE hmodule) {
 	
 	//512Bug 检测修改 0x0047F7A8   004092B0
 
-	address = (UINT)ReadCodeFile("code\\512.CEM", NULL);
+	/*address = (UINT)ReadCodeFile("code\\512.CEM", NULL);
 	if(address!=NULL)
-		switchJmp2(hmodule, "check512", 0x004BF000, 0x0047F7A8, address);
+		switchJmp2(hmodule, "check512", 0x004BF000, 0x0047F7A8, address);*/
 	
 	modifyCode(hmodule, level);
 	DWORD threadID;
