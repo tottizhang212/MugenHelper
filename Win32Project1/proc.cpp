@@ -296,7 +296,7 @@ void forbidStateDefOverFlow() {
 	address = restoreEsp2();
 	switchJmp3(0x0047F239, address);
 
-
+	switchJmp3(0x0047ECEB, address);
 	// address = (UINT)ReadCodeFile("code\\forStdef8.CEM", (char *)0x004BE500);
 
 	 //在statedef 处理函数跳转到0x004BE500前把0x004be604写为0047e9B6，保存调用入口点
