@@ -171,7 +171,6 @@ BEGIN:
 		_end :
 		JMP DWORD PTR DS : [0x4BF604];
 
-
 	}
 
 END:
