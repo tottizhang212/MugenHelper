@@ -8,6 +8,7 @@
 #include "proc.h"
 #include "resource.h"
 #include "util.h"
+#include "asm.h"
 #include "thread.h"
 #include <tlhelp32.h> 
 #include <psapi.h>
@@ -148,116 +149,7 @@ void checkThreads() {
 
 }
 
-//st: 在statedef 处理函数跳转值前,保存调用入口点
-UINT saveEsp1() {
 
-	goto END;
-BEGIN:
-	__asm {
-		MOV DWORD PTR DS : [0x4BE600], 0x0047EB31;
-		PUSH EDX;
-		LEA EAX, [ESP + 0x1C];
-		mov  ecx, 0x0047EB29;
-		jmp ecx;
-	}
-
-END:
-	//确定代码范围
-	UINT begin, end;
-	__asm
-	{
-		mov eax, BEGIN;
-		mov begin, eax;
-		mov eax, END;
-		mov end, eax;
-	}
-	return copyAsmCode(begin, (end - begin));
-}
-//st:恢复S溢出的ESP
-UINT restoreEsp1() {
-
-	goto END;
-BEGIN:
-	__asm {
-		add esp, 0x90;
-		CMP DWORD PTR DS : [0x4BE600], 0x0047EB31
-		jne  _end;
-		mov  DWORD PTR DS : [esp], 0x0047EB31;
-		mov  DWORD PTR DS : [0x4BE600],0;
-	 _end:
-		retn;
-
-	}
-
-END:
-	//确定代码范围
-	UINT begin, end;
-	__asm
-	{
-		mov eax, BEGIN;
-		mov begin, eax;
-		mov eax, END;
-		mov end, eax;
-	}
-
-	return copyAsmCode(begin, (end - begin));
-}
-//cmd:在statedef 处理函数跳转值前,保存调用入口点
-UINT saveEsp2() {
-
-	goto END;
-BEGIN:
-	__asm {
-		LEA EDX, [ESP + 0x1C];
-		PUSH ECX;
-		MOV DWORD PTR DS : [0x004BE604], 0x0047E9B6;
-		MOV EBX, 0x0047E9AC;
-		JMP EBX;
-	}
-
-END:
-	//确定代码范围
-	UINT begin, end;
-	__asm
-	{
-		mov eax, BEGIN;
-		mov begin, eax;
-		mov eax, END;
-		mov end, eax;
-	}
-	return copyAsmCode(begin, (end - begin));
-}
-
-
-//cmd:恢复S溢出的ESP
-UINT restoreEsp2() {
-
-	goto END;
-BEGIN:
-	__asm {
-		add esp, 0x90;
-		CMP DWORD PTR DS : [0x4BE604], 0x0047E9B6
-			jne  _end;
-		mov  DWORD PTR DS : [esp], 0x0047E9B6;
-		mov  DWORD PTR DS : [0x4BE604], 0;
-	_end:
-		retn;
-
-	}
-
-END:
-	//确定代码范围
-	UINT begin, end;
-	__asm
-	{
-		mov eax, BEGIN;
-		mov begin, eax;
-		mov eax, END;
-		mov end, eax;
-	}
-
-	return copyAsmCode(begin, (end - begin));
-}
 
 void forbidStateDefOverFlow() {
 	//保存ESP
@@ -716,7 +608,7 @@ void WINAPI checkPn2(UINT writeVal, UINT ptr)
 //干涉对方控制器 小于6E
 UINT WINAPI checkController(UINT ptr,UINT code) {
 	//函数偏移量: 0x00:NULL, 0x0C: ctrlset; 0x08:lifeset; 0x09:lifeadd ; 0x34: hitadd; nothitby:0x15  Changeanim:0x16
-
+	ADRDATA(0x004BF600) = 0x00471644;
 	
 	if (IS_NOT_SELF(myAddr, ptr)) {
 
@@ -1202,10 +1094,13 @@ UINT WINAPI loadCodes(HMODULE hmodule) {
 	//胜负锁定修改代码
 	UINT address = (UINT)ReadCodeFile("code\\victory.CEM", (char *)0x004BE900);
 	//控制器回调代码
-	address = (UINT)ReadCodeFile("code\\contrl.CEM", NULL);
+	//address = (UINT)ReadCodeFile("code\\contrl.CEM", NULL);
+	address = changeController1();
 	switchJmp2(hmodule, "checkController", 0x004BEA08, 0x0046E854, address);
+
 	//当身回调代码
-	address = (UINT)ReadCodeFile("code\\rever.CEM", NULL);
+	//address = (UINT)ReadCodeFile("code\\rever.CEM", NULL);
+	address = changeRever();
 	switchJmp2(hmodule, "checkRever", 0x004BEA0C, 0x0046F528, address);
 	//切换动画回调代码
 	address = (UINT)ReadCodeFile("code\\anim.CEM", NULL);

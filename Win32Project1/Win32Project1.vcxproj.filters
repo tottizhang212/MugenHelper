@@ -39,6 +39,9 @@
     <ClInclude Include="thread.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="asm.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -51,6 +54,9 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="util.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="asm.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
