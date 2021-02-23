@@ -1009,18 +1009,7 @@ void modifyCode(HMODULE hmodule,UINT level) {
 	ret = VirtualProtect((LPVOID)0x00470489, 16, 0x40, (PDWORD)0x004BE200);
 	ret = VirtualProtect((LPVOID)0x004704CE, 16, 0x40, (PDWORD)0x004BE200);
 
-	//当身切换为Hitdef 0x0046F528跳转至 0x004BF100
-	//switchJmp(hmodule, "checkRever", 0x004BEA0C, 0x0046F528, 0x04FBD3E9);	
-	
-	//changeanim回调       0x0046EA90跳转至0x004BF200
-	//switchJmp(hmodule, "checkAnim", 0x004BEA10, 0x0046EA90, 0x05076BE9);
 		
-	//对方调用控制器函数回调2    0x00470378跳转至0x004BF220
-	//switchJmp(hmodule, "checkController2", 0x004BEA14, 0x00470378, 0x04EEA3E9);
-	
-	//对方调用控制器函数回调3
-	//switchJmp(hmodule, "checkController3", 0x004BEA18, 0x00471216, 0x04E0B5E9);
-	
 	//Alive 触发器读取代码地址可读写
 	VirtualProtect((LPVOID)0x0047B5EA, 16, 0x40, (PDWORD)0x004BE200);
 			
@@ -1036,9 +1025,9 @@ void modifyCode(HMODULE hmodule,UINT level) {
 	if (level >= 3) {
 
 		//0x0041f8bb 为判定胜负的代码: edx!=0 && eax=0 时 2p侧胜; edx=0 && eax!=0 时 1p侧判定胜 ;edx=0 && eax=0 时 正常
-		ret = VirtualProtect((LPVOID)0x0041F8BB, 8, 0x40, (PDWORD)0x004BE200);
-		ADRDATA(0x0041F8BB) = 0x09F040E9;
-		ADR_BYTE_DATA(0x0041F8BF) = 0x00;
+		//ret = VirtualProtect((LPVOID)0x0041F8BB, 8, 0x40, (PDWORD)0x004BE200);
+		//ADRDATA(0x0041F8BB) = 0x09F040E9;
+		//ADR_BYTE_DATA(0x0041F8BF) = 0x00;
 		//*(PBYTE(0x0041F8BF)) = 0x00;
 	}
 	//512限制解除，配合 攻击等级4
@@ -1092,7 +1081,14 @@ UINT WINAPI loadCodes(HMODULE hmodule) {
 	//S溢出自锁保护，应对1p侧的S溢出阻止
 	protectStateDefOverFlowEx(hmodule);
 	//胜负锁定修改代码
-	UINT address = (UINT)ReadCodeFile("code\\victory.CEM", (char *)0x004BE900);
+	//UINT address = (UINT)ReadCodeFile("code\\victory.CEM", (char *)0x004BE900);
+	UINT address = changeVictory();
+	if (level >= 3)
+	{
+		switchJmp3(0x0041F8BB, address);
+	}
+	
+	
 	//控制器回调代码
 	//address = (UINT)ReadCodeFile("code\\contrl.CEM", NULL);
 	address = changeController1();
@@ -1103,16 +1099,22 @@ UINT WINAPI loadCodes(HMODULE hmodule) {
 	address = changeRever();
 	switchJmp2(hmodule, "checkRever", 0x004BEA0C, 0x0046F528, address);
 	//切换动画回调代码
-	address = (UINT)ReadCodeFile("code\\anim.CEM", NULL);
+	//address = (UINT)ReadCodeFile("code\\anim.CEM", NULL);
+	address = changeAnim();
 	switchJmp2(hmodule, "checkAnim", 0x004BEA10, 0x0046EA90, address);
+
+
 	//控制器回调代码2
-	address = (UINT)ReadCodeFile("code\\contrl2.CEM", NULL);
+	//address = (UINT)ReadCodeFile("code\\contrl2.CEM", NULL);
+	address = changeController2();
 	switchJmp2(hmodule, "checkController2", 0x004BEA14, 0x00470378, address);
+	
 	// dis溢出阻止
-	address = (UINT)ReadCodeFile("code\\dis1.CEM", (char *)0x004BF280);
+	//address = (UINT)ReadCodeFile("code\\dis1.CEM", (char *)0x004BF280);
 
 	//控制器回调代码3
-	address = (UINT)ReadCodeFile("code\\contrl3.CEM", NULL);
+	//address = (UINT)ReadCodeFile("code\\contrl3.CEM", NULL);
+	address = changeController3();
 	switchJmp2(hmodule, "checkController3", 0x004BEA18, 0x00471216, address);
 
 
