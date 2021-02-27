@@ -218,7 +218,8 @@ void protectStateDefOverFlowEx(HMODULE hmodule)
 	//switchJmp2(hmodule, "checkStateDefOverFlow", 0x004BF516, 0x0047EB0B, address);
 
 	//S溢出自锁保护
-	UINT address = (UINT)ReadCodeFile("code\\checkDef.CEM", NULL);
+	//UINT address = (UINT)ReadCodeFile("code\\checkDef.CEM", NULL);
+	UINT address = protectOverFlow();
 	switchJmp2(hmodule, "checkDef", 0x004BF520, 0x0043C93A, address);
 
 

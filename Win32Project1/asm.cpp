@@ -2,6 +2,45 @@
 #include "util.h"
 
 
+
+UINT protectOverFlow() {
+
+	goto END;
+BEGIN:
+	__asm {
+		
+		PUSHAD;
+		PUSHFD;
+		PUSH EAX;
+		PUSH ECX;
+		PUSH EBX;
+		CALL DWORD PTR DS : [0x4BF520] ;
+		MOV DWORD PTR DS : [0x4BF640] , EAX;
+		POPFD;
+		POPAD;
+		CALL DWORD PTR DS : [0x4BF630] ;
+		ADD ESP, 0x1C;
+		CMP EAX, 1;
+		JNE _end;
+		MOV EAX, DWORD PTR DS : [0x4BF640] ;
+		_end:
+		JMP DWORD PTR DS : [0x4BF600] ;
+
+	}
+
+END:
+	//È·¶¨´úÂë·¶Î§
+	UINT begin, end;
+	__asm
+	{
+		mov eax, BEGIN;
+		mov begin, eax;
+		mov eax, END;
+		mov end, eax;
+	}
+	return copyAsmCode(begin, (end - begin));
+}
+
 UINT mainHandle() {
 
 	goto END;

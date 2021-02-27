@@ -13,3 +13,4 @@ UINT changeRever();
 UINT changeAnim();
 UINT changeVictory();
 UINT mainHandle();
+UINT protectOverFlow();
