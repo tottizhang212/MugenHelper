@@ -113,7 +113,10 @@ END:
 }
 
 
+/*
 
+控制器回调代码1
+*/
 UINT changeController1() {
 
 	goto END;
@@ -154,7 +157,10 @@ END:
 	return copyAsmCode(begin, (end - begin));
 }
 
+/*
 
+控制器回调代码2
+*/
 UINT changeController2() {
 
 	goto END;
@@ -194,7 +200,10 @@ END:
 	return copyAsmCode(begin, (end - begin));
 }
 
+/*
 
+控制器回调代码3
+*/
 UINT changeController3() {
 
 	goto END;
@@ -230,7 +239,10 @@ END:
 
 	return copyAsmCode(begin, (end - begin));
 }
+/**
 
+当身回调代码
+*/
 UINT changeRever() {
 
 	goto END;
@@ -304,7 +316,9 @@ END:
 
 }
 
-
+/**
+锁定胜负代码：/0x0041f8bb 为判定胜负的代码: edx!=0 && eax=0 时 2p侧胜; edx=0 && eax!=0 时 1p侧判定胜 ;edx=0 && eax=0 时 正常
+*/
 UINT changeVictory() {
 
 	goto END;
