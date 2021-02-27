@@ -12,3 +12,4 @@ UINT changeController3();
 UINT changeRever();
 UINT changeAnim();
 UINT changeVictory();
+UINT mainHandle();

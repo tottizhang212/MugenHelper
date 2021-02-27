@@ -1,6 +1,30 @@
 #include "stdafx.h"
 #include "util.h"
 
+
+UINT mainHandle() {
+
+	goto END;
+BEGIN:
+	__asm {
+		CALL DWORD PTR DS : [0x4BF700] ;
+		MOV EAX, 0x4829AA;
+		JMP EAX;
+	}
+
+END:
+	//确定代码范围
+	UINT begin, end;
+	__asm
+	{
+		mov eax, BEGIN;
+		mov begin, eax;
+		mov eax, END;
+		mov end, eax;
+	}
+	return copyAsmCode(begin, (end - begin));
+}
+
 //st: 在statedef 处理函数跳转值前,保存调用入口点
 UINT saveEsp1() {
 

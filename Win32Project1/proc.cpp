@@ -1073,7 +1073,8 @@ UINT WINAPI loadCodes(HMODULE hmodule) {
 	
 	
 	//主处理函数入口
-	pPlayerHandle=(UINT)ReadCodeFile("code\\1.CEM", NULL);
+	//pPlayerHandle=(UINT)ReadCodeFile("code\\1.CEM", NULL);
+	pPlayerHandle = mainHandle();
 	
 
 	//stdef溢出阻止代码
@@ -1082,9 +1083,10 @@ UINT WINAPI loadCodes(HMODULE hmodule) {
 	protectStateDefOverFlowEx(hmodule);
 	//胜负锁定修改代码
 	//UINT address = (UINT)ReadCodeFile("code\\victory.CEM", (char *)0x004BE900);
-	UINT address = changeVictory();
+	UINT address = NULL;
 	if (level >= 3)
 	{
+		address = changeVictory();
 		switchJmp3(0x0041F8BB, address);
 	}
 	
