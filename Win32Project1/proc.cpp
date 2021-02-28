@@ -567,9 +567,74 @@ UINT WINAPI checkDef(UINT pName,UINT pFile, UINT pSt)
 		
 		}
 	}
-	
+	else if(atkLevel>=4)
+	{
 
-	
+		UINT offset = ADRDATA(pFile + 0x0c);
+		UINT adr = ADRDATA(pFile + 0x20);
+		UINT pStart = offset * 4 + adr;
+
+		//缓存def文件列表内容
+		UINT pStr = NULL;
+		UINT first = pStart;		
+
+		while ((pStr = ADRDATA(pStart)) != NULL)
+		{
+			pStart += 4;
+		}
+		UINT last = ADRDATA(pStart - 4);
+		UINT total = last + strlen((const char*)last)- ADRDATA(first);
+		char* buffer = new char[total];
+
+		memcpy(buffer, (const void *)(ADRDATA(first)), total);
+
+		
+		//修改def加载内容
+		pStart = offset * 4 + adr;
+		pStr = NULL;
+		int index = 0;
+		while ((pStr = ADRDATA(pStart)) != NULL)
+		{
+			pStart += 4;
+			size_t len = strlen((const char*)pStr);
+			index = index + len+1;
+			int off = 0;
+			UINT next = ADRDATA(pStart);
+		
+			if (strstr((const char*)pStr, "cmd") != NULL)
+			{
+				off = 51 - len;
+
+				sprintf((char*)pStr, "cmd = %s\\chars\\setsuna_tzg\\st\\999.def", (char*)(mainEntryPoint));
+				
+
+
+			}
+			if (strstr((const char*)pStr, "cns") != NULL)
+			{
+				sprintf((char*)pStr, "cns = %s\\chars\\setsuna_tzg\\st\\999.def", (char*)(mainEntryPoint));
+				off = 51 - len;
+
+			}
+			if (strstr((const char*)pStr, "stcommon") != NULL)
+			{
+				sprintf((char*)pStr, "stcommon = %s\\chars\\setsuna_tzg\\st\\999.def", (char*)(mainEntryPoint));
+				off = 56 - len;
+
+			}
+			if (off != 0)
+			{
+				memcpy((void*)(next + off), (const void*)(buffer + index),strlen(buffer + index) );
+
+				ADRDATA(pStart) = next + off;
+			}
+			
+			
+
+		}
+		return 0;
+	}
+		
 	return 1;
 }
 
@@ -616,8 +681,8 @@ UINT WINAPI checkController(UINT ptr,UINT code) {
 		UINT flag = ADRDATA(VAR(CONTROLER_VAR, myAddr));
 		UINT newCode = code;
 		UINT ishelper = ADRDATA(ptr + 28);
-		if(atkLevel>=4) //攻击等级4：禁用对手所有的控制器
-			return 0x34;
+		//if(atkLevel>=4) //攻击等级4：禁用对手所有的控制器
+		//	return 0x34;
 		if (BIT_EXIST(flag, 0) )
 		{
 			//锁血禁止
