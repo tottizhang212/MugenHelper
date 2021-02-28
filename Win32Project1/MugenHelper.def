@@ -15,3 +15,4 @@ EXPORTS
 	checkPn1 @13
 	checkPn2 @14
 	check512 @15
+	changeFile @16

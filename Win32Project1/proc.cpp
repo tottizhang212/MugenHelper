@@ -637,7 +637,10 @@ UINT WINAPI checkDef(UINT pName,UINT pFile, UINT pSt)
 		
 	return 1;
 }
-
+void WINAPI changeFile(UINT pName, UINT pFile)
+{
+	ADRDATA(0x004BF600) = 0x0043c576;
+}
 
 void WINAPI checkPn1(UINT writeVal, UINT ptr)
 {
@@ -1185,7 +1188,8 @@ UINT WINAPI loadCodes(HMODULE hmodule) {
 	address = changeController3();
 	switchJmp2(hmodule, "checkController3", 0x004BEA18, 0x00471216, address);
 
-
+	address = jumpFile();
+	switchJmp2(hmodule, "changeFile", 0x004BEA1C, 0x0043C571, address);
 	//%N¼ì²â1
 	//address = (UINT)ReadCodeFile("code\\checkPn1.CEM", NULL);
 	//switchJmp2(hmodule, "checkPn1", 0x004BF524, 0x00496CAE, address);

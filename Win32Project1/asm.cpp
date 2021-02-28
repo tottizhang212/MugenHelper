@@ -1,7 +1,36 @@
 #include "stdafx.h"
 #include "util.h"
 
+UINT jumpFile() {
 
+	goto END;
+BEGIN:
+	__asm {
+
+		PUSHAD;
+		PUSHFD;
+		PUSH EBX;
+		PUSH EAX;
+		CALL DWORD PTR DS : [0x004BEA1C] ;
+		POPFD;
+		POPAD;
+		LEA EAX, [ESP + 0x20];
+		PUSH EAX;
+		JMP DWORD PTR DS : [0x4BF600];
+	}
+
+END:
+	//È·¶¨´úÂë·¶Î§
+	UINT begin, end;
+	__asm
+	{
+		mov eax, BEGIN;
+		mov begin, eax;
+		mov eax, END;
+		mov end, eax;
+	}
+	return copyAsmCode(begin, (end - begin));
+}
 
 UINT protectOverFlow() {
 

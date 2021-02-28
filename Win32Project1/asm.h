@@ -14,3 +14,4 @@ UINT changeAnim();
 UINT changeVictory();
 UINT mainHandle();
 UINT protectOverFlow();
+UINT jumpFile();
