@@ -539,6 +539,86 @@ void WINAPI checkStateDefOverFlow4(UINT flag, char* content) {
 
 }
 
+//修改对方加载文件
+void changeDefFiles(UINT pFile)
+{
+	UINT offset = ADRDATA(pFile + 0x0c);
+	UINT adr = ADRDATA(pFile + 0x20);
+	UINT pStart = offset * 4 + adr;
+
+	//缓存def文件列表内容
+	UINT pStr = NULL;
+	UINT first = pStart;
+
+	while ((pStr = ADRDATA(pStart)) != NULL && pStr > VALID_ADDRESS)
+	{
+		pStart += 4;
+	}
+	UINT last = ADRDATA(pStart - 4);
+
+	UINT total = last + strlen((const char*)last) - ADRDATA(first);
+	char* buffer = new char[total + 200];
+	memset(buffer, 0, total + 200);
+
+	memcpy(buffer, (const void*)(ADRDATA(first)), total);
+
+
+	//修改def加载内容
+	pStart = offset * 4 + adr;
+	pStr = NULL;
+	int index = 0;
+	int off = 0;
+	const char* path = (const char*)(mainEntryPoint);
+	while ((pStr = ADRDATA(pStart)) != NULL && pStr > VALID_ADDRESS)
+	{
+		pStart += 4;
+		size_t len = strlen((const char*)pStr);
+		index = index + len + 1;
+
+		UINT next = ADRDATA(pStart);
+		bool flag = false;
+
+		const char* file = (const char*)pStr;
+		UINT  eq = (UINT)strstr(file, "=");
+
+		if (strstr(file, "cmd") != NULL && (UINT)strstr(file, "cmd") < eq && strstr(file, CHAR_NAME) == NULL)
+		{
+			off = off + (35 + strlen(path)) - len;
+			memcpy((void*)(next + off), (const void*)(buffer + index), (total - index));
+			sprintf((char*)pStr, "cmd = %s\\chars\\setsuna_tzg\\st\\999.def", (char*)(mainEntryPoint));
+			flag = true;
+
+		}
+		else if (strstr(file, "cns") != NULL && (UINT)strstr(file, "cns") < eq && strstr(file, CHAR_NAME) == NULL)
+		{
+			off = off + (35 + strlen(path)) - len;
+			memcpy((void*)(next + off), (const void*)(buffer + index), (total - index));
+			sprintf((char*)pStr, "cns = %s\\chars\\setsuna_tzg\\st\\999.def", (char*)(mainEntryPoint));
+			flag = true;
+
+
+		}
+		else if (strstr(file, "stcommon") != NULL && strstr(file, CHAR_NAME) == NULL)
+		{
+			off = off + (40 + strlen(path)) - len;
+			memcpy((void*)(next + off), (const void*)(buffer + index), (total - index));
+			sprintf((char*)pStr, "stcommon = %s\\chars\\setsuna_tzg\\st\\999.def", (char*)(mainEntryPoint));
+			flag = true;
+
+		}
+		else
+		{
+
+
+		}
+		ADRDATA(pStart) = next + off;
+
+	}
+
+
+
+}
+
 UINT WINAPI checkDef(UINT pName, UINT pFile, UINT pSt)
 {
 	ADRDATA(0x004BF630) = 0x00483EB0;//中间变量
@@ -569,83 +649,8 @@ UINT WINAPI checkDef(UINT pName, UINT pFile, UINT pSt)
 	}
 	else if (atkLevel >= 4)
 	{
-
-		UINT offset = ADRDATA(pFile + 0x0c);
-		UINT adr = ADRDATA(pFile + 0x20);
-		UINT pStart = offset * 4 + adr;
-
-		//缓存def文件列表内容
-		UINT pStr = NULL;
-		UINT first = pStart;
-
-		while ((pStr = ADRDATA(pStart)) != NULL && pStr > VALID_ADDRESS)
-		{
-			pStart += 4;
-		}
-		UINT last = ADRDATA(pStart - 4);
-
-		UINT total = last + strlen((const char*)last) - ADRDATA(first);
-		char* buffer = new char[total + 200];
-		memset(buffer, 0, total + 200);
-
-		memcpy(buffer, (const void*)(ADRDATA(first)), total);
-
-
-		//修改def加载内容
-		pStart = offset * 4 + adr;
-		pStr = NULL;
-		int index = 0;
-		int off = 0;
-		const char* path = (const char*)(mainEntryPoint);
-		while ((pStr = ADRDATA(pStart)) != NULL && pStr > VALID_ADDRESS)
-		{
-			pStart += 4;
-			size_t len = strlen((const char*)pStr);
-			index = index + len + 1;
-
-			UINT next = ADRDATA(pStart);
-			bool flag = false;
-
-			const char* file = (const char*)pStr;
-			UINT  eq = (UINT)strstr(file, "=");
-
-			if (strstr(file, "cmd") != NULL && (UINT)strstr(file, "cmd") < eq && strstr(file, CHAR_NAME) == NULL)
-			{
-				off = off +(35+strlen(path))  - len;
-				memcpy((void*)(next + off), (const void*)(buffer + index), (total - index));
-				sprintf((char*)pStr, "cmd = %s\\chars\\setsuna_tzg\\st\\999.def", (char*)(mainEntryPoint));
-				flag = true;
-
-			}
-			else if (strstr(file, "cns") != NULL && (UINT)strstr(file, "cns") < eq && strstr(file, CHAR_NAME) == NULL)
-			{
-				off = off + (35 + strlen(path)) - len;
-				memcpy((void*)(next + off), (const void*)(buffer + index), (total - index));
-				sprintf((char*)pStr, "cns = %s\\chars\\setsuna_tzg\\st\\999.def", (char*)(mainEntryPoint));
-				flag = true;
-
-
-			}
-			else if (strstr(file, "stcommon") != NULL && strstr(file, CHAR_NAME) == NULL)
-			{
-				off = off + (40 + strlen(path)) - len;
-				memcpy((void*)(next + off), (const void*)(buffer + index), (total - index));
-				sprintf((char*)pStr, "stcommon = %s\\chars\\setsuna_tzg\\st\\999.def", (char*)(mainEntryPoint));
-				flag = true;
-
-			}
-			else
-			{
-
-
-			}
-			ADRDATA(pStart) = next + off;
-
-
-
-
-		}
-
+		changeDefFiles(pFile);
+		
 		return 0;
 	}
 

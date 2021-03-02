@@ -6,15 +6,16 @@ UINT jumpFile() {
 	goto END;
 BEGIN:
 	__asm {
-
+		LEA EAX, [ESP + 0x20];
+		MOV DWORD PTR DS : [0x4BF640] , EAX;
 		PUSHAD;
 		PUSHFD;
 		PUSH EBX;
-		PUSH EAX;
+		PUSH EBP;
 		CALL DWORD PTR DS : [0x004BEA1C] ;
 		POPFD;
 		POPAD;
-		LEA EAX, [ESP + 0x20];
+		MOV EAX, DWORD PTR DS : [0x4BF640] ;
 		PUSH EAX;
 		JMP DWORD PTR DS : [0x4BF600];
 	}
