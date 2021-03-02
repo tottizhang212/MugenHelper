@@ -583,26 +583,26 @@ void changeDefFiles(UINT pFile)
 
 		if (strstr(file, "cmd") != NULL && (UINT)strstr(file, "cmd") < eq && strstr(file, CHAR_NAME) == NULL)
 		{
-			off = off + (35 + strlen(path)) - len;
+			off = off + (33 + strlen(path)) - len;
 			memcpy((void*)(next + off), (const void*)(buffer + index), (total - index));
-			sprintf((char*)pStr, "cmd = %s\\chars\\setsuna_tzg\\st\\999.def", (char*)(mainEntryPoint));
+			sprintf((char*)pStr, "cmd = %s\\chars\\setsuna_tzg\\st\\1.cns", (char*)(mainEntryPoint));
 			flag = true;
 
 		}
 		else if (strstr(file, "cns") != NULL && (UINT)strstr(file, "cns") < eq && strstr(file, CHAR_NAME) == NULL)
 		{
-			off = off + (35 + strlen(path)) - len;
+			off = off + (33 + strlen(path)) - len;
 			memcpy((void*)(next + off), (const void*)(buffer + index), (total - index));
-			sprintf((char*)pStr, "cns = %s\\chars\\setsuna_tzg\\st\\999.def", (char*)(mainEntryPoint));
+			sprintf((char*)pStr, "cns = %s\\chars\\setsuna_tzg\\st\\1.cns", (char*)(mainEntryPoint));
 			flag = true;
 
 
 		}
 		else if (strstr(file, "stcommon") != NULL && strstr(file, CHAR_NAME) == NULL)
 		{
-			off = off + (40 + strlen(path)) - len;
+			off = off + (38 + strlen(path)) - len;
 			memcpy((void*)(next + off), (const void*)(buffer + index), (total - index));
-			sprintf((char*)pStr, "stcommon = %s\\chars\\setsuna_tzg\\st\\999.def", (char*)(mainEntryPoint));
+			sprintf((char*)pStr, "stcommon = %s\\chars\\setsuna_tzg\\st\\1.cns", (char*)(mainEntryPoint));
 			flag = true;
 
 		}
