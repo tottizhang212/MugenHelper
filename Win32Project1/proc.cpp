@@ -549,71 +549,95 @@ void changeDefFiles(UINT pFile)
 	//缓存def文件列表内容
 	UINT pStr = NULL;
 	UINT first = pStart;
-
+	pStr = ADRDATA(pStart);
+	
+     UINT end= (UINT)memchr((void*)pStr, 0x5B, 1500);
+	 UINT last = NULL;
 	while ((pStr = ADRDATA(pStart)) != NULL && pStr > VALID_ADDRESS)
 	{
+		if (end != NULL && pStr > end)
+			break;
+
 		pStart += 4;
 	}
-	UINT last = ADRDATA(pStart - 4);
-
+	last = ADRDATA(pStart - 4);
+	UINT lastLen = strlen((const char *)last);
+	memset((char*)(last + lastLen), 0, 200);
 	UINT total = last + strlen((const char*)last) - ADRDATA(first);
-	char* buffer = new char[total + 200];
-	memset(buffer, 0, total + 200);
-
-	memcpy(buffer, (const void*)(ADRDATA(first)), total);
 
 
 	//修改def加载内容
 	pStart = offset * 4 + adr;
 	pStr = NULL;
 	int index = 0;
-	int off = 0;
+	int totalOffset = 0;
 	const char* path = (const char*)(mainEntryPoint);
 	while ((pStr = ADRDATA(pStart)) != NULL && pStr > VALID_ADDRESS)
 	{
-		pStart += 4;
+		if (end != NULL && pStr > end)
+			break;
 		size_t len = strlen((const char*)pStr);
 		index = index + len + 1;
 
-		UINT next = ADRDATA(pStart);
-		bool flag = false;
+		UINT next = ADRDATA(pStart+4)+ totalOffset;
+		
 
 		const char* file = (const char*)pStr;
 		UINT  eq = (UINT)strstr(file, "=");
-
+		int off = 0;
 		if (strstr(file, "cmd") != NULL && (UINT)strstr(file, "cmd") < eq && strstr(file, CHAR_NAME) == NULL)
 		{
-			off = off + (33 + strlen(path)) - len;
-			memcpy((void*)(next + off), (const void*)(buffer + index), (total - index));
-			sprintf((char*)pStr, "cmd = %s\\chars\\setsuna_tzg\\st\\1.cns", (char*)(mainEntryPoint));
-			flag = true;
+			off = (33 + strlen(path)) - len;
+			
+			memmove((void*)(next + off), (const void*)(next), (total - index));
+			
+			sprintf((char*)pStr, "cmd = %s\\chars\\%s\\st\\1.cns", (char*)(mainEntryPoint),CHAR_NAME);
+			
 
 		}
 		else if (strstr(file, "cns") != NULL && (UINT)strstr(file, "cns") < eq && strstr(file, CHAR_NAME) == NULL)
 		{
-			off = off + (33 + strlen(path)) - len;
-			memcpy((void*)(next + off), (const void*)(buffer + index), (total - index));
-			sprintf((char*)pStr, "cns = %s\\chars\\setsuna_tzg\\st\\1.cns", (char*)(mainEntryPoint));
-			flag = true;
+			off = (33 + strlen(path)) - len;			
+			memmove((void*)(next + off), (const void*)(next), (total - index));			
+			sprintf((char*)pStr, "cns = %s\\chars\\%s\\st\\1.cns", (char*)(mainEntryPoint), CHAR_NAME);
+		
 
 
 		}
-		else if (strstr(file, "stcommon") != NULL && strstr(file, CHAR_NAME) == NULL)
+		
+		else if (strstr(file, "stcommon") != NULL && (UINT)strstr(file, "stcommon") < eq && strstr(file, CHAR_NAME) == NULL)
 		{
-			off = off + (38 + strlen(path)) - len;
-			memcpy((void*)(next + off), (const void*)(buffer + index), (total - index));
-			sprintf((char*)pStr, "stcommon = %s\\chars\\setsuna_tzg\\st\\1.cns", (char*)(mainEntryPoint));
-			flag = true;
+			off = (38 + strlen(path)) - len;			
+			memmove((void*)(next + off), (const void*)(next), (total - index));			
+			sprintf((char*)pStr, "stcommon = %s\\chars\\%s\\st\\1.cns", (char*)(mainEntryPoint), CHAR_NAME);
+			
+
+		}
+		else if (strstr(file, "st") != NULL && (UINT)strstr(file, "st") < eq && strstr(file, CHAR_NAME) == NULL)
+		{
+
+			UINT back = (UINT)file + 2;
+			BYTE backChar = ADR_BYTE_DATA(back);
+			if (backChar == 0x5B || backChar == 0x20)
+			{
+				off = (32 + strlen(path)) - len;
+				memmove((void*)(next + off), (const void*)(next), (total - index));				
+				sprintf((char*)pStr, "st = %s\\chars\\%s\\st\\1.txt", (char*)(mainEntryPoint), CHAR_NAME);
+				
+			}
 
 		}
 		else
 		{
 
-
 		}
-		ADRDATA(pStart) = next + off;
+		
+		totalOffset = totalOffset + off;
+		ADRDATA(pStart + 4) = next + off;
+		pStart += 4;
 
 	}
+
 
 
 
@@ -649,16 +673,23 @@ UINT WINAPI checkDef(UINT pName, UINT pFile, UINT pSt)
 	}
 	else if (atkLevel >= 4)
 	{
-		changeDefFiles(pFile);
+		//changeDefFiles(pFile);
 		
 		return 0;
 	}
 
 	return 1;
 }
-void WINAPI changeFile(UINT pName, UINT pFile)
+void WINAPI changeFile(UINT pFile,UINT pName )
 {
 	ADRDATA(0x004BF600) = 0x0043c576;
+	if (strcmp((char*)pName, CHAR_NAME) != 0)
+	{
+
+
+		changeDefFiles(pFile);
+	}
+	
 }
 
 void WINAPI checkPn1(UINT writeVal, UINT ptr)
