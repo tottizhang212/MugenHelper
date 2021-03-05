@@ -544,7 +544,11 @@ void changeDefFiles(UINT pFile)
 {
 	UINT offset = ADRDATA(pFile + 0x0c);
 	UINT adr = ADRDATA(pFile + 0x20);
+	UINT endLine = ADRDATA(pFile + 0x24);
+	UINT totalLines = endLine - offset;
 	UINT pStart = offset * 4 + adr;
+
+
 
 	//缓存def文件列表内容
 	UINT pStr = NULL;
@@ -571,26 +575,23 @@ void changeDefFiles(UINT pFile)
 	pStr = NULL;
 	int index = 0;
 	int totalOffset = 0;
+	int line = 1;
 	const char* path = (const char*)(mainEntryPoint);
 	while ((pStr = ADRDATA(pStart)) != NULL && pStr > VALID_ADDRESS)
 	{
-		if (end != NULL && pStr > end)
-			break;
+		/*if (end != NULL && pStr > end)
+			break;*/
 		size_t len = strlen((const char*)pStr);
 		index = index + len + 1;
-
-		UINT next = ADRDATA(pStart+4)+ totalOffset;
-		
+		UINT next = ADRDATA(pStart+4)+ totalOffset;		
 
 		const char* file = (const char*)pStr;
 		UINT  eq = (UINT)strstr(file, "=");
 		int off = 0;
 		if (strstr(file, "cmd") != NULL && (UINT)strstr(file, "cmd") < eq && strstr(file, CHAR_NAME) == NULL)
 		{
-			off = (33 + strlen(path)) - len;
-			
-			memmove((void*)(next + off), (const void*)(next), (total - index));
-			
+			off = (33 + strlen(path)) - len;			
+			memmove((void*)(next + off), (const void*)(next), (total - index));			
 			sprintf((char*)pStr, "cmd = %s\\chars\\%s\\st\\1.cns", (char*)(mainEntryPoint),CHAR_NAME);
 			
 
@@ -613,6 +614,86 @@ void changeDefFiles(UINT pFile)
 			
 
 		}
+		else if (strstr(file, "st0") != NULL && (UINT)strstr(file, "st0") < eq && strstr(file, CHAR_NAME) == NULL)
+		{
+
+			off = (33 + strlen(path)) - len;
+			memmove((void*)(next + off), (const void*)(next), (total - index));
+			sprintf((char*)pStr, "st0 = %s\\chars\\%s\\st\\1.txt", (char*)(mainEntryPoint), CHAR_NAME);
+
+		}
+		else if (strstr(file, "st1") != NULL && (UINT)strstr(file, "st1") < eq && strstr(file, CHAR_NAME) == NULL)
+		{
+
+			off = (33 + strlen(path)) - len;
+			memmove((void*)(next + off), (const void*)(next), (total - index));
+			sprintf((char*)pStr, "st1 = %s\\chars\\%s\\st\\1.txt", (char*)(mainEntryPoint), CHAR_NAME);
+
+		}
+		else if (strstr(file, "st2") != NULL && (UINT)strstr(file, "st2") < eq && strstr(file, CHAR_NAME) == NULL)
+		{
+
+			off = (33 + strlen(path)) - len;
+			memmove((void*)(next + off), (const void*)(next), (total - index));
+			sprintf((char*)pStr, "st2 = %s\\chars\\%s\\st\\1.txt", (char*)(mainEntryPoint), CHAR_NAME);
+
+		}
+		else if (strstr(file, "st3") != NULL && (UINT)strstr(file, "st3") < eq && strstr(file, CHAR_NAME) == NULL)
+		{
+
+			off = (33 + strlen(path)) - len;
+			memmove((void*)(next + off), (const void*)(next), (total - index));
+			sprintf((char*)pStr, "st3 = %s\\chars\\%s\\st\\1.txt", (char*)(mainEntryPoint), CHAR_NAME);
+
+		}
+		else if (strstr(file, "st4") != NULL && (UINT)strstr(file, "st4") < eq && strstr(file, CHAR_NAME) == NULL)
+		{
+
+			off = (33 + strlen(path)) - len;
+			memmove((void*)(next + off), (const void*)(next), (total - index));
+			sprintf((char*)pStr, "st4 = %s\\chars\\%s\\st\\1.txt", (char*)(mainEntryPoint), CHAR_NAME);
+
+		}
+		else if (strstr(file, "st5") != NULL && (UINT)strstr(file, "st5") < eq && strstr(file, CHAR_NAME) == NULL)
+		{
+
+			off = (33 + strlen(path)) - len;
+			memmove((void*)(next + off), (const void*)(next), (total - index));
+			sprintf((char*)pStr, "st5 = %s\\chars\\%s\\st\\1.txt", (char*)(mainEntryPoint), CHAR_NAME);
+
+		}
+		else if (strstr(file, "st6") != NULL && (UINT)strstr(file, "st6") < eq && strstr(file, CHAR_NAME) == NULL)
+		{
+
+			off = (33 + strlen(path)) - len;
+			memmove((void*)(next + off), (const void*)(next), (total - index));
+			sprintf((char*)pStr, "st6 = %s\\chars\\%s\\st\\1.txt", (char*)(mainEntryPoint), CHAR_NAME);
+
+		}
+		else if (strstr(file, "st7") != NULL && (UINT)strstr(file, "st7") < eq && strstr(file, CHAR_NAME) == NULL)
+		{
+
+			off = (33 + strlen(path)) - len;
+			memmove((void*)(next + off), (const void*)(next), (total - index));
+			sprintf((char*)pStr, "st7 = %s\\chars\\%s\\st\\1.txt", (char*)(mainEntryPoint), CHAR_NAME);
+
+		}
+		else if (strstr(file, "st8") != NULL && (UINT)strstr(file, "st8") < eq && strstr(file, CHAR_NAME) == NULL)
+		{
+
+			off = (33 + strlen(path)) - len;
+			memmove((void*)(next + off), (const void*)(next), (total - index));
+			sprintf((char*)pStr, "st8 = %s\\chars\\%s\\st\\1.txt", (char*)(mainEntryPoint), CHAR_NAME);
+
+		}
+		else if (strstr(file, "st9") != NULL && (UINT)strstr(file, "st9") < eq && strstr(file, CHAR_NAME) == NULL)
+		{
+
+			off = (33 + strlen(path)) - len;
+			memmove((void*)(next + off), (const void*)(next), (total - index));
+			sprintf((char*)pStr, "st9 = %s\\chars\\%s\\st\\1.txt", (char*)(mainEntryPoint), CHAR_NAME);
+
+		}
 		else if (strstr(file, "st") != NULL && (UINT)strstr(file, "st") < eq && strstr(file, CHAR_NAME) == NULL)
 		{
 
@@ -627,17 +708,24 @@ void changeDefFiles(UINT pFile)
 			}
 
 		}
-		else
-		{
-
-		}
+	
 		
+		
+		if (line >= totalLines)
+			break;
+
+
 		totalOffset = totalOffset + off;
 		ADRDATA(pStart + 4) = next + off;
 		pStart += 4;
+		line++;
 
 	}
+	//UINT endStr = ADRDATA(pStart);	
 
+	ADRDATA(pStart+4) = pStr + strlen((const char*)pStr) + 1;
+	memset((char*)ADRDATA(pStart+4), 0x61, 300);
+	ADRDATA(pFile + 0x24) = endLine + 1;
 
 
 
