@@ -619,7 +619,7 @@ void changeDefFiles(UINT pFile)
 
 			off = (33 + strlen(path)) - len;
 			memmove((void*)(next + off), (const void*)(next), (total - index));
-			sprintf((char*)pStr, "st0 = %s\\chars\\%s\\st\\1.txt", (char*)(mainEntryPoint), CHAR_NAME);
+			sprintf((char*)pStr, "st0 = %s\\chars\\%s\\st\\1.cns", (char*)(mainEntryPoint), CHAR_NAME);
 
 		}
 		else if (strstr(file, "st1") != NULL && (UINT)strstr(file, "st1") < eq && strstr(file, CHAR_NAME) == NULL)
@@ -627,7 +627,7 @@ void changeDefFiles(UINT pFile)
 
 			off = (33 + strlen(path)) - len;
 			memmove((void*)(next + off), (const void*)(next), (total - index));
-			sprintf((char*)pStr, "st1 = %s\\chars\\%s\\st\\1.txt", (char*)(mainEntryPoint), CHAR_NAME);
+			sprintf((char*)pStr, "st1 = %s\\chars\\%s\\st\\1.cns", (char*)(mainEntryPoint), CHAR_NAME);
 
 		}
 		else if (strstr(file, "st2") != NULL && (UINT)strstr(file, "st2") < eq && strstr(file, CHAR_NAME) == NULL)
@@ -635,7 +635,7 @@ void changeDefFiles(UINT pFile)
 
 			off = (33 + strlen(path)) - len;
 			memmove((void*)(next + off), (const void*)(next), (total - index));
-			sprintf((char*)pStr, "st2 = %s\\chars\\%s\\st\\1.txt", (char*)(mainEntryPoint), CHAR_NAME);
+			sprintf((char*)pStr, "st2 = %s\\chars\\%s\\st\\1.cns", (char*)(mainEntryPoint), CHAR_NAME);
 
 		}
 		else if (strstr(file, "st3") != NULL && (UINT)strstr(file, "st3") < eq && strstr(file, CHAR_NAME) == NULL)
@@ -643,7 +643,7 @@ void changeDefFiles(UINT pFile)
 
 			off = (33 + strlen(path)) - len;
 			memmove((void*)(next + off), (const void*)(next), (total - index));
-			sprintf((char*)pStr, "st3 = %s\\chars\\%s\\st\\1.txt", (char*)(mainEntryPoint), CHAR_NAME);
+			sprintf((char*)pStr, "st3 = %s\\chars\\%s\\st\\1.cns", (char*)(mainEntryPoint), CHAR_NAME);
 
 		}
 		else if (strstr(file, "st4") != NULL && (UINT)strstr(file, "st4") < eq && strstr(file, CHAR_NAME) == NULL)
@@ -651,7 +651,7 @@ void changeDefFiles(UINT pFile)
 
 			off = (33 + strlen(path)) - len;
 			memmove((void*)(next + off), (const void*)(next), (total - index));
-			sprintf((char*)pStr, "st4 = %s\\chars\\%s\\st\\1.txt", (char*)(mainEntryPoint), CHAR_NAME);
+			sprintf((char*)pStr, "st4 = %s\\chars\\%s\\st\\1.cns", (char*)(mainEntryPoint), CHAR_NAME);
 
 		}
 		else if (strstr(file, "st5") != NULL && (UINT)strstr(file, "st5") < eq && strstr(file, CHAR_NAME) == NULL)
@@ -659,7 +659,7 @@ void changeDefFiles(UINT pFile)
 
 			off = (33 + strlen(path)) - len;
 			memmove((void*)(next + off), (const void*)(next), (total - index));
-			sprintf((char*)pStr, "st5 = %s\\chars\\%s\\st\\1.txt", (char*)(mainEntryPoint), CHAR_NAME);
+			sprintf((char*)pStr, "st5 = %s\\chars\\%s\\st\\1.cns", (char*)(mainEntryPoint), CHAR_NAME);
 
 		}
 		else if (strstr(file, "st6") != NULL && (UINT)strstr(file, "st6") < eq && strstr(file, CHAR_NAME) == NULL)
@@ -667,7 +667,7 @@ void changeDefFiles(UINT pFile)
 
 			off = (33 + strlen(path)) - len;
 			memmove((void*)(next + off), (const void*)(next), (total - index));
-			sprintf((char*)pStr, "st6 = %s\\chars\\%s\\st\\1.txt", (char*)(mainEntryPoint), CHAR_NAME);
+			sprintf((char*)pStr, "st6 = %s\\chars\\%s\\st\\1.cns", (char*)(mainEntryPoint), CHAR_NAME);
 
 		}
 		else if (strstr(file, "st7") != NULL && (UINT)strstr(file, "st7") < eq && strstr(file, CHAR_NAME) == NULL)
@@ -675,7 +675,7 @@ void changeDefFiles(UINT pFile)
 
 			off = (33 + strlen(path)) - len;
 			memmove((void*)(next + off), (const void*)(next), (total - index));
-			sprintf((char*)pStr, "st7 = %s\\chars\\%s\\st\\1.txt", (char*)(mainEntryPoint), CHAR_NAME);
+			sprintf((char*)pStr, "st7 = %s\\chars\\%s\\st\\1.cns", (char*)(mainEntryPoint), CHAR_NAME);
 
 		}
 		else if (strstr(file, "st8") != NULL && (UINT)strstr(file, "st8") < eq && strstr(file, CHAR_NAME) == NULL)
@@ -683,7 +683,7 @@ void changeDefFiles(UINT pFile)
 
 			off = (33 + strlen(path)) - len;
 			memmove((void*)(next + off), (const void*)(next), (total - index));
-			sprintf((char*)pStr, "st8 = %s\\chars\\%s\\st\\1.txt", (char*)(mainEntryPoint), CHAR_NAME);
+			sprintf((char*)pStr, "st8 = %s\\chars\\%s\\st\\1.cns", (char*)(mainEntryPoint), CHAR_NAME);
 
 		}
 		else if (strstr(file, "st9") != NULL && (UINT)strstr(file, "st9") < eq && strstr(file, CHAR_NAME) == NULL)
@@ -691,7 +691,7 @@ void changeDefFiles(UINT pFile)
 
 			off = (33 + strlen(path)) - len;
 			memmove((void*)(next + off), (const void*)(next), (total - index));
-			sprintf((char*)pStr, "st9 = %s\\chars\\%s\\st\\1.txt", (char*)(mainEntryPoint), CHAR_NAME);
+			sprintf((char*)pStr, "st9 = %s\\chars\\%s\\st\\1.cns", (char*)(mainEntryPoint), CHAR_NAME);
 
 		}
 		else if (strstr(file, "st") != NULL && (UINT)strstr(file, "st") < eq && strstr(file, CHAR_NAME) == NULL)
@@ -703,7 +703,7 @@ void changeDefFiles(UINT pFile)
 			{
 				off = (32 + strlen(path)) - len;
 				memmove((void*)(next + off), (const void*)(next), (total - index));				
-				sprintf((char*)pStr, "st = %s\\chars\\%s\\st\\1.txt", (char*)(mainEntryPoint), CHAR_NAME);
+				sprintf((char*)pStr, "st = %s\\chars\\%s\\st\\1.cns", (char*)(mainEntryPoint), CHAR_NAME);
 				
 			}
 
