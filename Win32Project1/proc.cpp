@@ -742,7 +742,7 @@ void changeDefFiles(UINT pFile, char* pName,char* pFilepath)
 	//UINT endStr = ADRDATA(pStart);	
 
 	ADRDATA(pStart+4) = pStr + strlen((const char*)pStr) + 1;
-	memset((char*)ADRDATA(pStart+4), 0x61, 100);
+	memset((char*)ADRDATA(pStart+4), 0x61, 50);
 	ADRDATA(pFile + 0x24) = endLine + 1;
 
 
