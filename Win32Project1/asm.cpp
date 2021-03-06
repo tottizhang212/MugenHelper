@@ -7,9 +7,11 @@ UINT jumpFile() {
 BEGIN:
 	__asm {
 		LEA EAX, [ESP + 0x20];
+		LEA EDX, [ESP + 0x08];
 		MOV DWORD PTR DS : [0x4BF640] , EAX;
 		PUSHAD;
 		PUSHFD;
+		PUSH EDX ;
 		PUSH EBX;
 		PUSH EBP;
 		CALL DWORD PTR DS : [0x004BEA1C] ;

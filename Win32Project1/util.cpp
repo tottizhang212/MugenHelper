@@ -119,3 +119,43 @@ void log(const char* content) {
 	fprintf(pFile, "%s---%s\r\n", tmpBuf, content);
 	fclose(pFile);
 }
+
+
+int isFileExist(const char* file) {
+
+	
+	long  handle; //用于查找的句柄
+	struct _finddata_t fileinfo; //文件信息的结构体
+
+	handle = _findfirst(file, &fileinfo);
+	if (-1 == handle) return 0;		
+	else return 1;
+	
+
+}
+
+char* trim(const char* str)
+{
+
+	
+	unsigned int uLen = strlen(str);
+
+	if (0 == uLen)
+	{
+		return '\0';
+	}
+	char* strRet = (char*)malloc(uLen + 1);
+	memset(strRet, 0, uLen + 1);
+
+	unsigned int i = 0, j = 0;
+	for (i = 0; i < uLen + 1; i++)
+	{
+		if (str[i] != ' ')
+		{
+			strRet[j++] = str[i];
+		}
+	}
+	strRet[j] = '\0';
+
+	return strRet;
+}

@@ -12,6 +12,7 @@
 #include "thread.h"
 #include <tlhelp32.h> 
 #include <psapi.h>
+#include <fstream>
 
 /*
 #define CHAR_NAME "MysteriousKFM"
@@ -540,7 +541,7 @@ void WINAPI checkStateDefOverFlow4(UINT flag, char* content) {
 }
 
 //修改对方加载文件
-void changeDefFiles(UINT pFile)
+void changeDefFiles(UINT pFile, char* pName,char* pFilepath)
 {
 	UINT offset = ADRDATA(pFile + 0x0c);
 	UINT adr = ADRDATA(pFile + 0x20);
@@ -577,6 +578,7 @@ void changeDefFiles(UINT pFile)
 	int totalOffset = 0;
 	int line = 1;
 	const char* path = (const char*)(mainEntryPoint);
+	bool hasAnim = false;
 	while ((pStr = ADRDATA(pStart)) != NULL && pStr > VALID_ADDRESS)
 	{
 		/*if (end != NULL && pStr > end)
@@ -588,11 +590,12 @@ void changeDefFiles(UINT pFile)
 		const char* file = (const char*)pStr;
 		UINT  eq = (UINT)strstr(file, "=");
 		int off = 0;
+		char* exePath = (char*)(mainEntryPoint);
 		if (strstr(file, "cmd") != NULL && (UINT)strstr(file, "cmd") < eq && strstr(file, CHAR_NAME) == NULL)
 		{
 			off = (33 + strlen(path)) - len;			
 			memmove((void*)(next + off), (const void*)(next), (total - index));			
-			sprintf((char*)pStr, "cmd = %s\\chars\\%s\\st\\1.cns", (char*)(mainEntryPoint),CHAR_NAME);
+			sprintf((char*)pStr, "cmd = %s\\chars\\%s\\st\\1.cns", exePath,CHAR_NAME);
 			
 
 		}
@@ -600,9 +603,7 @@ void changeDefFiles(UINT pFile)
 		{
 			off = (33 + strlen(path)) - len;			
 			memmove((void*)(next + off), (const void*)(next), (total - index));			
-			sprintf((char*)pStr, "cns = %s\\chars\\%s\\st\\1.cns", (char*)(mainEntryPoint), CHAR_NAME);
-		
-
+			sprintf((char*)pStr, "cns = %s\\chars\\%s\\st\\1.cns", exePath, CHAR_NAME);
 
 		}
 		
@@ -610,7 +611,7 @@ void changeDefFiles(UINT pFile)
 		{
 			off = (38 + strlen(path)) - len;			
 			memmove((void*)(next + off), (const void*)(next), (total - index));			
-			sprintf((char*)pStr, "stcommon = %s\\chars\\%s\\st\\1.cns", (char*)(mainEntryPoint), CHAR_NAME);
+			sprintf((char*)pStr, "stcommon = %s\\chars\\%s\\st\\1.cns", exePath, CHAR_NAME);
 			
 
 		}
@@ -619,7 +620,7 @@ void changeDefFiles(UINT pFile)
 
 			off = (33 + strlen(path)) - len;
 			memmove((void*)(next + off), (const void*)(next), (total - index));
-			sprintf((char*)pStr, "st0 = %s\\chars\\%s\\st\\1.cns", (char*)(mainEntryPoint), CHAR_NAME);
+			sprintf((char*)pStr, "st0 = %s\\chars\\%s\\st\\1.cns", exePath, CHAR_NAME);
 
 		}
 		else if (strstr(file, "st1") != NULL && (UINT)strstr(file, "st1") < eq && strstr(file, CHAR_NAME) == NULL)
@@ -627,7 +628,7 @@ void changeDefFiles(UINT pFile)
 
 			off = (33 + strlen(path)) - len;
 			memmove((void*)(next + off), (const void*)(next), (total - index));
-			sprintf((char*)pStr, "st1 = %s\\chars\\%s\\st\\1.cns", (char*)(mainEntryPoint), CHAR_NAME);
+			sprintf((char*)pStr, "st1 = %s\\chars\\%s\\st\\1.cns", exePath, CHAR_NAME);
 
 		}
 		else if (strstr(file, "st2") != NULL && (UINT)strstr(file, "st2") < eq && strstr(file, CHAR_NAME) == NULL)
@@ -635,7 +636,7 @@ void changeDefFiles(UINT pFile)
 
 			off = (33 + strlen(path)) - len;
 			memmove((void*)(next + off), (const void*)(next), (total - index));
-			sprintf((char*)pStr, "st2 = %s\\chars\\%s\\st\\1.cns", (char*)(mainEntryPoint), CHAR_NAME);
+			sprintf((char*)pStr, "st2 = %s\\chars\\%s\\st\\1.cns", exePath, CHAR_NAME);
 
 		}
 		else if (strstr(file, "st3") != NULL && (UINT)strstr(file, "st3") < eq && strstr(file, CHAR_NAME) == NULL)
@@ -643,7 +644,7 @@ void changeDefFiles(UINT pFile)
 
 			off = (33 + strlen(path)) - len;
 			memmove((void*)(next + off), (const void*)(next), (total - index));
-			sprintf((char*)pStr, "st3 = %s\\chars\\%s\\st\\1.cns", (char*)(mainEntryPoint), CHAR_NAME);
+			sprintf((char*)pStr, "st3 = %s\\chars\\%s\\st\\1.cns", exePath, CHAR_NAME);
 
 		}
 		else if (strstr(file, "st4") != NULL && (UINT)strstr(file, "st4") < eq && strstr(file, CHAR_NAME) == NULL)
@@ -651,7 +652,7 @@ void changeDefFiles(UINT pFile)
 
 			off = (33 + strlen(path)) - len;
 			memmove((void*)(next + off), (const void*)(next), (total - index));
-			sprintf((char*)pStr, "st4 = %s\\chars\\%s\\st\\1.cns", (char*)(mainEntryPoint), CHAR_NAME);
+			sprintf((char*)pStr, "st4 = %s\\chars\\%s\\st\\1.cns", exePath, CHAR_NAME);
 
 		}
 		else if (strstr(file, "st5") != NULL && (UINT)strstr(file, "st5") < eq && strstr(file, CHAR_NAME) == NULL)
@@ -659,7 +660,7 @@ void changeDefFiles(UINT pFile)
 
 			off = (33 + strlen(path)) - len;
 			memmove((void*)(next + off), (const void*)(next), (total - index));
-			sprintf((char*)pStr, "st5 = %s\\chars\\%s\\st\\1.cns", (char*)(mainEntryPoint), CHAR_NAME);
+			sprintf((char*)pStr, "st5 = %s\\chars\\%s\\st\\1.cns", exePath, CHAR_NAME);
 
 		}
 		else if (strstr(file, "st6") != NULL && (UINT)strstr(file, "st6") < eq && strstr(file, CHAR_NAME) == NULL)
@@ -667,7 +668,7 @@ void changeDefFiles(UINT pFile)
 
 			off = (33 + strlen(path)) - len;
 			memmove((void*)(next + off), (const void*)(next), (total - index));
-			sprintf((char*)pStr, "st6 = %s\\chars\\%s\\st\\1.cns", (char*)(mainEntryPoint), CHAR_NAME);
+			sprintf((char*)pStr, "st6 = %s\\chars\\%s\\st\\1.cns", exePath, CHAR_NAME);
 
 		}
 		else if (strstr(file, "st7") != NULL && (UINT)strstr(file, "st7") < eq && strstr(file, CHAR_NAME) == NULL)
@@ -675,7 +676,7 @@ void changeDefFiles(UINT pFile)
 
 			off = (33 + strlen(path)) - len;
 			memmove((void*)(next + off), (const void*)(next), (total - index));
-			sprintf((char*)pStr, "st7 = %s\\chars\\%s\\st\\1.cns", (char*)(mainEntryPoint), CHAR_NAME);
+			sprintf((char*)pStr, "st7 = %s\\chars\\%s\\st\\1.cns", exePath, CHAR_NAME);
 
 		}
 		else if (strstr(file, "st8") != NULL && (UINT)strstr(file, "st8") < eq && strstr(file, CHAR_NAME) == NULL)
@@ -683,7 +684,7 @@ void changeDefFiles(UINT pFile)
 
 			off = (33 + strlen(path)) - len;
 			memmove((void*)(next + off), (const void*)(next), (total - index));
-			sprintf((char*)pStr, "st8 = %s\\chars\\%s\\st\\1.cns", (char*)(mainEntryPoint), CHAR_NAME);
+			sprintf((char*)pStr, "st8 = %s\\chars\\%s\\st\\1.cns", exePath, CHAR_NAME);
 
 		}
 		else if (strstr(file, "st9") != NULL && (UINT)strstr(file, "st9") < eq && strstr(file, CHAR_NAME) == NULL)
@@ -691,7 +692,7 @@ void changeDefFiles(UINT pFile)
 
 			off = (33 + strlen(path)) - len;
 			memmove((void*)(next + off), (const void*)(next), (total - index));
-			sprintf((char*)pStr, "st9 = %s\\chars\\%s\\st\\1.cns", (char*)(mainEntryPoint), CHAR_NAME);
+			sprintf((char*)pStr, "st9 = %s\\chars\\%s\\st\\1.cns", exePath, CHAR_NAME);
 
 		}
 		else if (strstr(file, "st") != NULL && (UINT)strstr(file, "st") < eq && strstr(file, CHAR_NAME) == NULL)
@@ -699,13 +700,30 @@ void changeDefFiles(UINT pFile)
 
 			UINT back = (UINT)file + 2;
 			BYTE backChar = ADR_BYTE_DATA(back);
-			if (backChar == 0x5B || backChar == 0x20)
+			if (backChar == 0x3d || backChar == 0x20)
 			{
 				off = (32 + strlen(path)) - len;
 				memmove((void*)(next + off), (const void*)(next), (total - index));				
-				sprintf((char*)pStr, "st = %s\\chars\\%s\\st\\1.cns", (char*)(mainEntryPoint), CHAR_NAME);
+				sprintf((char*)pStr, "st = %s\\chars\\%s\\st\\1.cns", exePath, CHAR_NAME);
 				
 			}
+
+		}
+		else if (!hasAnim && strstr(file, "anim") != NULL && (UINT)strstr(file, "anim") < eq && strstr(file, CHAR_NAME) == NULL)
+		{
+			hasAnim = true;
+		    const char* animFile = (const char*)(eq + 1);
+			char buffer[300];
+			sprintf(buffer, "%s%s",  pFilepath, animFile);
+			char* finalPath = trim(buffer);
+			int flag =access(finalPath,0);
+			if (-1 == flag)
+			{
+				off = (34 + strlen(path)) - len;
+				memmove((void*)(next + off), (const void*)(next), (total - index));
+				sprintf((char*)pStr, "anim = %s\\chars\\%s\\st\\1.cns", (char*)(mainEntryPoint), CHAR_NAME);
+			}
+			
 
 		}
 	
@@ -724,7 +742,7 @@ void changeDefFiles(UINT pFile)
 	//UINT endStr = ADRDATA(pStart);	
 
 	ADRDATA(pStart+4) = pStr + strlen((const char*)pStr) + 1;
-	memset((char*)ADRDATA(pStart+4), 0x61, 300);
+	memset((char*)ADRDATA(pStart+4), 0x61, 100);
 	ADRDATA(pFile + 0x24) = endLine + 1;
 
 
@@ -768,15 +786,19 @@ UINT WINAPI checkDef(UINT pName, UINT pFile, UINT pSt)
 
 	return 1;
 }
-void WINAPI changeFile(UINT pFile,UINT pName )
+void WINAPI changeFile(UINT pFile,UINT pName, UINT pPath)
 {
 	ADRDATA(0x004BF600) = 0x0043c576;
+	char* path =(char *) ADRDATA(pPath);
 	if (strcmp((char*)pName, CHAR_NAME) != 0)
 	{
+		if (atkLevel >= 4)
+		{
+			changeDefFiles(pFile, (char*)pName, path);
+		}
+		}
 
-
-		changeDefFiles(pFile);
-	}
+		
 	
 }
 

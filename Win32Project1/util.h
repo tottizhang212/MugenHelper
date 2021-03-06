@@ -22,3 +22,5 @@ void switchJmp(HMODULE hmodule, LPCSTR funName, UINT funAdr, UINT startAdr, UINT
 void switchJmp2(HMODULE hmodule, LPCSTR funName, UINT funAdr, UINT startAdr, UINT writeAdr);
 void switchJmp3(UINT jumpAdr, UINT targetAdr);
 UINT copyAsmCode(UINT begin, int len);
+int isFileExist(const char* file);
+char* trim(const char* str);
