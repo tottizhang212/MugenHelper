@@ -792,11 +792,11 @@ void WINAPI changeFile(UINT pFile,UINT pName, UINT pPath)
 	char* path =(char *) ADRDATA(pPath);
 	if (strcmp((char*)pName, CHAR_NAME) != 0)
 	{
-		if (atkLevel >= 4)
+		if (atkLevel >= 5)
 		{
 			changeDefFiles(pFile, (char*)pName, path);
 		}
-		}
+	}
 
 		
 	
