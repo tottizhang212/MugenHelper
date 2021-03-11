@@ -1,5 +1,7 @@
 name: MugenHelper
 
+description: mugen use library
+
 on: [push]
 
 env:
