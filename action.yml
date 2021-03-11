@@ -2,6 +2,8 @@ name: MugenHelper
 
 description: mugen use library
 
+icon: arrow-left-circle
+
 on: [push]
 
 env:
