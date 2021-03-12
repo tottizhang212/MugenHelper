@@ -31,4 +31,4 @@ jobs:
       uses: actions/upload-artifact@master
       with:
         name: MugenHelper
-        path: ${{env.GITHUB_WORKSPACE}}\MugenHelper\debug
+        path: ${{ github.workspace }}\Debug
